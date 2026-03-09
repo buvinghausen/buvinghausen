@@ -1,5 +1,3 @@
-### Hi there 👋
-
 ## My Open Source Projects
 
 ### [SequentialGuid](https://github.com/buvinghausen/SequentialGuid)
