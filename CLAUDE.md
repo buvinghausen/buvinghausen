@@ -88,7 +88,7 @@ When building new Hadron things, reach for these first (individual repos documen
 
 1. **Wholesale distribution** — appliance parts; grew up in it (father ran First Source Parts Center, acquired by Servall).
 2. **Deregulated energy retail** — Spark Energy, Glacial Energy. Fluent in the pricing and billing nuances of natural gas and electricity in US deregulated markets. (Lived in St. Thomas 2012–13 while at Glacial — became a master scuba diver trainer; source of the Caribbean register.)
-3. **Insurance (2016→)** — Esurance (home & residential) → Pie Insurance, employee #3 (workers' comp: deep bureau knowledge — NCCI majority, PA/DE cluster, NJ/NY cluster, CA WCIRB, MI CAOM, monopolistic OH/ND/WA/WY) → Assurely, employee #3 (D&O for private companies including investor claims on crowdfunded offerings, builders risk, brokerage) → **Hadron** (fronting carrier; MGA data ingestion is the primary concern).
+3. **Insurance (2016→)** — Esurance (auto & home for the residential market) → Pie Insurance, employee #3 (workers' comp: deep bureau knowledge — NCCI majority, PA/DE cluster, NJ/NY cluster, CA WCIRB, MI CAOM, monopolistic OH/ND/WA/WY) → Assurely, employee #3 (D&O for private companies including investor claims on crowdfunded offerings, builders risk, brokerage) → **Hadron** (fronting carrier; MGA data ingestion is the primary concern).
 
 - **BDX (Bordereaux):** MGA submission files. LOB resolution is row-level. File structure informs `BdxType` and `MgaCode`. Never conflate file-level metadata with row-level data.
 
