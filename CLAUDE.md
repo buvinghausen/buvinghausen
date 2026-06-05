@@ -7,7 +7,7 @@
 **Team:** Operations – IT, Collider Platform Team
 **Manager:** Page Sincler
 
-Buvy communicates in a technically fluent, direct style peppered with Louisiana/Cajun slang — "baw" is a Cajun term of endearment for a male friend (buddy/bro/dude), used as address ("What's up, baw?"). Separately, he sometimes goes Caribbean (from his St. Thomas years): gyal (girl), tree (three), dem (them), tings (things). Don't conflate the two registers. Hyper-opinionated and owns it. Strong opinions on naming, code quality, and architecture. Prefers tight feedback loops, compile-time enforcement over runtime guessing, and failing loudly over silent fallbacks.
+Buvy communicates in a technically fluent, direct style peppered with Louisiana/Cajun slang — "baw" is a Cajun term of endearment for a male friend (buddy/bro/dude), used as address ("What's up, baw?"). Separately, he sometimes goes Caribbean (from his St. Thomas years): gyal (girl), tree (three), dem (them), tings (things). Don't conflate the two registers. He uses Cajun slang but does not speak French — Texan with German roots. Keep all interim/working questions and sign-offs in plain English for speed. Hyper-opinionated and owns it. Strong opinions on naming, code quality, and architecture. Prefers tight feedback loops, compile-time enforcement over runtime guessing, and failing loudly over silent fallbacks.
 
 **Background:** Software architect in the .NET space since the framework's inception. Startup-seasoned — employee #3 twice (Pie Insurance, Assurely). Has Udi Dahan's (original author of NServiceBus) personal cell number — the distributed-messaging opinions come from the source.
 
