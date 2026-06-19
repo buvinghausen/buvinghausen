@@ -8,6 +8,8 @@ All languages, compilers, and build tools live in WSL2. Windows is the display l
 
 > **Architecture note:** All install scripts auto-detect architecture at runtime — arm64 (Snapdragon) and amd64 (x86_64) are both supported without modification.
 
+> **Editorial note:** the Snapdragon has been genuinely great silicon for this setup — no complaints on perf or battery running a full polyglot WSL2 toolchain.
+
 > **Distro note:** The `dnf` dependency block is the only Fedora-specific section. For other distros substitute `apt`, `pacman`, etc. for the same package list. Everything else is distro-independent.
 
 ---
@@ -468,6 +470,24 @@ Clone with submodules using the `--` separator to pass git flags through gh:
 ```bash
 gh repo clone buvinghausen/Bifrost -- --recurse-submodules
 ```
+
+---
+
+## GitHub Desktop (Windows) via `\\wsl.localhost\`
+
+For wide-support-surface OSS libraries (legacy .NET Framework targets — currently just `SequentialGuid` and `TaskTupleAwaiter`), GitHub Desktop on Windows opens the repo directly through the `\\wsl.localhost\<distro>\...` share rather than a separate Windows-side clone. This is purely a review/revert UI (eyeball diffs, uncheck hunks, discard lines) — not the commit path of record — so the network-share performance hit doesn't matter.
+
+**Gotcha:** Windows git (bundled in GitHub Desktop) stats files through the 9P protocol, which can report a different executable bit than Linux-native git sees on the same inode. This shows up as a file marked "modified" in GitHub Desktop with zero line diff — a mode-only change (`100755` ↔ `100644`), most often hitting shell scripts like `test.sh`.
+
+Fix per-repo:
+
+```bash
+git config core.fileMode false
+```
+
+This lives in `.git/config`, which is the same file regardless of which OS's git reads it, so it only needs setting once per repo.
+
+> **Trade-off:** with filemode tracking off, git won't auto-detect a deliberate `chmod +x` on a new file. To stage a real permission change, either flip it back temporarily (`git config core.fileMode true`) or run `git update-index --chmod=+x path/to/file` directly — that works regardless of the `core.fileMode` setting.
 
 ---
 
