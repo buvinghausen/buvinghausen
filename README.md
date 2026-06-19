@@ -1,3 +1,7 @@
+Software architect in the .NET space since the framework's inception — two-time startup employee #3, I design spec-first, plan-second, code-last: specs are cheap to rewrite, code isn't, so every incongruence gets sorted before a single line is committed to. Once code ships, the philosophy doesn't change — compile-time enforcement over runtime guessing, no silent fallbacks, fail loudly and immediately, and naming as a deliberate act, never an afterthought. The pit of success: the easy path and the correct path should be the same path.
+
+The repos below are where that ethos ships in the open.
+
 ## My Open Source Projects
 
 ### [SequentialGuid](https://github.com/buvinghausen/SequentialGuid)
