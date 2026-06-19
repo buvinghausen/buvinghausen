@@ -84,6 +84,18 @@ When building new Hadron things, reach for these first (individual repos documen
 
 ---
 
+## Personal Dev Environment
+
+Full WSL2 polyglot toolchain setup (Node, Go, Python, Rust, JVM, .NET, gh, Claude Code) lives in this repo's `TOOLCHAIN.md` — read it for exact install/update commands.
+
+Two conventions it encodes that generalize beyond this machine:
+- **Auto-resolving over pinned.** Prefer version managers/installers that track "latest stable" (fnm, pyenv, rustup, sdkman, `dotnet-install --channel LTS`) over distro package managers or hard-pinned versions — avoids feed lag and silent staleness.
+- **Deliberate pre-release tracking, with an exit condition.** Willing to run ahead of stable when it buys a real capability (TypeScript `@rc` for the Go-native compiler, free-threaded Python via `PYTHON_GIL=0`) — but only when paired with a stated trigger for dropping the override once stable catches up.
+
+This is the same **fail loudly, no silent fallbacks** mantra applied to tooling, not just code: tracking "latest" is not a safety net. If an upstream dependency ships a breaking change, the toolchain should break hard and visibly on the next install/update — never auto-pin backward or paper over it to keep the build green.
+
+---
+
 ## Domain Expertise — Three Pillars
 
 1. **Wholesale distribution** — appliance parts; grew up in it (father ran First Source Parts Center, acquired by Servall).
