@@ -419,6 +419,28 @@ claude
 
 ---
 
+## Docker
+
+Docker Desktop runs on the Windows host, not inside WSL2 — there is no install step here. The CLI and socket are injected into the distro via WSL integration, which is opt-in per-distro and off by default for non-default distros like Fedora.
+
+Enable on the Windows side:
+
+1. Docker Desktop → **Settings → Resources → WSL Integration**
+2. Toggle the entry for **Fedora** under "Enable integration with additional distros"
+3. **Apply & Restart**
+4. From PowerShell: `wsl --shutdown`, then reopen the Fedora terminal
+
+Verify:
+
+```bash
+docker version
+docker context ls
+```
+
+> **Note:** The Windows host manages Docker Desktop purely to provide the GUI for one-off container/image/volume cleanup — no `dnf install`, no update command inside WSL, updates happen entirely through Docker Desktop on Windows. Project workloads themselves run from WSL via **Aspire** — that's the next wave of toolchain verification.
+
+---
+
 ## Code Directory
 
 All repositories live inside WSL2 at `~/code/` — never on `/mnt/c/`. Crossing the WSL2/Windows filesystem boundary via `/mnt/c/` degrades I/O performance noticeably for git operations, file watching, and builds.
