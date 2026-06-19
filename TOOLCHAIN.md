@@ -334,6 +334,74 @@ claude
 
 ---
 
+## Code Directory
+
+All repositories live inside WSL2 at `~/code/` — never on `/mnt/c/`. Crossing the WSL2/Windows filesystem boundary via `/mnt/c/` degrades I/O performance noticeably for git operations, file watching, and builds.
+
+Suggested layout:
+
+```
+~/code/
+  ├── buvinghausen/    # personal repos
+  └── norse/           # Norse Architecture
+        └── Bifrost/
+            ├── Svartalfheim/
+            ├── Asgard/
+            └── ...
+```
+
+Clone with submodules using the `--` separator to pass git flags through gh:
+
+```bash
+gh repo clone buvinghausen/Bifrost -- --recurse-submodules
+```
+
+---
+
+## posh-git-sh
+
+Git-aware prompt active only inside `~/code/**`. Outside that boundary the prompt reverts to the standard bash default.
+
+```bash
+curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
+```
+
+Add to `~/.bashrc` (before SDKMAN block):
+
+```bash
+# posh-git-sh — only active inside ~/code/**
+source ~/.posh-git-sh
+
+_update_prompt() {
+    case "$PWD" in
+        $HOME/code/*)
+            PROMPT_COMMAND='__posh_git_ps1 "\u@\h:\w " "\\\$ ";'
+            ;;
+        *)
+            PROMPT_COMMAND=''
+            PS1='\u@\h:\w\$ '
+            ;;
+    esac
+}
+
+cd() {
+    builtin cd "$@" || return
+    _update_prompt
+}
+
+_update_prompt
+```
+
+> **Note:** The prompt only activates when inside `~/code/**` AND inside a git repo — navigating to `~/code` itself without a repo won't trigger it. That's correct behavior.
+
+**Updating posh-git-sh:**
+
+```bash
+curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
+```
+
+---
+
 ## JetBrains Gateway / WSL2 Tips
 
 - Use **JetBrains Gateway** (not the local IDE) for the best WSL2 experience — backend runs in Linux, UI on Windows.
@@ -360,6 +428,7 @@ nextest   0.9.137
 dotnet    10.0.301
 gh        2.95.0
 claude    2.1.183        native, linux-arm64, auto-updates enabled
+posh-git-sh 1.5.1       ~/code/** only
 ```
 
 *Verified on: 2026-06-19 · Surface Snapdragon · WSL2 Fedora aarch64*
@@ -412,4 +481,7 @@ sudo install gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh
 rm -rf gh_${GH_VERSION}_linux_${ARCH} gh_${GH_VERSION}_linux_${ARCH}.tar.gz
 
 # Claude Code — auto-updates itself, no action required
+
+# posh-git-sh
+curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
 ```
