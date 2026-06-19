@@ -288,6 +288,52 @@ curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
 
 ---
 
+## GitHub CLI
+
+Auto-detects architecture at install time:
+
+```bash
+GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+tar -xzf gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+sudo install gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh
+rm -rf gh_${GH_VERSION}_linux_${ARCH} gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+
+gh --version
+```
+
+Authenticate:
+
+```bash
+gh auth login
+# Select: GitHub.com → HTTPS → Login with a web browser
+```
+
+**Updating gh:** Re-run the install block above — `sudo install` overwrites the existing binary in place.
+
+---
+
+## Claude Code
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+
+claude --version
+claude doctor
+```
+
+Authenticate:
+
+```bash
+claude
+# On first launch follow the browser prompt to sign in with your Anthropic account
+```
+
+> **Note:** The native installer auto-updates in the background on the `latest` channel — no update command required. Requires a Claude Pro subscription or higher.
+
+---
+
 ## JetBrains Gateway / WSL2 Tips
 
 - Use **JetBrains Gateway** (not the local IDE) for the best WSL2 experience — backend runs in Linux, UI on Windows.
@@ -312,6 +358,8 @@ rustc     1.96.0         aarch64-unknown-linux-gnu
 cargo     1.96.0
 nextest   0.9.137
 dotnet    10.0.301
+gh        2.95.0
+claude    2.1.183        native, linux-arm64, auto-updates enabled
 ```
 
 *Verified on: 2026-06-19 · Surface Snapdragon · WSL2 Fedora aarch64*
@@ -354,4 +402,14 @@ rustup update
 
 # .NET
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
+
+# GitHub CLI
+GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+tar -xzf gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+sudo install gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh
+rm -rf gh_${GH_VERSION}_linux_${ARCH} gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+
+# Claude Code — auto-updates itself, no action required
 ```
