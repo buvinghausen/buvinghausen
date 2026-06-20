@@ -3,7 +3,9 @@
     "allow": [
       "Edit",
       "Write",
-      "Bash"
+      "Bash",
+      "WebFetch",
+      "WebSearch"
     ],
     "deny": [
       "Bash(rm -rf *)",
