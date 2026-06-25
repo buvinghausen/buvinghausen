@@ -401,6 +401,26 @@ gh auth login
 
 ---
 
+## PowerShell
+
+Microsoft's RHEL/CentOS repos only ship x86_64 RPMs — no aarch64 packages. Install from the GitHub releases tarball instead, which ships arm64 and amd64 binaries:
+
+```bash
+PS_VERSION=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
+wget https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
+sudo mkdir -p /opt/microsoft/powershell/7
+sudo tar -xzf powershell-${PS_VERSION}-linux-${ARCH}.tar.gz -C /opt/microsoft/powershell/7
+sudo chmod +x /opt/microsoft/powershell/7/pwsh
+sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/local/bin/pwsh
+rm powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
+pwsh --version
+```
+
+**Updating PowerShell:** Re-run the install block — `tar -xzf` overwrites in place, the symlink is stable, no `mkdir` needed again.
+
+---
+
 ## Claude Code
 
 ```bash
@@ -561,6 +581,7 @@ nextest   0.9.137
 dotnet    10.0.301      (+ 9.0.17, 8.0.28 runtimes for multi-target test execution)
 mono      6.14.1         legacy net472/net462 test execution
 gh        2.95.0
+pwsh      7.6.3
 claude    2.1.183        native, linux-arm64, auto-updates enabled
 posh-git-sh 1.5.1       ~/code/** only
 ```
@@ -620,6 +641,14 @@ wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION
 tar -xzf gh_${GH_VERSION}_linux_${ARCH}.tar.gz
 sudo install gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh
 rm -rf gh_${GH_VERSION}_linux_${ARCH} gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+
+# PowerShell
+PS_VERSION=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
+wget https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
+sudo tar -xzf powershell-${PS_VERSION}-linux-${ARCH}.tar.gz -C /opt/microsoft/powershell/7
+sudo chmod +x /opt/microsoft/powershell/7/pwsh
+rm powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 
 # Claude Code — auto-updates itself, no action required
 
