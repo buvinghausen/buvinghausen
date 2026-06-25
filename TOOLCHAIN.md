@@ -92,10 +92,11 @@ source ~/.bashrc
 go version
 ```
 
-Install gopls (language server for JetBrains/GoLand):
+Install gopls (language server) and Delve (debugger) for JetBrains/GoLand:
 
 ```bash
 go install golang.org/x/tools/gopls@latest
+go install github.com/go-delve/delve/cmd/dlv@latest
 ```
 
 **Updating Go:** Remove the old installation first, then re-run the install block above:
@@ -104,7 +105,14 @@ go install golang.org/x/tools/gopls@latest
 sudo rm -rf /usr/local/go
 ```
 
-**GoLand config:** Settings → Go → GOROOT → `/usr/local/go`
+**GoLand config:**
+- Settings → Go → GOROOT → `\\wsl.localhost\FedoraLinux-44\usr\local\go`
+- **Delve (debugger):** GoLand bundles a `linux/amd64` `dlv` that fails on arm64 with `Exec format error`. There is no UI setting to override the path — replace the bundled binary after every GoLand update:
+
+```powershell
+# Run from PowerShell (or copy via Explorer)
+Copy-Item "\\wsl.localhost\FedoraLinux-44\home\buvy\go\bin\dlv" "C:\Program Files\JetBrains\GoLand\plugins\go-plugin\lib\dlv\linux\dlv" -Force
+```
 
 ---
 
@@ -555,11 +563,27 @@ curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master
 
 ---
 
-## JetBrains Gateway / WSL2 Tips
+## JetBrains WSL2 Tips
 
-- Use **JetBrains Gateway** (not the local IDE) for the best WSL2 experience — backend runs in Linux, UI on Windows.
-- All `export` and init lines above are in `~/.bashrc` — JetBrains backends source it on connect.
-- After initial setup run `wsl --shutdown` from PowerShell then reopen before connecting JetBrains tools to ensure a clean environment load.
+**Use local IDEs with a WSL Run Target** — not JetBrains Gateway. With a full suite (GoLand, RustRover, Rider, PyCharm, IntelliJ, WebStorm) Gateway doubles the servicing burden: every IDE patch requires a matching Gateway patch. Run Targets give the same WSL2 build/run/test integration from the local IDE without that overhead.
+
+**WSL Run Target setup (per IDE, one-time):**
+
+1. Settings → Build, Execution, Deployment → Run Targets → `+` → WSL
+2. Select `FedoraLinux-44` from the distro list
+3. JetBrains introspects the distro and maps toolchain paths automatically
+4. In each run/debug configuration set **Run target** to the WSL entry
+
+**GoLand specifics:**
+
+- Settings → Go → GOROOT → `\\wsl.localhost\FedoraLinux-44\usr\local\go`
+- With the WSL Run Target active, GoLand translates the UNC path correctly when invoking the toolchain — the broken-path bug (`stat /main.go: directory not found`) is a symptom of missing Run Target configuration, not a GOROOT misconfiguration
+
+**General:**
+
+- All `export` and init lines above are in `~/.bashrc` — JetBrains WSL introspection sources it automatically
+- After initial setup run `wsl --shutdown` from PowerShell then reopen before connecting to ensure a clean environment load
+- **If a run configuration produces broken paths** (e.g. `/main.go` instead of the full Linux path), delete it and recreate it from scratch — the path mapping bakes in at creation time and corruption isn't fixable by editing
 
 ---
 
@@ -571,6 +595,7 @@ npm       11.17.0
 tsc       7.0.1-rc       (Go-native compiler — intentional)
 go        1.26.4         linux/arm64
 gopls     0.22.0
+dlv       1.27.0
 java      25.0.3         Temurin LTS
 kotlin    2.4.0
 gradle    9.6.0
@@ -610,6 +635,7 @@ wget https://go.dev/dl/${GO_VERSION}.linux-${ARCH}.tar.gz
 sudo tar -C /usr/local -xzf ${GO_VERSION}.linux-${ARCH}.tar.gz
 rm ${GO_VERSION}.linux-${ARCH}.tar.gz
 go install golang.org/x/tools/gopls@latest
+go install github.com/go-delve/delve/cmd/dlv@latest
 
 # Java / Kotlin / Gradle
 sdk update && sdk upgrade
