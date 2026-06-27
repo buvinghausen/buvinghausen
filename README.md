@@ -16,7 +16,7 @@ A lightweight .NET library that lets you `await` a tuple of tasks and destructur
 
 ## [Norse Architecture](https://github.com/NorseArchitecture)
 
-A reference .NET platform built as composable realms — primitives, contracts, infrastructure, hosting, EF Core foundations, identity, and access — orchestrated through .NET Aspire. Each realm is its own repo and ships independently; mix in the realms you need, swap the runtime containers, and compose your own platform on the same substrate.
+A reference .NET platform — `Norse.*` — built as composable realms. Repositories carry the lore; namespaces carry the function: open the org and tour the cosmos, open the `.slnx` and every project says what it does. Each realm ships independently; mix in the realms you need, write your own .NET Aspire AppHost, and compose your own platform on the same substrate.
 
 ### [Bifrost](https://github.com/NorseArchitecture/Bifrost)
 
@@ -28,11 +28,13 @@ git clone --recurse-submodules https://github.com/NorseArchitecture/Bifrost.git
 
 | Realm | The lore | Provides |
 |---|---|---|
-| [Svartalfheim](https://github.com/NorseArchitecture/Svartalfheim) | The dwarven forge where Mjölnir and Gleipnir were made | Domain primitives — value types, identifiers, `Result` parsing, encryption |
-| [Asgard](https://github.com/NorseArchitecture/Asgard) | Realm of the Æsir, whose laws bind gods and mortals alike | Abstractions — the contracts every realm must honor |
-| [Midgard](https://github.com/NorseArchitecture/Midgard) | Realm of mortals, where the law is lived | Infrastructure — persistence, messaging, caching, external integrations |
-| [Urdarbrunnr](https://github.com/NorseArchitecture/Urdarbrunnr) | The Well of Urd at Yggdrasil's roots, where the Norns carve fate into its trunk as runes | EF Core foundations — entity base types, conventions, migrations chassis |
-| [Yggdrasil](https://github.com/NorseArchitecture/Yggdrasil) | The World Tree that binds the nine realms | Hosting — web, worker, and migration service chassis |
-| [Himinbjorg](https://github.com/NorseArchitecture/Himinbjorg) | Heimdall's hall at the head of Bifrost | Identity — backend-only EF persistence for ASP.NET Identity & OpenIddict |
-| [Heimdall](https://github.com/NorseArchitecture/Heimdall) | The ever-watchful guardian of Bifrost, who alone decides who may cross | Access — one auth ruleset enforced across Blazor Server, WASM, and MAUI |
-| [Glitnir](https://github.com/NorseArchitecture/Glitnir) | The shining hall of judgment, where every suit is settled | The design court — specs, plans, and proof-of-concept verdicts |
+| [Svartalfheim](https://github.com/NorseArchitecture/Svartalfheim) | The dwarven forge where Mjölnir and Gleipnir were made | `Norse.Primitives` — the forge: `Result<T>`, the parsing stack, and the analyzers and BuildCheck rules that strike when law is broken |
+| [Asgard](https://github.com/NorseArchitecture/Asgard) | Realm of the Æsir, whose laws bind gods and mortals alike | `Norse.Abstractions` — declared law: contracts, attribute model, plugin interfaces, mediator law |
+| [Midgard](https://github.com/NorseArchitecture/Midgard) | Realm of mortals, where the law is lived | `Norse.Infrastructure` — embodied law: concrete persistence, mediator runtime, API, UI Composition framework |
+| [Urdarbrunnr](https://github.com/NorseArchitecture/Urdarbrunnr) | The Well of Urd at Yggdrasil's roots, where the Norns carve fate into its trunk as runes | `Norse.EntityFramework` — entity base types, DbContext foundations, conventions, value converters, and the migrations chassis |
+| [Ratatoskr](https://github.com/NorseArchitecture/Ratatoskr) | The squirrel racing up and down Yggdrasil's trunk, carrying messages between the eagle at the crown and Níðhöggr at the roots | `Norse.NServiceBus` — NServiceBus endpoint configuration, saga infrastructure, message conventions, and transport wiring |
+| [Yggdrasil](https://github.com/NorseArchitecture/Yggdrasil) | The World Tree that binds the nine realms | `Norse.Hosting` — hosting runtimes and deployables: web server, worker, migration service, WASM client, and MAUI app |
+| [Himinbjorg](https://github.com/NorseArchitecture/Himinbjorg) | Heimdall's hall at the head of Bifrost | `Norse.Identity` — EF persistence for ASP.NET Identity and OpenIddict: entities, conventions, and migrations; sealed server-side, never referenced from WASM or MAUI |
+| [Heimdall](https://github.com/NorseArchitecture/Heimdall) | The ever-watchful guardian of Bifrost, who alone decides who may cross | `Norse.Access` — one auth ruleset across Blazor Server, WASM, and MAUI, with admin components and the backing gRPC service |
+| [Nagalfar](https://github.com/NorseArchitecture/Nagalfar) | The ship built from dead men's nails, captained by giants, to ferry the end of the world | `Norse.DesignSystem` — design tokens, radii, and component primitives assembled into something seaworthy enough to carry every product UI |
+| [Glitnir](https://github.com/NorseArchitecture/Glitnir) | The shining hall of judgment where every suit is settled | The design court — specs, plans, and proof-of-concept verdicts |
