@@ -9,7 +9,7 @@
 
 Buvy communicates in a technically fluent, direct style peppered with Louisiana/Cajun slang — "baw" is a Cajun term of endearment for a male friend (buddy/bro/dude), used as address ("What's up, baw?"). Separately, he sometimes goes Caribbean (from his St. Thomas years): gyal (girl), tree (three), dem (them), tings (things). Don't conflate the two registers. He uses Cajun slang but does not speak French — Texan with German roots. Keep all interim/working questions and sign-offs in plain English for speed. Hyper-opinionated and owns it. Strong opinions on naming, code quality, and architecture. Prefers tight feedback loops, compile-time enforcement over runtime guessing, and failing loudly over silent fallbacks.
 
-**Background:** Software architect in the .NET space since the framework's inception. Startup-seasoned — employee #3 twice (Pie Insurance, Assurely). Has Udi Dahan's (original author of NServiceBus) personal cell number — the distributed-messaging opinions come from the source.
+**Background:** Software architect in the .NET space since the framework's inception. Startup-seasoned — employee #3 at both Pie Insurance and Assurely.
 
 **Project-level architecture, schemas, and active work live in each repository's own CLAUDE.md — read it first and treat it as authoritative. This file carries only who Buvy is, platform-wide vocabulary, and engineering conventions that apply everywhere.**
 
@@ -92,14 +92,12 @@ Two conventions it encodes that generalize beyond this machine:
 - **Auto-resolving over pinned.** Prefer version managers/installers that track "latest stable" (fnm, pyenv, rustup, sdkman, `dotnet-install --channel LTS`) over distro package managers or hard-pinned versions — avoids feed lag and silent staleness.
 - **Deliberate pre-release tracking, with an exit condition.** Willing to run ahead of stable when it buys a real capability (TypeScript `@rc` for the Go-native compiler, free-threaded Python via `PYTHON_GIL=0`) — but only when paired with a stated trigger for dropping the override once stable catches up.
 
-This is the same **fail loudly, no silent fallbacks** mantra applied to tooling, not just code: tracking "latest" is not a safety net. If an upstream dependency ships a breaking change, the toolchain should break hard and visibly on the next install/update — never auto-pin backward or paper over it to keep the build green.
-
 ---
 
 ## Domain Expertise — Three Pillars
 
-1. **Wholesale distribution** — appliance parts; grew up in it (father ran First Source Parts Center, acquired by Servall).
-2. **Deregulated energy retail** — Spark Energy, Glacial Energy. Fluent in the pricing and billing nuances of natural gas and electricity in US deregulated markets. (Lived in St. Thomas 2012–13 while at Glacial — became a master scuba diver trainer; source of the Caribbean register.)
+1. **Wholesale distribution** — appliance parts; grew up in it.
+2. **Deregulated energy retail** — Spark Energy, Glacial Energy; US deregulated market pricing/billing. (St. Thomas 2012–13 — source of the Caribbean register.)
 3. **Insurance (2016→)** — Esurance (auto & home for the residential market) → Pie Insurance, employee #3 (workers' comp: deep bureau knowledge — NCCI majority, PA/DE cluster, NJ/NY cluster, CA WCIRB, MI CAOM, monopolistic OH/ND/WA/WY) → Assurely, employee #3 (D&O for private companies including investor claims on crowdfunded offerings, builders risk, brokerage) → **Hadron** (fronting carrier; MGA data ingestion is the primary concern).
 
 - **BDX (Bordereaux):** MGA submission files. LOB resolution is row-level. File structure informs `BdxType` and `MgaCode`. Never conflate file-level metadata with row-level data.
