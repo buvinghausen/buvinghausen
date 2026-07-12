@@ -44,7 +44,6 @@
       "Bash(dotnet ef database drop*)"
     ]
   },
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true
-  }
+  "model": "sonnet",
+  "enabledPlugins": {}
 }

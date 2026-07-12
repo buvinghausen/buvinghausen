@@ -449,6 +449,45 @@ claude
 
 ---
 
+## Playwright (Claude Code browser automation)
+
+Browser automation is Microsoft's official `@playwright/mcp` server, wired in as a Claude Code plugin (marketplace: `claude-plugins-official`). No standalone install step for the server itself — the plugin's `.mcp.json` launches it on demand via `npx`, always resolving `@latest`:
+
+```json
+{
+  "playwright": {
+    "command": "npx",
+    "args": ["@playwright/mcp@latest"]
+  }
+}
+```
+
+The browser is the distro's `chromium` package, not Playwright's own bundled Chromium download:
+
+```bash
+sudo dnf install -y chromium
+```
+
+The MCP server auto-detects the system `chromium-browser` executable (`/usr/sbin/chromium-browser`) directly — no `npx playwright install chromium` step, no second Chromium download managed separately from the OS. `~/.cache/ms-playwright` stays effectively empty (a few KB of registry metadata, no browser binaries) as a result — that's expected, not a broken install.
+
+Verify:
+
+```bash
+npx @playwright/mcp@latest --version
+chromium-browser --version
+```
+
+> **Note:** Routing through the dnf-managed `chromium` package keeps the browser under the distro's own patch/security-update cadence and avoids a redundant ~300MB Playwright-managed browser download sitting alongside the system one. This is intentional, not a fallback — the MCP server resolves straight to `chromium-browser`.
+
+**Updating:**
+
+```bash
+sudo dnf update -y chromium
+# @playwright/mcp always resolves @latest via npx — no separate update command
+```
+
+---
+
 ## Docker
 
 Docker Desktop runs on the Windows host, not inside WSL2 — there is no install step here. The CLI and socket are injected into the distro via WSL integration, which is opt-in per-distro and off by default for non-default distros like Fedora.
@@ -605,6 +644,8 @@ cargo     1.96.0
 nextest   0.9.137
 dotnet    10.0.301      (+ 9.0.17, 8.0.28 runtimes for multi-target test execution)
 mono      6.14.1         legacy net472/net462 test execution
+playwright-mcp 0.0.78    @playwright/mcp, via npx, no persistent install
+chromium  150.0.7871.114 dnf-managed, not Playwright-downloaded
 gh        2.95.0
 pwsh      7.6.3
 claude    2.1.183        native, linux-arm64, auto-updates enabled
@@ -612,6 +653,7 @@ posh-git-sh 1.5.1       ~/code/** only
 ```
 
 *Verified on: 2026-06-19 · Surface Snapdragon · WSL2 Fedora aarch64*
+*`playwright-mcp` / `chromium` added and verified separately: 2026-07-12*
 
 ---
 
@@ -659,6 +701,10 @@ curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 -
 
 # Mono
 sudo dnf update -y mono-complete
+
+# Chromium (Playwright MCP browser)
+sudo dnf update -y chromium
+# @playwright/mcp always resolves @latest via npx — no separate update command
 
 # GitHub CLI
 GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
