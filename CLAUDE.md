@@ -17,15 +17,6 @@ Buvy communicates in a technically fluent, direct style peppered with Louisiana/
 
 ## Platform Vocabulary
 
-| Name | Layer | Named After |
-|------|-------|-------------|
-| **Collider** | Umbrella product pitch (Accelerator + Crucible) | — |
-| **Accelerator** | Meta-repository / MSBuild platform | Fermi (OSS release) |
-| **Crucible** | Schema refinement workflow | Curie (OSS release) |
-| **Chamber** | UI/UX frontend layer | C.T.R. Wilson |
-
-OSS umbrella: **Curie** (after Marie Curie). Curie published first; Fermi built on her work — the release order mirrors that intentionally.
-
 **Bounded contexts** (each its own repo/lifecycle): `Exposure` · `Claims` · `Premium` · `Policy` · `Finance` · `Sales` · `Underwriting` · `Operations` · `Auth` · `Reference Data`
 
 ---
@@ -106,4 +97,4 @@ Two conventions it encodes that generalize beyond this machine:
 
 ## Open Source
 
-Buvy is the author of the **SequentialGuid** library on GitHub. OSS output from the platform work ships under the **Collider** umbrella (Crucible → Curie; Accelerator → Fermi).
+Buvy is the author of **SequentialGuid**, **TaskTupleAwaiter**, and **NorseArchitecture** on GitHub.
