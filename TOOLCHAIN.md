@@ -644,31 +644,33 @@ curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master
 ## Verified Environment
 
 ```
-Node.js   v24.17.0       (Krypton LTS)
-npm       11.17.0
-tsc       7.0.1-rc       (Go-native compiler — intentional)
-go        1.26.4         linux/arm64
-gopls     0.22.0
+Node.js   v24.18.0       (Krypton LTS)
+npm       12.0.1
+tsc       7.0.2          (Go-native compiler, GA since 2026-07-08 — no longer @rc)
+go        1.26.5         linux/arm64
+gopls     0.23.0
 dlv       1.27.0
 java      25.0.3         Temurin LTS
-kotlin    2.4.0
-gradle    9.6.0
+kotlin    2.4.10
+gradle    9.6.1
 python    3.14.5t        GIL-free (PYTHON_GIL=0)
-rustc     1.96.0         aarch64-unknown-linux-gnu
-cargo     1.96.0
-nextest   0.9.137
-dotnet    10.0.301      (+ 9.0.17, 8.0.28 runtimes for multi-target test execution)
+rustc     1.97.1         aarch64-unknown-linux-gnu
+cargo     1.97.1
+nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-installed
+dotnet    10.0.302       (+ 9.0.18, 8.0.29 runtimes for multi-target test execution)
+dotnet-11 11.0.100-preview.6.26359.118   TEMPORARY preview channel (Norse DU work) — see its own section
 mono      6.14.1         legacy net472/net462 test execution
 playwright-mcp 0.0.78    @playwright/mcp, via npx, no persistent install
 chromium  150.0.7871.114 dnf-managed, not Playwright-downloaded
-gh        2.95.0
+gh        2.96.0
 pwsh      7.6.3
 claude    2.1.183        native, linux-arm64, auto-updates enabled
 posh-git-sh 1.5.1       ~/code/** only
 ```
 
-*Verified on: 2026-06-19 · Surface Snapdragon · WSL2 Fedora aarch64*
+*Verified on: 2026-07-17 · Surface Snapdragon · WSL2 Fedora aarch64 · full pass via `./update-toolchain.sh`*
 *`playwright-mcp` / `chromium` added and verified separately: 2026-07-12*
+*`docker` module (image refresh + dangling-image/stale-container cleanup) added to the update pass 2026-07-17 — not listed above since it tracks container images, not a pinned CLI version.*
 
 ---
 
@@ -681,6 +683,6 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `.NET` and `Go` modules additionally remove the version they're superseding (old `/usr/local/go`, old .NET 11 preview SDK artifacts) rather than leaving them to accumulate. Modules: `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview), `rust`, `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates), `rust`, `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
 The command-by-command breakdown for each stack lives in that stack's own section above (e.g. [Go](#go), [.NET](#net)) — treat those as the reference for *what* each step does; `scripts/update-*.sh` is the reference for *exact, current* invocation. If they drift, the scripts win — update the docs above to match rather than editing this block, since this block just points at them.
