@@ -53,18 +53,18 @@ fnm install --lts && fnm default lts-latest
 
 ## TypeScript
 
-Install the `@rc` release to get the Go-native compiler (7.x) rather than the JavaScript-based compiler. The Go compiler delivers significantly faster type-checking on large codebases:
+Install the Go-native compiler (7.x) rather than the JavaScript-based compiler. The Go compiler delivers significantly faster type-checking on large codebases:
 
 ```bash
-npm install -g typescript@rc
+npm install -g typescript@latest
 ```
 
-> **Note:** `@rc` is intentional — TypeScript 7.x ships as the Go-native compiler and is a substantial performance improvement over the JS-based 6.x compiler. Once 7.x hits stable, `@rc` can be dropped.
+> **Note:** TypeScript 7.0 hit GA on 2026-07-08 — `latest` now resolves to the Go-native compiler directly. The old `@rc` pin used during the prerelease period is retired: npm's `rc` dist-tag is frozen on the stale `7.0.1-rc` since nobody publishes to it post-GA, so keeping that pin would silently install *behind* stable rather than ahead of it. If a future major briefly ships a next-gen compiler under `@rc`/`@next` again, re-pin deliberately and drop it the same way once it GAs.
 
 **Updating TypeScript:**
 
 ```bash
-npm install -g typescript@rc
+npm install -g typescript@latest
 ```
 
 ---
@@ -245,7 +245,7 @@ rustup component add rust-analyzer clippy rustfmt
 
 # Cargo tools
 cargo install cargo-watch cargo-edit
-cargo install --locked cargo-nextest
+curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
 ```
 
 Verify:
@@ -257,12 +257,13 @@ rust-analyzer --version
 cargo nextest --version
 ```
 
-> **Note:** `cargo-nextest` requires `--locked` — this is intentional and enforced by the nextest project.
+> **Note:** `cargo-nextest` installs from nextest's own prebuilt `aarch64-unknown-linux-gnu` binary (`get.nexte.st/latest/linux-arm`), not `cargo install` — building it from source takes 15+ minutes on Snapdragon (dozens of transitive crates, `--locked` release profile) versus seconds for the tarball. Substitute `linux-arm-musl` in the URL for a fully static binary with no glibc dependency, or `linux-x64`/`linux-x64-musl` on amd64. `cargo-watch`/`cargo-edit` don't ship prebuilt binaries this way, so those stay on `cargo install`.
 
 **Updating Rust:**
 
 ```bash
 rustup update
+curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
 ```
 
 **RustRover/IntelliJ config:** Settings → Rust → Toolchain location → `~/.cargo/bin`
@@ -350,7 +351,9 @@ sudo dnf update -y mono-complete
 
 ## .NET 11 Preview SDK — TEMPORARY (Norse discriminated unions)
 
-> **Temporary section — remove once no longer needed.** Tracking the .NET 11 preview channel (currently preview 5) to get native discriminated union support for the Norse Architecture. **Exit condition:** drop this section once .NET 11 hits GA and the team has decided whether to adopt it as a standing channel, or once the DU work no longer needs the preview bits — whichever comes first. The main [.NET](#net) section above stays pinned to `--channel LTS` regardless; this installs side by side, it does not replace that baseline.
+> **Temporary section — remove once no longer needed.** Tracking the .NET 11 preview channel (currently preview 6, shipped 2026-07-14) to get native discriminated union support for the Norse Architecture. **Exit condition:** drop this section once .NET 11 hits GA and the team has decided whether to adopt it as a standing channel, or once the DU work no longer needs the preview bits — whichever comes first. The main [.NET](#net) section above stays pinned to `--channel LTS` regardless; this installs side by side, it does not replace that baseline.
+>
+> **`--quality preview` covers RC too.** `dotnet-install.sh` only has three quality values — `daily`, `preview`, `GA` — there's no separate `rc` value. Every monthly 11.0 build (previews and, later, release candidates) ships under `preview` until GA, so the install command below doesn't need to change when 11.0 reaches RC.
 
 Install the latest preview build of the 11.0 channel into the same `$DOTNET_ROOT` — SDKs coexist side by side automatically:
 
@@ -380,6 +383,8 @@ dotnet --list-sdks
 ```bash
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 11.0 --quality preview
 ```
+
+> **Old preview SDKs pile up.** Each monthly build installs as a new side-by-side SDK under `$DOTNET_ROOT` rather than replacing the last one — `scripts/update-dotnet.sh` (see [Full Update Pass](#full-update-pass)) handles this by diffing `dotnet --list-sdks` before/after the install and pruning the superseded preview's SDK/runtime/pack/host artifacts once the new one is confirmed present.
 
 ---
 
@@ -513,6 +518,16 @@ docker context ls
 > Day-to-day container lifecycle (start/stop/remove) is intended to go through the Docker Desktop GUI on Windows, not the WSL CLI — the CLI here is for occasional one-off verification, not routine use. One gotcha if you do run from the CLI: a bare `docker run` (no `-d`) ties the container to the foreground process and it dies (`Exited 137`) when that shell session ends; use `docker run -d` or just manage it from the GUI.
 >
 > `unstructured-api` itself is a parked capability, not active work yet — it extracts text chunks from unstructured documents (PDFs, Office docs, etc.) as a precursor step to running embeddings for RAG. This was just a "does the plumbing work" check.
+
+**Updating images:**
+
+```bash
+./scripts/update-docker.sh
+```
+
+Lists every locally-pulled image (`docker images`), then re-pulls each `repository:tag` pair. Images pinned to an immutable version tag are effectively a no-op (already at that digest); floating tags (`:latest`, etc.) actually refresh. Local-only builds with no upstream repository fail their pull individually and are skipped without aborting the rest of the sweep.
+
+> **Note — clean-slate policy, deliberate:** a container built from a tag that's since moved shows up in `docker ps -a` with a raw image ID instead of a name. The script force-removes any container in that state (`docker rm -f`, never `-v` — named *and* anonymous volumes are always left behind) and then prunes the now-unreferenced image. It does **not** try to reconstruct the container's `docker run` config (bind mounts, networks, replication topology) — that's easy to get subtly wrong, and anything worth keeping either lives in a named volume (survives regardless) or is owned by an orchestrator that already knows how to recreate its own containers correctly. Confirmed live on this machine: Aspire's Norse Architecture postgres primary/replica pair (`pg-primary-*`/`pg-replica-*`) bind-mounts ephemeral, session-specific init scripts from `/run/desktop/mnt/host/wsl/docker-desktop-bind-mounts/...` that only Aspire itself can regenerate correctly — the pair comes back on the next AppHost run, rebuilt against the fresh image, data intact via the `norse-pg-primary`/`norse-pg-replica` volumes. This is tuned for solo personal-machine use — if anyone else ever runs this against a shared box, they inherit the clean-slate trade-off, not just the script.
 
 ---
 
@@ -662,68 +677,10 @@ posh-git-sh 1.5.1       ~/code/** only
 Run this periodically to bring the entire toolchain current:
 
 ```bash
-# npm + TypeScript
-npm install -g npm@latest
-npm install -g typescript@rc
-
-# Node.js
-fnm install --lts && fnm default lts-latest
-
-# Go
-sudo rm -rf /usr/local/go
-GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -1)
-ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://go.dev/dl/${GO_VERSION}.linux-${ARCH}.tar.gz
-sudo tar -C /usr/local -xzf ${GO_VERSION}.linux-${ARCH}.tar.gz
-rm ${GO_VERSION}.linux-${ARCH}.tar.gz
-go install golang.org/x/tools/gopls@latest
-go install github.com/go-delve/delve/cmd/dlv@latest
-
-# Java / Kotlin / Gradle
-sdk update && sdk upgrade
-
-# Python
-pyenv update
-PYTHON_LATEST=$(pyenv latest 3)
-pyenv install ${PYTHON_LATEST}
-pyenv install ${PYTHON_LATEST}t
-pyenv global ${PYTHON_LATEST}t
-
-# Rust
-rustup update
-
-# .NET
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
-
-# Older .NET runtimes (multi-target test execution)
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0 --runtime dotnet
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --runtime dotnet
-
-# Mono
-sudo dnf update -y mono-complete
-
-# Chromium (Playwright MCP browser)
-sudo dnf update -y chromium
-# @playwright/mcp always resolves @latest via npx — no separate update command
-
-# GitHub CLI
-GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
-ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz
-tar -xzf gh_${GH_VERSION}_linux_${ARCH}.tar.gz
-sudo install gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh
-rm -rf gh_${GH_VERSION}_linux_${ARCH} gh_${GH_VERSION}_linux_${ARCH}.tar.gz
-
-# PowerShell
-PS_VERSION=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
-ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
-wget https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
-sudo tar -xzf powershell-${PS_VERSION}-linux-${ARCH}.tar.gz -C /opt/microsoft/powershell/7
-sudo chmod +x /opt/microsoft/powershell/7/pwsh
-rm powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
-
-# Claude Code — auto-updates itself, no action required
-
-# posh-git-sh
-curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
+./update-toolchain.sh              # every module, in order
+./update-toolchain.sh dotnet go    # or just the modules you want
 ```
+
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `.NET` and `Go` modules additionally remove the version they're superseding (old `/usr/local/go`, old .NET 11 preview SDK artifacts) rather than leaving them to accumulate. Modules: `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview), `rust`, `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+
+The command-by-command breakdown for each stack lives in that stack's own section above (e.g. [Go](#go), [.NET](#net)) — treat those as the reference for *what* each step does; `scripts/update-*.sh` is the reference for *exact, current* invocation. If they drift, the scripts win — update the docs above to match rather than editing this block, since this block just points at them.
