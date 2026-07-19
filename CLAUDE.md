@@ -81,7 +81,8 @@ Full WSL2 polyglot toolchain setup (Node, Go, Python, Rust, JVM, .NET, gh, Claud
 
 Two conventions it encodes that generalize beyond this machine:
 - **Auto-resolving over pinned.** Prefer version managers/installers that track "latest stable" (fnm, pyenv, rustup, sdkman, `dotnet-install --channel LTS`) over distro package managers or hard-pinned versions — avoids feed lag and silent staleness.
-- **Deliberate pre-release tracking, with an exit condition.** Willing to run ahead of stable when it buys a real capability (TypeScript `@rc` for the Go-native compiler, free-threaded Python via `PYTHON_GIL=0`) — but only when paired with a stated trigger for dropping the override once stable catches up.
+- **Deliberate pre-release tracking, with an exit condition.** Willing to run ahead of stable when it buys a real capability (e.g. the .NET 11 preview channel for Norse discriminated unions) — but only when paired with a stated trigger for dropping the override once stable catches up. TypeScript's Go-native compiler followed this pattern: tracked via `@rc`, now resolves via plain `@latest` since 7.0 hit GA on 2026-07-08.
+- **Python runs both GIL flavors side by side.** Standard (GIL-enabled) and free-threaded builds are both installed via pyenv; standard is the global default, free-threaded is available on demand via `pyenv local`/`pyenv shell` for testing (see `TOOLCHAIN.md`).
 
 ---
 

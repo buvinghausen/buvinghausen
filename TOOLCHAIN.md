@@ -189,21 +189,21 @@ export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
-# Force free-threaded Python globally
-export PYTHON_GIL=0
+# GIL enabled by default (yt-dlp and other GIL-dependent tools need it).
+# Flip to free-threaded for testing: export PYTHON_GIL=0
 EOF
 
 source ~/.bashrc
 pyenv update
 ```
 
-Install latest stable Python (standard + free-threaded builds):
+Install latest stable Python (standard + free-threaded builds), global defaults to the standard build:
 
 ```bash
 PYTHON_LATEST=$(pyenv latest 3)
 pyenv install ${PYTHON_LATEST}
 pyenv install ${PYTHON_LATEST}t
-pyenv global ${PYTHON_LATEST}t
+pyenv global ${PYTHON_LATEST}
 ```
 
 Verify:
@@ -213,7 +213,7 @@ python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
 ```
 
-> **Note:** The `t` suffix is the free-threaded build. `PYTHON_GIL=0` ensures the GIL is disabled globally regardless of pyenv's shim routing. The standard build is available alongside for compatibility testing via `pyenv local`.
+> **Note:** The `t` suffix is the free-threaded build. Standard (GIL-enabled) is the current global default since some tools (yt-dlp) don't tolerate the GIL disabled. To test something against free-threading: `pyenv shell ${PYTHON_LATEST}t && export PYTHON_GIL=0` for that shell, or `pyenv local ${PYTHON_LATEST}t` to pin a project directory to it. Revert to free-threaded-by-default globally with `pyenv global ${PYTHON_LATEST}t` and restoring `export PYTHON_GIL=0` in `~/.bashrc`.
 
 > **Updating Python:** `pyenv update` first to get new versions, then re-run the install block. `pyenv latest 3` always resolves the current stable release — when 3.15 ships stable it will naturally pick that up.
 
@@ -653,7 +653,7 @@ dlv       1.27.0
 java      25.0.3         Temurin LTS
 kotlin    2.4.10
 gradle    9.6.1
-python    3.14.5t        GIL-free (PYTHON_GIL=0)
+python    3.14.5         GIL enabled (standard build; 3.14.5t available via pyenv local/shell for free-threaded testing)
 rustc     1.97.1         aarch64-unknown-linux-gnu
 cargo     1.97.1
 nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-installed
@@ -671,6 +671,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *Verified on: 2026-07-17 · Surface Snapdragon · WSL2 Fedora aarch64 · full pass via `./update-toolchain.sh`*
 *`playwright-mcp` / `chromium` added and verified separately: 2026-07-12*
 *`docker` module (image refresh + dangling-image/stale-container cleanup) added to the update pass 2026-07-17 — not listed above since it tracks container images, not a pinned CLI version.*
+*`python` default flipped from free-threaded (`t`, `PYTHON_GIL=0`) back to standard/GIL-enabled: 2026-07-19 — yt-dlp needs the GIL. Free-threaded build stays installed for opt-in testing.*
 
 ---
 
