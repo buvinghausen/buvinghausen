@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Updates Python via pyenv (standard + free-threaded builds) and removes the
-# superseded free-threaded global build once the new one is active. The
-# paired standard (non-t) build is left alone — TOOLCHAIN.md keeps it around
-# on purpose for `pyenv local` compatibility testing.
+# superseded global build once the new one is active. Preserves whichever
+# flavor (standard vs free-threaded `t`) is currently set as global rather
+# than forcing one — TOOLCHAIN.md documents standard/GIL-enabled as the
+# current default (yt-dlp needs the GIL); free-threaded is opt-in via
+# `pyenv local`/`pyenv shell` for testing.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./lib.sh
@@ -14,7 +16,6 @@ if [[ ! -d "$PYENV_ROOT/bin" ]]; then
 fi
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
-export PYTHON_GIL=0
 
 log "pyenv update"
 pyenv update
@@ -25,10 +26,17 @@ PYTHON_LATEST=$(pyenv latest 3)
 log "Python ${PYTHON_LATEST} (standard + free-threaded)"
 pyenv install -s "${PYTHON_LATEST}"
 pyenv install -s "${PYTHON_LATEST}t"
-pyenv global "${PYTHON_LATEST}t"
 
-if [[ -n "$PYTHON_PREV" && "$PYTHON_PREV" == *t && "$PYTHON_PREV" != "${PYTHON_LATEST}t" ]]; then
-	log "Removing superseded free-threaded build: $PYTHON_PREV"
+if [[ "$PYTHON_PREV" == *t ]]; then
+	PYTHON_NEW_GLOBAL="${PYTHON_LATEST}t"
+	export PYTHON_GIL=0
+else
+	PYTHON_NEW_GLOBAL="${PYTHON_LATEST}"
+fi
+pyenv global "${PYTHON_NEW_GLOBAL}"
+
+if [[ -n "$PYTHON_PREV" && "$PYTHON_PREV" != "$PYTHON_NEW_GLOBAL" ]]; then
+	log "Removing superseded build: $PYTHON_PREV"
 	pyenv uninstall -f "$PYTHON_PREV"
 fi
 
