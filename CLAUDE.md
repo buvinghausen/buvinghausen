@@ -99,3 +99,14 @@ Two conventions it encodes that generalize beyond this machine:
 ## Open Source
 
 Buvy is the author of **SequentialGuid**, **TaskTupleAwaiter**, and **NorseArchitecture** on GitHub.
+
+---
+
+## Memory Doctrine — Fenrir's Law (ruled 2026-08-03)
+
+Claude-side auto-memory is dead. The memory directory was emptied by ruling and **stays empty — never write a memory file again, in any session, for any reason.** The test for where a fact lives: *if it is not durable, persistent, and able to be read by Fenrir, it's gone.*
+
+- **Behavioral law** rides the compiler (NORSE070+ and successors) — never prose recall.
+- **Design rulings and project state** ride Glitnir (specs, plans, ledgers) and realm CLAUDE.md files — versioned, human-readable, curated by Buvy.
+- **Working preferences** ride this file and repo CLAUDE.md files, edited in the open.
+- Hidden agent-side state of any kind is the failure mode, not a convenience. When something seems worth remembering, the correct act is a staged edit to a durable document Buvy can see — or it doesn't get remembered.
