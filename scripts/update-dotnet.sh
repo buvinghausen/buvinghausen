@@ -131,8 +131,23 @@ log "dotnet new — template updates"
 dotnet new update
 
 log "dotnet tool — global tool updates"
-if [[ -n "$(dotnet tool list --global | tail -n +3)" ]]; then
-	dotnet tool update --global --all
+# Per-tool instead of `--all`: dotnet-ef rides the 11.0 preview channel
+# alongside the preview SDK, and `--all` hard-fails the moment any installed
+# tool is newer than its latest *stable* ("requested version 10.0.10 is lower
+# than existing version 11.0.0-preview.x"), killing the whole run. Policy:
+# a tool whose installed version is a prerelease keeps tracking prereleases;
+# everything else tracks stable. Self-healing at GA — stable outranks its own
+# previews, so `--prerelease` rolls the tool onto the GA version and the next
+# run's version check stops matching, dropping it back to stable-only.
+TOOLS=$(dotnet tool list --global | tail -n +3 | awk 'NF {print $1, $2}')
+if [[ -n "$TOOLS" ]]; then
+	while read -r id version; do
+		if [[ "$version" == *-* ]]; then
+			dotnet tool update --global "$id" --prerelease
+		else
+			dotnet tool update --global "$id"
+		fi
+	done <<<"$TOOLS"
 else
 	echo "No global tools installed — skipping"
 fi
