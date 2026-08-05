@@ -20,7 +20,7 @@ log "cargo tools"
 cargo install cargo-watch cargo-edit
 
 log "cargo-nextest (prebuilt binary — building from source takes 15+ min, see TOOLCHAIN.md)"
-NEXTEST_PLATFORM=$(uname -m | sed 's/x86_64/linux-x64/;s/aarch64/linux-arm/')
+NEXTEST_PLATFORM=$(uname -m | sed 's/x86_64/linux/;s/aarch64/linux-arm/')
 curl -LsSf "https://get.nexte.st/latest/${NEXTEST_PLATFORM}" | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
 
 rustc --version
