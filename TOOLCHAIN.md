@@ -344,7 +344,10 @@ mono tests/unit/SequentialGuid.Tests/bin/Debug/net472/SequentialGuid.Tests.exe
 **Updating Mono:**
 
 ```bash
-sudo dnf update -y mono-complete
+sudo dnf install -y mono-complete
+# `install`, not `update` — dnf's install upgrades an already-installed package to
+# the latest available version, but `update` errors out if the package isn't
+# installed yet ("available, but not installed"). `install` works either way.
 ```
 
 ---
@@ -487,7 +490,8 @@ chromium-browser --version
 **Updating:**
 
 ```bash
-sudo dnf update -y chromium
+sudo dnf install -y chromium
+# `install`, not `update` — same reasoning as the Mono section above.
 # @playwright/mcp always resolves @latest via npx — no separate update command
 ```
 
