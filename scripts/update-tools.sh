@@ -39,10 +39,10 @@ else
 fi
 
 log "Mono"
-sudo dnf update -y mono-complete
+sudo dnf install -y mono-complete
 
 log "Chromium (Playwright MCP browser)"
-sudo dnf update -y chromium
+sudo dnf install -y chromium
 
 log "posh-git-sh"
 curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
