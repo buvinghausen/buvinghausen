@@ -41,9 +41,45 @@ You need `~/.ssh/id_ed25519_github` (no `.pub`) present on every host that will 
 chmod 600 ~/.ssh/id_ed25519_github
 ```
 
-**If you use 1Password or Bitwarden:** both now offer a built-in SSH agent that syncs the key across your devices and exposes it as a normal `ssh-agent` (including into WSL and devcontainers) without you ever manually copying the private key file at all. Worth adopting if you're not already using one — it turns "copy the key to N devices" into "sign into the same vault everywhere."
+**If you use 1Password or Bitwarden's SSH agent:** you can skip having a private key file on a host at all — the agent holds the key and answers every SSH/git signature request itself. Neither agent bridges into WSL natively (checked both projects' issue trackers: 1Password's WSL support is still an open feature request, and Bitwarden's Windows agent only exposes the `\\.\pipe\openssh-ssh-agent` named pipe, which WSL can't reach directly — the "just works everywhere" framing was the plan, not what either vendor ships).
 
-Once the key file is in place on a host, run the configure script there:
+For Bitwarden specifically, this repo has the bridge built: **`ssh/bitwarden-agent-bridge.sh`** relays that named pipe into a WSL Unix socket via `npiperelay` + `socat`, supervised by **`ssh/bitwarden-agent-bridge.service`** as a `systemd --user` unit (WSL2's systemd must be enabled — it is by default on recent WSL). A shell-rc-spawned relay was tried first and rejected: every new terminal raced to claim the socket, and a dead relay failed silently. A single supervised service avoids both.
+
+Prereqs on Windows:
+- Bitwarden Desktop must be the **standalone installer**, not the Microsoft Store/Appx build — the Store build runs sandboxed and can go unresponsive on the pipe, which hangs `ssh-add` indefinitely with no error.
+- Bitwarden Desktop → Settings → SSH Agent → enable it
+- Set the Windows **"OpenSSH Authentication Agent"** service to *Disabled* (Bitwarden needs to own the named pipe)
+
+Then in WSL:
+```bash
+sudo dnf install -y socat   # apt/pacman/etc. on other distros
+# download npiperelay.exe (amd64) from https://github.com/jstarks/npiperelay/releases,
+# verify against the release checksum, and place it at ~/.local/bin/npiperelay.exe
+
+mkdir -p ~/.local/bin ~/.config/systemd/user
+cp ssh/bitwarden-agent-bridge.sh ~/.local/bin/bitwarden-agent-bridge.sh
+chmod +x ~/.local/bin/bitwarden-agent-bridge.sh
+cp ssh/bitwarden-agent-bridge.service ~/.config/systemd/user/bitwarden-agent-bridge.service
+systemctl --user daemon-reload
+systemctl --user enable --now bitwarden-agent-bridge.service
+```
+Then add to `~/.bashrc` (or `.zshrc`):
+```bash
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+```
+Open a new shell and confirm with `ssh-add -l` — it should list the key Bitwarden is holding. If `ssh-add -l` hangs, see the gotchas documented at the top of `bitwarden-agent-bridge.sh` (Store-build sandboxing, npiperelay's `-p` flag) before assuming the setup is wrong.
+
+A host set up this way only ever has `~/.ssh/id_ed25519_github.pub` on disk — no private key file, and `configure-host.sh` doesn't apply (it requires a private key file present and exits without one). Point `~/.ssh/config`'s `IdentityFile` at the `.pub` file instead; OpenSSH matches it against whatever the agent is holding:
+```
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github.pub
+```
+
+---
+
+For hosts with the private key file on disk, once it's in place, run the configure script there:
 
 ```bash
 chmod +x configure-host.sh
