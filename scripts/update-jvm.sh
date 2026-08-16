@@ -25,10 +25,20 @@ source ./lib.sh
 
 export SDKMAN_DIR="$HOME/.sdkman"
 if [[ ! -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]]; then
-	echo "SDKMAN not found — run the Java/Kotlin install steps in TOOLCHAIN.md first" >&2
-	exit 1
+	log "SDKMAN not found — bootstrapping (see TOOLCHAIN.md)"
+	curl -s "https://get.sdkman.io" | bash
 fi
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
+
+# `sdk upgrade` below only upgrades candidates already installed — on a fresh
+# SDKMAN bootstrap there are none, so the initial install (latest LTS Temurin
+# + Kotlin + Gradle, per TOOLCHAIN.md) has to happen explicitly first.
+if [[ ! -d "$SDKMAN_DIR/candidates/java" ]]; then
+	log "Java / Kotlin / Gradle not found — installing (see TOOLCHAIN.md)"
+	sdk install java
+	sdk install kotlin
+	sdk install gradle
+fi
 
 run_sdk() {
 	set +e

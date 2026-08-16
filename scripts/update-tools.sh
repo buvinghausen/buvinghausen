@@ -47,6 +47,52 @@ sudo dnf install -y chromium
 log "posh-git-sh"
 curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
 
+# The download above is a replay-safe overwrite, but the ~/.bashrc wiring
+# that actually activates it (source + cd() override) is a one-time bootstrap
+# — add it if missing. Must land BEFORE the SDKMAN block: SDKMAN's own
+# installer requires its block to stay the last thing in ~/.bashrc, so this
+# is spliced in above it rather than appended at the end.
+POSH_MARKER="# posh-git-sh — only active inside ~/code/**"
+if ! grep -qF "$POSH_MARKER" "$HOME/.bashrc" 2>/dev/null; then
+	log "Wiring posh-git-sh into ~/.bashrc"
+	POSH_BLOCK=$(
+		cat <<'EOF'
+
+# posh-git-sh — only active inside ~/code/**
+source ~/.posh-git-sh
+
+_update_prompt() {
+    case "$PWD" in
+        $HOME/code/*)
+            PROMPT_COMMAND='__posh_git_ps1 "\u@\h:\w " "\\\$ ";'
+            ;;
+        *)
+            PROMPT_COMMAND=''
+            PS1='\u@\h:\w\$ '
+            ;;
+    esac
+}
+
+cd() {
+    builtin cd "$@" || return
+    _update_prompt
+}
+
+_update_prompt
+EOF
+	)
+	SDKMAN_LINE=$(grep -nF "MUST BE AT THE END OF THE FILE FOR SDKMAN" "$HOME/.bashrc" 2>/dev/null | head -1 | cut -d: -f1 || true)
+	if [[ -n "$SDKMAN_LINE" ]]; then
+		TMP_BASHRC=$(mktemp)
+		head -n $((SDKMAN_LINE - 1)) "$HOME/.bashrc" >"$TMP_BASHRC"
+		printf '%s\n' "$POSH_BLOCK" >>"$TMP_BASHRC"
+		tail -n +"$SDKMAN_LINE" "$HOME/.bashrc" >>"$TMP_BASHRC"
+		mv "$TMP_BASHRC" "$HOME/.bashrc"
+	else
+		printf '%s\n' "$POSH_BLOCK" >>"$HOME/.bashrc"
+	fi
+fi
+
 gh --version
 pwsh --version
 mono --version
