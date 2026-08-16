@@ -1,0 +1,12 @@
+[Unit]
+Description=Bitwarden SSH agent bridge (Windows named pipe -> WSL unix socket)
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/bitwarden-agent-bridge.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
