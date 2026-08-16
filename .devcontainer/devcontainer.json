@@ -1,0 +1,110 @@
+// .devcontainer/devcontainer.json
+{
+  "name": "buvinghausen",
+
+  "build": {
+    "context": ".",
+    "dockerfile": "Dockerfile"
+  },
+  // No compose here (unlike Bifrost) -- nothing needs naming beyond what "build"
+  // already gives it, and there's no sibling-repo mount to arrange: this is a
+  // single, non-meta repo, so VS Code's default workspace bind is enough.
+  "workspaceFolder": "/workspaces/buvinghausen",
+
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    "ghcr.io/dirien/devcontainer-feature-codex/codex:0": {},
+    // Reuses the host's own Docker Desktop/WSL2 engine via its socket instead of
+    // running a second, nested daemon -- Testcontainers only needs a reachable
+    // Docker API, it doesn't care whose engine answers it. Lighter than Bifrost's
+    // docker-in-docker (no nested dind-var-lib-docker volume, no daemon startup
+    // cost). moby:false takes Docker CE for the same reason as Bifrost: no
+    // guaranteed moby-* packages on every base/arch combination.
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:2": {
+      "version": "24",
+      "npmVersion": "12"
+    },
+    // "lts" tracks TOOLCHAIN.md's own `--channel LTS` convention -- not pinned
+    // to a preview build the way Bifrost pins to 11.0 preview for Norse's DU
+    // work, which doesn't apply here. dotnetRuntimeVersions installs the two
+    // older shared runtimes multi-targeted OSS libraries (SequentialGuid,
+    // TaskTupleAwaiter) actually test against -- see TOOLCHAIN.md's "Older .NET
+    // Runtimes" section. net472/net462 legs can't run through dotnet test's
+    // launcher at all on Linux; Mono (Dockerfile) handles those directly.
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "lts",
+      "dotnetRuntimeVersions": "9.0,8.0"
+    },
+    // enableShared: CSnakes embeds the interpreter in-process and needs
+    // libpython3.x.so, not just the python3 binary on PATH -- the feature's
+    // default build doesn't produce one.
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.14",
+      "enableShared": true
+    }
+  },
+
+  // Named volume, auto-created on first use -- no initializeCommand needed here.
+  // That was only required in Bifrost's compose setup, where compose refuses to
+  // create an "external: true" volume itself; a plain devcontainer mount creates
+  // a missing named volume the same way `docker run -v name:path` does. Durable
+  // across rebuilds: nuget/npm caches and every CLI's own auth state (gh,
+  // claude, codex) all live under here instead of re-authenticating on every
+  // "Rebuild Container".
+  "mounts": [
+    "source=buvinghausen-home,target=/home/vscode,type=volume",
+    // Explicit bind alongside VS Code's own automatic agent forwarding -- makes
+    // this work the same way for the standalone devcontainer CLI, GitHub
+    // Codespaces, and non-VS-Code IDEs too, not just "usually works" in VS Code.
+    // See ssh/GITHUB-SSH-SIGNING-SETUP.md Part 4.
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind"
+  ],
+
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": "/ssh-agent",
+    // Set on the host before the container starts; configure-git-ssh-signing.sh
+    // applies these and derives the signing key from whatever the forwarded
+    // agent is holding. Unset means the script skips both steps.
+    "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
+    "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}",
+    "NUGET_PACKAGES": "/home/vscode/.nuget/packages",
+    // inotify doesn't cross a Windows-side bind mount; anything watching must poll.
+    "DOTNET_USE_POLLING_FILE_WATCHER": "1",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+  },
+
+  "postCreateCommand": {
+    "safe-directory": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+    "git-ssh-signing": "bash ${containerWorkspaceFolder}/.devcontainer/configure-git-ssh-signing.sh",
+    "posh-git-sh": "bash ${containerWorkspaceFolder}/.devcontainer/configure-posh-git-sh.sh",
+    // npm 12 blocks lifecycle scripts unless the package is named in
+    // allow-scripts, so the claude-code feature's `npm install -g` silently
+    // skips the postinstall that places the native binary -- `claude` then
+    // exits with "native binary not installed". This runs that postinstall
+    // directly. Drop it if the feature turns npm-12-aware, or npm gets pinned
+    // back to 11.
+    "claude-native-binary": "sudo \"$(command -v node)\" \"$(npm root -g)/@anthropic-ai/claude-code/install.cjs\"",
+    // The dirien codex feature installs @openai/codex globally during image
+    // build, as root -- everything else under lib/node_modules is vscode:nvm
+    // (group-writable), but @openai/codex itself lands root:nvm, so
+    // `npm install -g @openai/codex` as vscode (e.g. to self-update) fails
+    // renaming the old dir out of the way: EACCES.
+    "codex-ownership": "sudo chown -R vscode:nvm \"$(npm root -g)\""
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-dotnettools.csdevkit", "ms-python.python"],
+      "settings": {
+        // Point the .NET Install Tool at the container's own install so
+        // csharp/csdevkit stop acquiring private runtimes under ~/.vscode-server.
+        "dotnetAcquisitionExtension.sharedExistingDotnetPath": "/usr/share/dotnet/dotnet",
+        "python.defaultInterpreterPath": "/usr/local/python/current/bin/python"
+      }
+    }
+  }
+}
