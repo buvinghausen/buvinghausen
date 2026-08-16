@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Updates Rust via rustup and refreshes cargo-installed tooling.
 # rustup replaces the active toolchain in place — no separate cleanup needed.
+#
+# Bootstraps rustup itself when missing (fresh machine / fresh distro) —
+# rustup-init.sh doesn't touch shell rc files on its own (verified: the
+# sh.rustup.rs wrapper just downloads and execs the real installer binary,
+# which leaves PATH wiring to the caller), so ~/.bashrc is appended here.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./lib.sh
@@ -8,7 +13,18 @@ source ./lib.sh
 if [[ -f "$HOME/.cargo/env" ]]; then
 	source "$HOME/.cargo/env"
 fi
-require_cmd rustup "rustup not found — run the Rust install steps in TOOLCHAIN.md first"
+
+if ! command -v rustup >/dev/null 2>&1; then
+	log "rustup not found — bootstrapping (see TOOLCHAIN.md)"
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	append_bashrc_once "# Rust" <<'EOF'
+
+# Rust
+source "$HOME/.cargo/env"
+EOF
+	source "$HOME/.cargo/env"
+fi
+require_cmd rustup "rustup install failed — check the installer output above"
 
 log "rustup"
 rustup update

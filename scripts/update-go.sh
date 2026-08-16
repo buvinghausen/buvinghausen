@@ -1,15 +1,29 @@
 #!/usr/bin/env bash
 # Updates Go, gopls, and Delve. Removes the superseded /usr/local/go install
 # before laying down a new version — Go does not coexist side by side.
+#
+# Bootstraps Go itself when missing (fresh machine / fresh distro) — Go ships
+# as a raw tarball with no installer, so PATH/GOPATH are appended to
+# ~/.bashrc once here, mirroring TOOLCHAIN.md's manual install block.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./lib.sh
 
 export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
-require_cmd go "go not found on PATH — run the Go install steps in TOOLCHAIN.md first"
+
+if ! command -v go >/dev/null 2>&1; then
+	log "Go not found — bootstrapping (see TOOLCHAIN.md)"
+	append_bashrc_once "# Go" <<'EOF'
+
+# Go
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+EOF
+fi
 
 GO_LATEST=$(curl -s https://go.dev/VERSION?m=text | head -1)
-GO_CURRENT=$(go version | awk '{print $3}')
+GO_CURRENT=$(command -v go >/dev/null 2>&1 && go version | awk '{print $3}' || echo "none")
 
 if [[ "$GO_CURRENT" == "$GO_LATEST" ]]; then
 	log "Go already at $GO_CURRENT — skipping reinstall"

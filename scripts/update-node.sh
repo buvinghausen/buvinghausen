@@ -8,17 +8,29 @@
 # whatever `fnm current` resolves to post-install, mirroring the keep-only-
 # current-max policy used in update-python.sh/update-dotnet.sh. `system`
 # is never a real fnm-managed version — always skipped.
+#
+# Bootstraps fnm itself when missing (fresh machine / fresh distro) — fnm's
+# own installer appends `eval "$(fnm env)"` to ~/.bashrc, so no manual PATH
+# block is needed here the way Go/dotnet/Rust need one.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./lib.sh
 
-require_cmd fnm "fnm not found — run the Node.js install steps in TOOLCHAIN.md first"
+if ! command -v fnm >/dev/null 2>&1; then
+	log "fnm not found — bootstrapping (see TOOLCHAIN.md)"
+	curl -fsSL https://fnm.vercel.app/install | bash
+	export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/fnm:$PATH"
+fi
+require_cmd fnm "fnm install failed — check the installer output above"
 eval "$(fnm env)"
-require_cmd npm "npm not found on PATH after fnm env — check fnm install"
 
 log "Node.js (fnm lts-latest)"
 fnm install --lts
 fnm default lts-latest
+
+# npm only lands on PATH once a node version is installed and active above —
+# checked here, not before, so this also works on a first-ever bootstrap.
+require_cmd npm "npm not found on PATH after fnm install — check fnm install"
 
 NODE_KEEP=$(fnm current)
 log "Pruning stale Node.js versions (keeping ${NODE_KEEP})"

@@ -40,7 +40,20 @@ export PATH="$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools"
 # every single month.
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_NOLOGO=1
-require_cmd dotnet "dotnet not found — run the .NET install steps in TOOLCHAIN.md first"
+
+# dotnet-install.sh below installs unconditionally regardless of whether
+# dotnet already exists, so bootstrapping is just persisting PATH for future
+# shells — dotnet-install.sh itself never touches ~/.bashrc (verified: it
+# only patches PATH for its own process).
+if ! command -v dotnet >/dev/null 2>&1; then
+	log "dotnet not found — bootstrapping (see TOOLCHAIN.md)"
+	append_bashrc_once "# .NET" <<'EOF'
+
+# .NET
+export DOTNET_ROOT=$HOME/.dotnet
+export PATH=$PATH:$HOME/.dotnet:$HOME/.dotnet/tools
+EOF
+fi
 
 log ".NET LTS SDK"
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
