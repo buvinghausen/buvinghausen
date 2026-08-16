@@ -45,5 +45,6 @@
     ]
   },
   "model": "sonnet",
-  "enabledPlugins": {}
+  "enabledPlugins": {},
+  "skipDangerousModePermissionPrompt": true
 }
