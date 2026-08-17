@@ -2,14 +2,17 @@
 {
   "name": "buvinghausen",
 
-  "build": {
-    "context": ".",
-    "dockerfile": "Dockerfile"
-  },
-  // No compose here (unlike Bifrost) -- nothing needs naming beyond what "build"
-  // already gives it, and there's no sibling-repo mount to arrange: this is a
-  // single, non-meta repo, so VS Code's default workspace bind is enough.
-  "workspaceFolder": "/workspaces/buvinghausen",
+  // Compose, purely to add the sibling-repo bind mount (see docker-compose.yml's
+  // volumes comment) -- same reason Bifrost uses compose.
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "buvinghausen",
+  // Nested one level inside the mounted src/buvinghausen folder (see
+  // docker-compose.yml's volumes comment) -- VS Code/terminal cwd and Claude
+  // Code's project-root resolution both follow this, so every session still
+  // lands in this repo and still picks up its CLAUDE.md/.claude/settings.json
+  // automatically, while CSnakes, SequentialGuid, TaskTupleAwaiter, efcore,
+  // efcore.pg, grpc-dotnet, and protobuf-net now actually resolve as siblings.
+  "workspaceFolder": "/workspaces/buvinghausen/buvinghausen",
 
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
@@ -48,16 +51,15 @@
     }
   },
 
-  // Named volume, auto-created on first use -- no initializeCommand needed here.
-  // That was only required in Bifrost's compose setup, where compose refuses to
-  // create an "external: true" volume itself; a plain devcontainer mount creates
-  // a missing named volume the same way `docker run -v name:path` does. Durable
-  // across rebuilds: nuget/npm caches and every CLI's own auth state (gh,
-  // claude, codex) all live under here instead of re-authenticating on every
-  // "Rebuild Container".
-  "mounts": [
-    "source=buvinghausen-home,target=/home/vscode,type=volume"
-  ],
+  // The home volume is declared external in docker-compose.yml, and compose
+  // refuses to create external volumes itself. Idempotent -- `docker volume
+  // create` on an existing volume just prints its name. Runs on the host,
+  // before the build. Durable across rebuilds: nuget/npm caches and every
+  // CLI's own auth state (gh, claude, codex) all live under here instead of
+  // re-authenticating on every "Rebuild Container".
+  "initializeCommand": {
+    "home-volume": "docker volume create buvinghausen-home"
+  },
 
   // SSH agent forwarding needs no config here -- VS Code auto-forwards whatever
   // agent is running on the host (Bitwarden's bridge on WSL2/Fedora, the native
@@ -76,7 +78,13 @@
   },
 
   "postCreateCommand": {
-    "safe-directory": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+    // ${containerWorkspaceFolder} covers this repo; the siblings mounted alongside
+    // it (see docker-compose.yml's volumes comment) land root-owned through that
+    // same mount, so they hit the same dubious-ownership check. Scanning the
+    // parent mount's immediate children for a .git directory picks up whatever
+    // siblings are actually checked out on the next rebuild without editing this
+    // line by hand -- same self-maintaining idea as Bifrost's submodule foreach.
+    "safe-directory": "git config --global --add safe.directory ${containerWorkspaceFolder} && for d in /workspaces/buvinghausen/*/; do [ -d \"$d/.git\" ] && git config --global --add safe.directory \"${d%/}\"; done",
     "git-ssh-signing": "bash ${containerWorkspaceFolder}/.devcontainer/configure-git-ssh-signing.sh",
     "posh-git-sh": "bash ${containerWorkspaceFolder}/.devcontainer/configure-posh-git-sh.sh",
     // npm 12 blocks lifecycle scripts unless the package is named in
