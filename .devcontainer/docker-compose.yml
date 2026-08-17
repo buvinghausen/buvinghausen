@@ -1,0 +1,34 @@
+# Compose exists to add a sibling-repo bind mount, mirroring Bifrost's
+# docker-compose.yml (../../Bifrost) which solves the same problem for
+# NorseArchitecture's siblings.
+name: buvinghausen
+
+services:
+  buvinghausen:
+    image: vsc-buvinghausen
+    container_name: buvinghausen
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # No long-running process in the base image, and the dev container has to
+    # outlive the build. docker-outside-of-docker's entrypoint layers in front
+    # of this automatically.
+    command: sleep infinity
+    volumes:
+      # Mounts the whole src/buvinghausen folder (this repo's parent on the
+      # host) -- CSnakes, SequentialGuid, TaskTupleAwaiter, efcore, efcore.pg,
+      # grpc-dotnet, and protobuf-net sit as host-level siblings to this repo
+      # and need to actually be on disk in the container to be usable.
+      # devcontainer.json's workspaceFolder still points at the nested
+      # buvinghausen subdirectory, so VS Code/terminal cwd and Claude Code's
+      # project-root resolution are unaffected.
+      - ../..:/workspaces/buvinghausen:cached
+      # Declared external so it stays plain buvinghausen-home instead of
+      # compose scoping it to buvinghausen_buvinghausen-home. See
+      # devcontainer.json's initializeCommand, which creates it since compose
+      # refuses to create an external:true volume itself.
+      - buvinghausen-home:/home/vscode
+
+volumes:
+  buvinghausen-home:
+    external: true
