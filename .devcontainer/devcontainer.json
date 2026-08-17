@@ -56,16 +56,14 @@
   // claude, codex) all live under here instead of re-authenticating on every
   // "Rebuild Container".
   "mounts": [
-    "source=buvinghausen-home,target=/home/vscode,type=volume",
-    // Explicit bind alongside VS Code's own automatic agent forwarding -- makes
-    // this work the same way for the standalone devcontainer CLI, GitHub
-    // Codespaces, and non-VS-Code IDEs too, not just "usually works" in VS Code.
-    // See ssh/GITHUB-SSH-SIGNING-SETUP.md Part 4.
-    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind"
+    "source=buvinghausen-home,target=/home/vscode,type=volume"
   ],
 
+  // SSH agent forwarding needs no config here -- VS Code auto-forwards whatever
+  // agent is running on the host (Bitwarden's bridge on WSL2/Fedora, the native
+  // agent on Windows) into SSH_AUTH_SOCK, same as Bifrost. configure-git-ssh-signing.sh
+  // points git's signing at whatever key that forwarded agent is holding.
   "remoteEnv": {
-    "SSH_AUTH_SOCK": "/ssh-agent",
     // Set on the host before the container starts; configure-git-ssh-signing.sh
     // applies these and derives the signing key from whatever the forwarded
     // agent is holding. Unset means the script skips both steps.
