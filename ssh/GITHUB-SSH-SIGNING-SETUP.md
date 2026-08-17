@@ -111,16 +111,21 @@ Push it and check the commit on GitHub for the green **Verified** badge.
 
 ## Part 4 — Devcontainers: making forwarding automatic for anyone
 
-Two attached files handle this:
+No devcontainer.json config needed — don't add an explicit `mounts`/`remoteEnv` entry for `SSH_AUTH_SOCK`. VS Code's Dev Containers extension forwards whatever agent is running on the host into the container's `SSH_AUTH_SOCK` automatically: the Bitwarden/WSL2 bridge (`ssh/bitwarden-agent-bridge.sh` + `.service`, Part 2), the native agent on Windows, the Keychain agent on macOS, or a plain `ssh-agent` on Linux — regardless of whether the container itself was launched from a WSL2 window or natively on Windows. All that's needed in `postCreateCommand` is:
 
-- **`devcontainer-ssh-forwarding.json`** — merge its `mounts`, `remoteEnv`, and `postCreateCommand` fields into your real `.devcontainer/devcontainer.json`.
-- **`check-ssh-agent.sh`** — save as `.devcontainer/check-ssh-agent.sh`. Runs on container start and prints clear, actionable instructions if no agent got forwarded, instead of a confusing git failure later.
+```bash
+bash .devcontainer/configure-git-ssh-signing.sh
+```
 
-The mechanism: `${localEnv:SSH_AUTH_SOCK}` is resolved on **whoever's host** opens the container, so it forwards *their* agent — not a hardcoded one. As long as a person has a normal `ssh-agent` (or 1Password/Bitwarden agent, or macOS Keychain agent) running with a key loaded, this "just works" with zero manual setup on their end. Nobody's private key ever touches the container image or filesystem — only the live agent socket is forwarded, so revoking/rotating on the host instantly applies inside every container without touching the container at all.
+which points git's SSH-based commit/tag signing at whatever key the forwarded agent is holding (no-ops quietly if none is loaded yet). See `.devcontainer/devcontainer.json` in this repo, or in NorseArchitecture/Bifrost, for the working example.
 
-**This also means:** since you dropped GPG, there's only one thing to forward (the SSH agent) instead of two (SSH + gpg-agent). GPG-agent forwarding across Windows/WSL/Mac needed extra relay tooling and was fragile; SSH agent forwarding via `SSH_AUTH_SOCK` is native and works the same everywhere your Docker backend is Linux-based — which includes WSL2 (Docker Desktop's default backend on Windows), so even Windows contributors are covered as long as Docker Desktop is running in its normal WSL2 mode.
+An earlier version of this doc recommended an explicit `source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind` mount instead. Don't use that — `${localEnv:SSH_AUTH_SOCK}` resolves against whatever launched VS Code, and on a native-Windows launch (not opened through a WSL2 remote window) that's the raw `\\.\pipe\openssh-ssh-agent` named pipe, not a Unix socket, which breaks the bind mount and fails container startup entirely. The automatic forwarding above has no such caveat, which is why it replaced the explicit mount here.
 
-**Caveat:** this can only forward a key that already exists and is loaded on the host. There's no way to *force* someone to have set up SSH auth to GitHub in the first place — `check-ssh-agent.sh` just makes the failure obvious and actionable instead of silent.
+Nobody's private key ever touches the container image or filesystem — only the live agent socket is forwarded, so revoking/rotating on the host instantly applies inside every container without touching the container at all.
+
+**This also means:** since you dropped GPG, there's only one thing to forward (the SSH agent) instead of two (SSH + gpg-agent). GPG-agent forwarding across Windows/WSL/Mac needed extra relay tooling and was fragile; SSH agent forwarding is handled natively by VS Code here.
+
+**Caveat:** this can only forward a key that already exists and is loaded on the host. There's no way to *force* someone to have set up SSH auth to GitHub in the first place — a missing/no-op signing key just shows up as unsigned commits (`git log --show-signature`) rather than a hard failure.
 
 ### Optional: verifying teammates' signatures inside the container
 
