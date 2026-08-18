@@ -1,0 +1,17 @@
+[Unit]
+Description=gsa-bridge - re-apply the managed /etc/hosts block
+Documentation=file:///mnt/c/Users/buvy/gsa-bridge/spec.md
+# WSL regenerates /etc/hosts on every boot (generateHosts defaults to true), which wipes
+# the managed block. Re-applying it here keeps WSL's own generated entries intact
+# instead of freezing them with generateHosts=false.
+Before=gsa-bridge.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Runs as root and unsandboxed on purpose: it must write /etc/hosts.
+ExecStart=/usr/bin/python3 /mnt/c/Users/buvy/gsa-bridge/wsl/sync_hosts.py
+
+[Install]
+WantedBy=multi-user.target
