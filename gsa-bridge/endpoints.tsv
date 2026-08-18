@@ -1,0 +1,31 @@
+# gsa-bridge endpoint table - the only file you maintain.
+#
+# Columns are tab-separated:
+#   name         short label used in logs and status output
+#   fqdn         the REAL hostname; the Windows relay dials this by name so GSA intercepts
+#   port         the REAL port; preserved end to end so connection strings never change
+#   wsl_addr     loopback address the WSL relay listens on (must be unique per fqdn)
+#   bridge_port  loopback port the Windows relay listens on (must be unique overall)
+#
+# Add a row with wsl_addr/bridge_port left as "-" and run:  wsl/sync_hosts.py --assign
+# Never renumber existing rows; /etc/hosts and any running clients depend on them.
+#
+# name	fqdn	port	wsl_addr	bridge_port
+sql-dev	sql-dev.privatelink.database.windows.net	1433	127.0.0.11	14001
+sql-stg	sql-stg.privatelink.database.windows.net	1433	127.0.0.12	14002
+sql-prd	sql-prd.privatelink.database.windows.net	1433	127.0.0.13	14003
+config-dev	config-dev.azconfig.io	443	127.0.0.14	14004
+config-stg	config-stg.azconfig.io	443	127.0.0.15	14005
+config-prd	config-prd.azconfig.io	443	127.0.0.16	14006
+file-dev	file-dev.blob.core.windows.net	443	127.0.0.17	14007
+file-stg	file-stg.blob.core.windows.net	443	127.0.0.18	14008
+file-prd	file-prd.blob.core.windows.net	443	127.0.0.19	14009
+vault-dev	vault-dev.vault.azure.net	443	127.0.0.20	14010
+vault-stg	vault-stg.vault.azure.net	443	127.0.0.21	14011
+vault-prd	vault-prd.vault.azure.net	443	127.0.0.22	14012
+bus-dev-amqp	bus-dev.servicebus.windows.net	5671	127.0.0.23	14013
+bus-stg-amqp	bus-stg.servicebus.windows.net	5671	127.0.0.24	14014
+bus-prd-amqp	bus-prd.servicebus.windows.net	5671	127.0.0.25	14015
+bus-dev-ws	bus-dev.servicebus.windows.net	443	127.0.0.23	14016
+bus-stg-ws	bus-stg.servicebus.windows.net	443	127.0.0.24	14017
+bus-prd-ws	bus-prd.servicebus.windows.net	443	127.0.0.25	14018
