@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Updates the .NET LTS SDK, the older 9.0/8.0 shared runtimes (multi-target
-# test execution), and the .NET 11 preview SDK (Norse discriminated unions —
+# Updates the .NET LTS SDK, the older 9.0/8.0 ASP.NET Core runtimes
+# (multi-target test execution, and to not get blocked contributing to
+# open-source projects targeting older ASP.NET Core TFMs), and the .NET 11
+# preview SDK (Norse discriminated unions —
 # TEMPORARY, see TOOLCHAIN.md). `--quality preview` covers every monthly
 # 11.0 build through GA — there is no separate "rc" quality value in
 # dotnet-install.sh, so this does not need to change when 11.0 reaches RC.
@@ -58,9 +60,9 @@ fi
 log ".NET LTS SDK"
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel LTS
 
-log ".NET 9.0 / 8.0 shared runtimes (multi-target test execution)"
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0 --runtime dotnet
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --runtime dotnet
+log ".NET 9.0 / 8.0 ASP.NET Core runtimes (multi-target test execution; --runtime aspnetcore also brings in Microsoft.NETCore.App)"
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0 --runtime aspnetcore
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --runtime aspnetcore
 
 log ".NET 11 preview SDK"
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 11.0 --quality preview
