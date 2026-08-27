@@ -321,6 +321,136 @@ swiftly update
 
 ---
 
+## Ruby
+
+Purpose here isn't a general Ruby dev environment — it's a host Ruby (with headers) to build and test Rust↔Ruby native extensions for the polyglot work: write the core in Rust, compile it as a Ruby native extension via [`rb-sys`](https://github.com/oxidize-rb/rb-sys)/[`magnus`](https://github.com/matsadler/magnus), wrap it in a thin Ruby gem. Whether a downstream consumer of that gem compiles it themselves or pulls a precompiled binary is their call — this section only covers the local dev/test loop.
+
+Install build dependencies (Fedora 40+ — substitute package manager/package set for other distros; see [ruby-build's suggested build environment](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment) for RHEL/older-Fedora variants):
+
+```bash
+sudo dnf install -y autoconf gcc rust patch make bzip2 openssl-devel libyaml-devel libffi-devel \
+  readline-devel gdbm-devel ncurses-devel perl-FindBin zlib-ng-compat-devel
+```
+
+Install rbenv (version manager) + ruby-build (the plugin that actually compiles Ruby from source — same two-piece split as pyenv's underlying `python-build`):
+
+```bash
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+cat >> ~/.bashrc << 'EOF'
+
+# rbenv
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init - --no-rehash bash)"
+EOF
+
+source ~/.bashrc
+```
+
+Install latest stable Ruby:
+
+```bash
+RUBY_LATEST=$(rbenv install --list | grep -vE 'jruby|mruby|picoruby|truffleruby' | tail -1 | xargs)
+rbenv install ${RUBY_LATEST}
+rbenv global ${RUBY_LATEST}
+```
+
+Verify:
+
+```bash
+ruby --version
+gem --version
+```
+
+> **Verified:** built Ruby 4.0.6 from source on this box (Fedora 44 aarch64) via `rbenv install` — confirmed working end to end, not just `--version`: `bundle gem --ext=rust rust_smoke` (Bundler's built-in Rust-extension scaffold, which wires up `rb-sys`/`magnus`/`rake-compiler` automatically) generated a gem, `bundle install && bundle exec rake compile` built the Rust side, and `ruby -Ilib -e 'require "rust_smoke"; puts RustSmoke.hello("...")'` called into the compiled Rust and printed the real result. `--no-rehash` in the `rbenv init` line matches ruby-build's own recommendation (skips a redundant shim rehash on every shell startup).
+
+**Updating Ruby:**
+
+```bash
+cd ~/.rbenv/plugins/ruby-build && git pull
+RUBY_PREV=$(rbenv version-name)
+RUBY_LATEST=$(rbenv install --list | grep -vE 'jruby|mruby|picoruby|truffleruby' | tail -1 | xargs)
+rbenv install -s ${RUBY_LATEST}
+rbenv global ${RUBY_LATEST}
+[ "$RUBY_PREV" != "$RUBY_LATEST" ] && rbenv uninstall -f "$RUBY_PREV"
+```
+
+---
+
+## PHP
+
+Same purpose as the Ruby section above, mirrored for PHP: a host PHP (with headers) to build and test Rust↔PHP native extensions via [`ext-php-rs`](https://github.com/davidcole1340/ext-php-rs) + its `cargo-php` CLI. WASM builds of PHP exist (e.g. `vmware-labs/webassembly-language-runtimes`) but are stale (frozen at PHP 8.2.6, no push since mid-2024, CGI-SAPI-only) — skipped in favor of this native path; WASM-target bridging, if any, happens on the GHA runner, not locally.
+
+Install build dependencies (Fedora — package list per [php.watch's compile-from-source guide](https://php.watch/articles/compile-php-fedora-rhel-centos), plus `libtidy-devel`/`libxslt-devel` which that guide omits but the default `./configure` needs — confirmed by running it, see the Verified note below):
+
+```bash
+sudo dnf install -y git make gcc gcc-c++ binutils glibc-devel autoconf libtool bison re2c automake \
+  libxml2-devel bzip2-devel libcurl-devel libffi-devel gmp-devel libicu-devel openldap-devel \
+  oniguruma-devel openssl-devel readline-devel libsodium-devel libzip-devel libpng-devel \
+  libjpeg-turbo-devel libwebp-devel sqlite-devel libtidy-devel libxslt-devel clang-devel
+```
+
+> `clang-devel` isn't a PHP build dependency — it's there for `bindgen` (used by `ext-php-rs-build` below) to find `libclang`.
+
+Install phpenv (version manager) + php-build (the plugin that compiles PHP from source — same rbenv-derived architecture as Ruby's rbenv/ruby-build pair above):
+
+```bash
+git clone https://github.com/phpenv/phpenv.git ~/.phpenv
+git clone https://github.com/php-build/php-build ~/.phpenv/plugins/php-build
+
+cat >> ~/.bashrc << 'EOF'
+
+# phpenv
+export PATH="$HOME/.phpenv/bin:$PATH"
+eval "$(phpenv init -)"
+EOF
+
+source ~/.bashrc
+```
+
+Install latest stable PHP:
+
+```bash
+PHP_LATEST=$(phpenv install --list | grep -vE 'snapshot|alpha|beta|RC' | tail -1 | xargs)
+phpenv install ${PHP_LATEST}
+phpenv global ${PHP_LATEST}
+phpenv rehash
+```
+
+Install `cargo-php`, the build/install CLI for `ext-php-rs` extensions:
+
+```bash
+cargo install cargo-php --locked
+```
+
+Verify:
+
+```bash
+php --version
+php-config --includes
+cargo-php --version
+```
+
+> **`cargo-php` install must happen with `php` already active on `PATH`** — its build script shells out to `php-config` to link against the Zend API. Installing it before `phpenv global` is set (or in a shell that hasn't sourced `~/.bashrc`) fails with `Could not find PHP executable` — confirmed by hitting exactly that error on this box, then fixing it by re-running `cargo install cargo-php` after `phpenv global` was in effect.
+>
+> **Verified:** built PHP 8.5.9 from source on this box (Fedora 44 aarch64) via `phpenv install` — confirmed working end to end, not just `--version`: a minimal `ext-php-rs` crate (`#[php_function] fn hello(subject: String) -> String`, `#[php_module]`) built with `cargo php install --release --yes`, which compiled it, dropped `libphp_smoke.so` into PHP's `extension_dir`, and wired an `extension=` line into `php.ini` automatically. `php -r 'echo hello("world"), PHP_EOL;'` then called into the compiled Rust and printed the real result — no `-d extension=` flag needed, it autoloads.
+
+**Updating PHP:**
+
+```bash
+cd ~/.phpenv/plugins/php-build && git pull
+PHP_PREV=$(phpenv version-name)
+PHP_LATEST=$(phpenv install --list | grep -vE 'snapshot|alpha|beta|RC' | tail -1 | xargs)
+phpenv install -s ${PHP_LATEST}
+phpenv global ${PHP_LATEST}
+phpenv rehash
+[ "$PHP_PREV" != "$PHP_LATEST" ] && phpenv uninstall -f "$PHP_PREV"
+cargo install cargo-php --locked --force
+```
+
+---
+
 ## .NET
 
 Install via the official dotnet-install script (non-admin, auto-detects arm64):
@@ -714,6 +844,9 @@ cargo     1.97.1
 nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-installed
 swiftly   1.1.3           toolchain manager
 swift     6.3.3           aarch64-unknown-linux-gnu (via swiftly --platform fedora39, see Swift section)
+ruby      4.0.6           aarch64-linux, via rbenv/ruby-build — host for rb-sys/magnus extension dev
+php       8.5.9           via phpenv/php-build — host for ext-php-rs extension dev
+cargo-php 0.1.21          ext-php-rs's build/install CLI
 dotnet    10.0.302       (+ 9.0.18, 8.0.29 runtimes for multi-target test execution)
 dotnet-11 11.0.100-preview.6.26359.118   TEMPORARY preview channel (Norse DU work) — see its own section
 mono      6.14.1         legacy net472/net462 test execution
@@ -730,6 +863,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`docker` module (image refresh + dangling-image/stale-container cleanup) added to the update pass 2026-07-17 — not listed above since it tracks container images, not a pinned CLI version.*
 *`python` default flipped from free-threaded (`t`, `PYTHON_GIL=0`) back to standard/GIL-enabled: 2026-07-19 — yt-dlp needs the GIL. Free-threaded build stays installed for opt-in testing.*
 *`swift` (via swiftly) added and verified 2026-08-26 — `swift build`/SPM confirmed with a real compiled-and-run executable, not just `--version`; see the `--platform fedora39` note in the Swift section for why that flag isn't `fedora41`.*
+*`ruby` (via rbenv/ruby-build) and `php` (via phpenv/php-build) added and verified 2026-08-26 for the write-in-Rust/wrap-per-language polyglot work — both confirmed by compiling a real `rb-sys`/`magnus` Ruby extension and a real `ext-php-rs` PHP extension and calling into the compiled Rust from each, not just `--version`. WASM builds of Ruby/PHP were evaluated and skipped: this repo's toolchain covers native compile+interop only, any WASM-target bridging happens on the GHA runner. See the Ruby and PHP sections for the `libtidy-devel`/`libxslt-devel` and `cargo-php`-needs-`php`-on-`PATH` gotchas hit along the way.*
 
 ---
 
@@ -742,8 +876,8 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, prunes the superseded Ruby build), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
-`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` is the one exception: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, so it still hard-fails with a pointer to that section.
+`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` is the one exception: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, so it still hard-fails with a pointer to that section.
 
 The command-by-command breakdown for each stack lives in that stack's own section above (e.g. [Go](#go), [.NET](#net)) — treat those as the reference for *what* each step does; `scripts/update-*.sh` is the reference for *exact, current* invocation. If they drift, the scripts win — update the docs above to match rather than editing this block, since this block just points at them.
