@@ -4,11 +4,12 @@
 # the new one is active, and rebuilds cargo-php against it (it links against
 # the active php-config, so a PHP rebuild invalidates the old binary).
 #
-# Host PHP here isn't for general PHP development — it's the build/test
-# target for Rust-backed native extensions (ext-php-rs), part of the
-# write-in-Rust/wrap-per-language polyglot work. See TOOLCHAIN.md's PHP
-# section for the verified ext-php-rs smoke test and why WASM PHP was
-# skipped in favor of this native path.
+# Host PHP here isn't for general PHP development — it's the build/test target for
+# Rust-backed native code, part of the write-in-Rust/wrap-per-language polyglot work: either a
+# compiled native extension (ext-php-rs) or, what HyperUuid's actual PHP binding uses, PHP's
+# built-in FFI extension dlopen-ing a plain Rust cdylib at runtime — hence --with-ffi below.
+# See TOOLCHAIN.md's PHP section for both verified smoke tests and why WASM PHP was skipped in
+# favor of this native path.
 #
 # Bootstraps phpenv + php-build itself when missing (fresh machine / fresh
 # distro), transcribed verbatim from TOOLCHAIN.md's PHP section so both
@@ -50,7 +51,7 @@ PHP_PREV=$(phpenv version-name 2>/dev/null || true)
 PHP_LATEST=$(phpenv install --list | grep -vE 'snapshot|alpha|beta|RC' | tail -1 | xargs)
 
 log "PHP ${PHP_LATEST}"
-phpenv install -s "${PHP_LATEST}"
+PHP_BUILD_CONFIGURE_OPTS="--with-ffi" phpenv install -s "${PHP_LATEST}"
 phpenv global "${PHP_LATEST}"
 phpenv rehash
 
@@ -63,4 +64,5 @@ log "cargo-php (rebuild against the active PHP)"
 cargo install cargo-php --locked --force
 
 php --version
+php -m | grep -i ffi
 cargo-php --version

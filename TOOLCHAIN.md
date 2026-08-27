@@ -380,7 +380,7 @@ rbenv global ${RUBY_LATEST}
 
 ## PHP
 
-Same purpose as the Ruby section above, mirrored for PHP: a host PHP (with headers) to build and test Rust↔PHP native extensions via [`ext-php-rs`](https://github.com/davidcole1340/ext-php-rs) + its `cargo-php` CLI. WASM builds of PHP exist (e.g. `vmware-labs/webassembly-language-runtimes`) but are stale (frozen at PHP 8.2.6, no push since mid-2024, CGI-SAPI-only) — skipped in favor of this native path; WASM-target bridging, if any, happens on the GHA runner, not locally.
+Same purpose as the Ruby section above, mirrored for PHP: a host PHP (with headers) to build and test Rust↔PHP native code. Two paths ended up mattering here, both covered by this section: [`ext-php-rs`](https://github.com/davidcole1340/ext-php-rs) + its `cargo-php` CLI (a compiled native extension, PHP's Zend API linked directly), and PHP's built-in `FFI` extension (dlopen a plain `cdylib` at runtime — no compile step, no Zend API). HyperUuid's actual PHP binding ended up on the FFI path, matching the dlopen-based approach the Go/Swift/Ruby bindings all use against the same shared `libhyperuuid` — see the `--with-ffi` note below. WASM builds of PHP exist (e.g. `vmware-labs/webassembly-language-runtimes`) but are stale (frozen at PHP 8.2.6, no push since mid-2024, CGI-SAPI-only) — skipped in favor of this native path; WASM-target bridging, if any, happens on the GHA runner, not locally.
 
 Install build dependencies (Fedora — package list per [php.watch's compile-from-source guide](https://php.watch/articles/compile-php-fedora-rhel-centos), plus `libtidy-devel`/`libxslt-devel` which that guide omits but the default `./configure` needs — confirmed by running it, see the Verified note below):
 
@@ -409,11 +409,11 @@ EOF
 source ~/.bashrc
 ```
 
-Install latest stable PHP:
+Install latest stable PHP, built `--with-ffi` (libffi-devel is already in the dependency list above; the default `./configure` php-build runs does *not* pass `--with-ffi` on its own — confirmed by inspecting `php -i`'s `Configure Command` output after a plain install and finding no FFI extension at all, not just a disabled one):
 
 ```bash
 PHP_LATEST=$(phpenv install --list | grep -vE 'snapshot|alpha|beta|RC' | tail -1 | xargs)
-phpenv install ${PHP_LATEST}
+PHP_BUILD_CONFIGURE_OPTS="--with-ffi" phpenv install ${PHP_LATEST}
 phpenv global ${PHP_LATEST}
 phpenv rehash
 ```
@@ -429,12 +429,15 @@ Verify:
 ```bash
 php --version
 php-config --includes
+php -m | grep -i ffi
 cargo-php --version
 ```
 
 > **`cargo-php` install must happen with `php` already active on `PATH`** — its build script shells out to `php-config` to link against the Zend API. Installing it before `phpenv global` is set (or in a shell that hasn't sourced `~/.bashrc`) fails with `Could not find PHP executable` — confirmed by hitting exactly that error on this box, then fixing it by re-running `cargo install cargo-php` after `phpenv global` was in effect.
 >
 > **Verified:** built PHP 8.5.9 from source on this box (Fedora 44 aarch64) via `phpenv install` — confirmed working end to end, not just `--version`: a minimal `ext-php-rs` crate (`#[php_function] fn hello(subject: String) -> String`, `#[php_module]`) built with `cargo php install --release --yes`, which compiled it, dropped `libphp_smoke.so` into PHP's `extension_dir`, and wired an `extension=` line into `php.ini` automatically. `php -r 'echo hello("world"), PHP_EOL;'` then called into the compiled Rust and printed the real result — no `-d extension=` flag needed, it autoloads.
+>
+> **Verified (FFI path):** rebuilt the same PHP 8.5.9 with `--with-ffi` added (`phpenv install -f`, forcing a rebuild of an already-installed version) — `php -m` now lists `FFI`. Confirmed end to end against HyperUuid's real `libhyperuuid.so`: `FFI::cdef($cHeaderDecls, $path)` dlopen'd it, called `uuid_new_v4`/`uuid_new_v5`/`uuid_new_v7` through `FFI::new('uint8_t[16]')` buffers, `FFI::memcpy` for input bytes and `FFI::string` to read output bytes back, and got byte-identical results to the RFC 9562 test vectors — no `ffi.enable` ini change needed: PHP's CLI SAPI runs FFI unrestricted regardless of the `ffi.enable` setting (confirmed by testing against the untouched `php.ini-production` default, which ships `;ffi.enable=preload` commented out); that directive only restricts non-CLI SAPIs like FPM.
 
 **Updating PHP:**
 
@@ -442,7 +445,7 @@ cargo-php --version
 cd ~/.phpenv/plugins/php-build && git pull
 PHP_PREV=$(phpenv version-name)
 PHP_LATEST=$(phpenv install --list | grep -vE 'snapshot|alpha|beta|RC' | tail -1 | xargs)
-phpenv install -s ${PHP_LATEST}
+PHP_BUILD_CONFIGURE_OPTS="--with-ffi" phpenv install -s ${PHP_LATEST}
 phpenv global ${PHP_LATEST}
 phpenv rehash
 [ "$PHP_PREV" != "$PHP_LATEST" ] && phpenv uninstall -f "$PHP_PREV"
@@ -845,7 +848,7 @@ nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-i
 swiftly   1.1.3           toolchain manager
 swift     6.3.3           aarch64-unknown-linux-gnu (via swiftly --platform fedora39, see Swift section)
 ruby      4.0.6           aarch64-linux, via rbenv/ruby-build — host for rb-sys/magnus extension dev
-php       8.5.9           via phpenv/php-build — host for ext-php-rs extension dev
+php       8.5.9           via phpenv/php-build, built --with-ffi — host for ext-php-rs and FFI extension dev
 cargo-php 0.1.21          ext-php-rs's build/install CLI
 dotnet    10.0.302       (+ 9.0.18, 8.0.29 runtimes for multi-target test execution)
 dotnet-11 11.0.100-preview.6.26359.118   TEMPORARY preview channel (Norse DU work) — see its own section
@@ -864,6 +867,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`python` default flipped from free-threaded (`t`, `PYTHON_GIL=0`) back to standard/GIL-enabled: 2026-07-19 — yt-dlp needs the GIL. Free-threaded build stays installed for opt-in testing.*
 *`swift` (via swiftly) added and verified 2026-08-26 — `swift build`/SPM confirmed with a real compiled-and-run executable, not just `--version`; see the `--platform fedora39` note in the Swift section for why that flag isn't `fedora41`.*
 *`ruby` (via rbenv/ruby-build) and `php` (via phpenv/php-build) added and verified 2026-08-26 for the write-in-Rust/wrap-per-language polyglot work — both confirmed by compiling a real `rb-sys`/`magnus` Ruby extension and a real `ext-php-rs` PHP extension and calling into the compiled Rust from each, not just `--version`. WASM builds of Ruby/PHP were evaluated and skipped: this repo's toolchain covers native compile+interop only, any WASM-target bridging happens on the GHA runner. See the Ruby and PHP sections for the `libtidy-devel`/`libxslt-devel` and `cargo-php`-needs-`php`-on-`PATH` gotchas hit along the way.*
+*`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
 
