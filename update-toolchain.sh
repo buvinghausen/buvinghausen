@@ -10,7 +10,7 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-MODULES=(base node go jvm dotnet rust swift ruby php python tools docker)
+MODULES=(base node go jvm dotnet rust wasm swift ruby php python tools docker)
 
 usage() {
 	echo "Usage: $0 [module ...]"

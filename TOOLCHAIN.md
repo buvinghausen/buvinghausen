@@ -272,6 +272,92 @@ curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/
 
 ---
 
+## WebAssembly (WASM)
+
+A cross-cutting compile target used by multiple language stacks above, not a language of its own — grouped here rather than folded into Rust's section since Rust is just its first consumer (shipping a native core to run inside a browser/edge WASM host — see `~/code/SkunkWerx/HyperUuid`). Depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`).
+
+Rust wasm targets:
+
+```bash
+rustup target add wasm32-wasip1 wasm32-unknown-unknown wasm32-unknown-emscripten
+```
+
+> **Note:** three targets, three different stories, picked for a reason. `wasm32-wasip1` (WASI) gets a real OS-like syscall surface — `random_get`/`clock_time_get` work out of the box, no extra glue needed — the natural target for proving core logic (RNG, clock reads) survives a WASM sandbox at all. `wasm32-unknown-unknown` has no such syscalls; anything touching randomness or the clock needs a JS-side shim (`wasm-bindgen`, or a custom `getrandom` backend) — the target for idiomatic browser/npm consumption. `wasm32-unknown-emscripten` is what pairs with .NET's Blazor WebAssembly `NativeFileReference` native-interop story below; unlike the other two, its linker is `emcc`, not `rust-lld` — needs the Emscripten SDK (next).
+
+Emscripten SDK (`emcc`, the linker `wasm32-unknown-emscripten` needs) — installed via `git clone` per [the project's own recommended method](https://github.com/emscripten-core/emsdk); no distro package, no curl-pipe installer:
+
+```bash
+git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+(cd ~/emsdk && ./emsdk install latest && ./emsdk activate latest)
+
+cat >> ~/.bashrc << 'EOF'
+
+# Emscripten SDK
+source "$HOME/emsdk/emsdk_env.sh" > /dev/null
+EOF
+
+source ~/.bashrc
+```
+
+Wasmtime — a standalone WASI runtime, for running/testing a `wasm32-wasip1` binary directly (`wasmtime run target/wasm32-wasip1/release/*.wasm`) without a browser or Node in the loop:
+
+```bash
+curl https://wasmtime.dev/install.sh -sSf | bash
+source ~/.bashrc
+```
+
+> **Note:** the installer wires `$WASMTIME_HOME`/`PATH` into `~/.bashrc` itself (guarded by its own `grep -qc 'WASMTIME_HOME'` idempotency check), unlike Go/.NET's raw-tarball installers — no manual `append_bashrc_once` needed here.
+
+.NET `wasm-tools` workload — Blazor WebAssembly plus native interop (`<NativeFileReference>` statically linking a wasm32 native library, e.g. an Emscripten-built `libhyperuuid` side module, into a Blazor WASM app):
+
+```bash
+dotnet workload install wasm-tools
+```
+
+**A real, verified bug this hits every time, worth documenting rather than rediscovering:**
+`NativeFileReference`ing a `wasm32-unknown-emscripten` **static library** (`.a`, built via `cargo rustc --crate-type staticlib` — the default `cdylib` produces an already-linked module `NativeFileReference` can't pull symbols from) built by a modern Rust toolchain fails the native relink with:
+
+```
+Unknown option '--enable-bulk-memory-opt'
+```
+
+Confirmed identically on both `linux-arm64` and `linux-x64`, and independently in an unrelated
+project ([PyO3/maturin#2549](https://github.com/PyO3/maturin/issues/2549)): rustc ≥ 1.87 emits
+WASM target-feature metadata that Binaryen's `wasm-opt` only learned to honor from Emscripten
+3.1.74 onward. Every .NET SDK band's `wasm-tools` workload observed so far bundles an older
+Emscripten (3.1.56 for the 10.0 LTS band) — squarely inside the broken range. Fix: drop the
+newer, compatible `wasm-opt` from this section's own `emsdk` install in over the bundled one —
+`update-wasm.sh` does this automatically after every `dotnet workload install`. Re-run the
+module (or just the loop below) after a bare `dotnet workload update`, which restores the
+stock broken binary:
+
+```bash
+for sdk_pack in "$DOTNET_ROOT/packs"/Microsoft.NET.Runtime.Emscripten.*.Sdk.*; do
+  version_dir=$(find "$sdk_pack" -maxdepth 1 -mindepth 1 -type d | head -1)
+  cp ~/emsdk/upstream/bin/wasm-opt "$version_dir/tools/bin/wasm-opt"
+done
+```
+
+Verify:
+
+```bash
+rustup target list --installed | grep wasm
+emcc --version
+wasmtime --version
+dotnet workload list
+```
+
+**Updating:**
+
+```bash
+rustup target add wasm32-wasip1 wasm32-unknown-unknown wasm32-unknown-emscripten
+(cd ~/emsdk && git pull && ./emsdk install latest && ./emsdk activate latest)
+curl https://wasmtime.dev/install.sh -sSf | bash
+dotnet workload update
+```
+
+---
+
 ## Swift
 
 Install build dependencies (per swift.org's Fedora tarball instructions), then Swiftly, the official Swift toolchain manager — same role here as fnm/pyenv/rustup/SDKMAN play for their languages above:
@@ -867,6 +953,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`python` default flipped from free-threaded (`t`, `PYTHON_GIL=0`) back to standard/GIL-enabled: 2026-07-19 — yt-dlp needs the GIL. Free-threaded build stays installed for opt-in testing.*
 *`swift` (via swiftly) added and verified 2026-08-26 — `swift build`/SPM confirmed with a real compiled-and-run executable, not just `--version`; see the `--platform fedora39` note in the Swift section for why that flag isn't `fedora41`.*
 *`ruby` (via rbenv/ruby-build) and `php` (via phpenv/php-build) added and verified 2026-08-26 for the write-in-Rust/wrap-per-language polyglot work — both confirmed by compiling a real `rb-sys`/`magnus` Ruby extension and a real `ext-php-rs` PHP extension and calling into the compiled Rust from each, not just `--version`. WASM builds of Ruby/PHP were evaluated and skipped: this repo's toolchain covers native compile+interop only, any WASM-target bridging happens on the GHA runner. See the Ruby and PHP sections for the `libtidy-devel`/`libxslt-devel` and `cargo-php`-needs-`php`-on-`PATH` gotchas hit along the way.*
+*Correction, 2026-08-27: the "WASM bridging happens on the GHA runner" line above was about HyperUuid's per-platform native `.so`/`.dll`/`.dylib` builds, which genuinely do run on GHA matrix runners (`build-packages.yml`) — not a decision against WASM tooling on this machine in general. See the new [WebAssembly (WASM)](#webassembly-wasm) section for the real first instance of that: Rust/.NET, added the same day.*
 *`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
@@ -880,8 +967,8 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, prunes the superseded Ruby build), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, prunes the superseded Ruby build), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
-`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` is the one exception: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, so it still hard-fails with a pointer to that section.
+`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` and `wasm` are the two exceptions: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, and `wasm` depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`) — both hard-fail with a pointer back to the relevant section rather than bootstrapping a prerequisite themselves.
 
 The command-by-command breakdown for each stack lives in that stack's own section above (e.g. [Go](#go), [.NET](#net)) — treat those as the reference for *what* each step does; `scripts/update-*.sh` is the reference for *exact, current* invocation. If they drift, the scripts win — update the docs above to match rather than editing this block, since this block just points at them.
