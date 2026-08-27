@@ -272,6 +272,55 @@ curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/
 
 ---
 
+## Swift
+
+Install build dependencies (per swift.org's Fedora tarball instructions), then Swiftly, the official Swift toolchain manager — same role here as fnm/pyenv/rustup/SDKMAN play for their languages above:
+
+```bash
+sudo dnf install -y binutils gcc git libcurl-devel libedit-devel libicu-devel \
+  libuuid-devel libxml2-devel python3-devel sqlite-devel zip unzip
+```
+
+```bash
+ARCH=$(uname -m)
+curl -O https://download.swift.org/swiftly/linux/swiftly-${ARCH}.tar.gz
+tar zxf swiftly-${ARCH}.tar.gz
+./swiftly init --assume-yes --quiet-shell-followup --no-modify-profile --platform fedora39
+rm swiftly swiftly-${ARCH}.tar.gz
+
+cat >> ~/.bashrc << 'EOF'
+
+# Swiftly (Swift toolchain manager)
+. "$HOME/.local/share/swiftly/env.sh"
+EOF
+
+source ~/.bashrc
+```
+
+Verify:
+
+```bash
+swiftly --version
+swift --version
+```
+
+> **Note:** `swiftly init` installs the latest stable toolchain automatically (no separate `swiftly install latest` step needed) and, by default, wires its env-sourcing line into `~/.bash_profile`/`~/.bash_login` — login-shell files WSL2's interactive bash terminals don't source. `--no-modify-profile` skips that, and the env line is appended to `~/.bashrc` by hand instead, matching every other language manager in this doc (Go, Rust, pyenv, SDKMAN).
+>
+> **`--platform fedora39`, not fedora41 — confirmed, not a typo.** swift.org's own platform-support matrix lists Fedora 41 as the current minimum, but the `swiftly` *binary currently shipped* at `download.swift.org/swiftly/linux` only recognizes `ubuntu24.04`/`22.04`/`20.04`/`18.04`, `fedora39`, `ubi9`, `amazonlinux2`, `debian12` as `--platform` values (confirmed by running it: `fedora41` fails hard with `Fatal error: Unrecognized platform fedora41`, listing that exact set). `fedora39` is the newest Fedora entry the installed swiftly release actually accepts, and it works fine on Fedora 44 — glibc/ABI compatibility across Fedora releases carries it. Re-check this note (and drop it) once a newer swiftly release adds `fedora41`/`fedora44` to its recognized list.
+>
+> **Verified:** ran this exact sequence on this box (Fedora 44 aarch64) — `swiftly init --platform fedora39` installed swiftly 1.1.3 and Swift 6.3.3 (`aarch64-unknown-linux-gnu`) cleanly. Confirmed working end to end, not just `--version`: `swift package init --type executable` + `swift build` compiled and linked a real executable, which ran and printed `Hello, world!`. Also confirmed the `~/.bashrc` wiring works in a fresh non-login interactive shell (`bash -lc 'swift --version'`), not just the shell that ran the installer.
+
+**Updating Swift:**
+
+```bash
+swiftly self-update
+swiftly update
+```
+
+> **Note:** `swiftly update` with no argument updates the currently in-use toolchain to the latest available and uninstalls the superseded one as part of the same command — no separate prune step, same auto-resolving-over-pinned convention as `rustup update` above.
+
+---
+
 ## .NET
 
 Install via the official dotnet-install script (non-admin, auto-detects arm64):
@@ -663,6 +712,8 @@ python    3.14.5         GIL enabled (standard build; 3.14.5t available via pyen
 rustc     1.97.1         aarch64-unknown-linux-gnu
 cargo     1.97.1
 nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-installed
+swiftly   1.1.3           toolchain manager
+swift     6.3.3           aarch64-unknown-linux-gnu (via swiftly --platform fedora39, see Swift section)
 dotnet    10.0.302       (+ 9.0.18, 8.0.29 runtimes for multi-target test execution)
 dotnet-11 11.0.100-preview.6.26359.118   TEMPORARY preview channel (Norse DU work) — see its own section
 mono      6.14.1         legacy net472/net462 test execution
@@ -678,6 +729,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`playwright-mcp` / `chromium` added and verified separately: 2026-07-12*
 *`docker` module (image refresh + dangling-image/stale-container cleanup) added to the update pass 2026-07-17 — not listed above since it tracks container images, not a pinned CLI version.*
 *`python` default flipped from free-threaded (`t`, `PYTHON_GIL=0`) back to standard/GIL-enabled: 2026-07-19 — yt-dlp needs the GIL. Free-threaded build stays installed for opt-in testing.*
+*`swift` (via swiftly) added and verified 2026-08-26 — `swift build`/SPM confirmed with a real compiled-and-run executable, not just `--version`; see the `--platform fedora39` note in the Swift section for why that flag isn't `fedora41`.*
 
 ---
 
@@ -690,8 +742,8 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
-`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` is the one exception: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, so it still hard-fails with a pointer to that section.
+`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` is the one exception: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, so it still hard-fails with a pointer to that section.
 
 The command-by-command breakdown for each stack lives in that stack's own section above (e.g. [Go](#go), [.NET](#net)) — treat those as the reference for *what* each step does; `scripts/update-*.sh` is the reference for *exact, current* invocation. If they drift, the scripts win — update the docs above to match rather than editing this block, since this block just points at them.
