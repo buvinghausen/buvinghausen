@@ -16,12 +16,28 @@ All languages, compilers, and build tools live in WSL2. Windows is the display l
 
 ## Base Dependencies
 
+The one `dnf` list every from-source build in this doc draws on. It used to be five — this block plus a separate prerequisite list at the top of the [Python](#python), [Swift](#swift), [Ruby](#ruby) and [PHP](#php) sections, each overlapping this one and each other (the pyenv list was a strict subset of this block already). They're folded together here, grouped by who needs what, so there is exactly one place to add a header and one function (`dnf_build_deps` in `scripts/lib.sh`) that both `update-base.sh` and each language module's first-time bootstrap call:
+
 ```bash
 sudo dnf update -y
-sudo dnf install -y curl wget git gcc gcc-c++ make openssl-devel zlib-devel \
-  bzip2 bzip2-devel readline-devel sqlite sqlite-devel xz xz-devel \
-  libffi-devel tk-devel libuuid-devel patch gawk
+sudo dnf install -y \
+  curl wget git gcc gcc-c++ make patch gawk binutils glibc-devel \
+  autoconf automake libtool bison re2c \
+  openssl-devel zlib-devel zlib-ng-compat-devel bzip2 bzip2-devel xz xz-devel \
+  readline-devel libedit-devel ncurses-devel gdbm-devel sqlite sqlite-devel \
+  libffi-devel libuuid-devel tk-devel libyaml-devel perl-FindBin \
+  libxml2-devel libxslt-devel libcurl-devel libicu-devel gmp-devel openldap-devel \
+  oniguruma-devel libsodium-devel libzip-devel libpng-devel libjpeg-turbo-devel \
+  libwebp-devel libtidy-devel clang-devel python3-devel zip unzip
 ```
+
+Who needs what (every line is the union of these, deduplicated):
+
+- **Everything / cargo builds:** `curl wget git gcc gcc-c++ make patch gawk`.
+- **pyenv** ([suggested build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)): `zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel`.
+- **ruby-build** ([suggested build environment](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment), Fedora 40+ variant): `autoconf libyaml-devel gdbm-devel ncurses-devel perl-FindBin zlib-ng-compat-devel` on top of the shared compiler/ssl/readline/ffi set. The wiki also lists `rust` (YJIT is compiled at configure time and needs `rustc`); deliberately *not* installed from dnf here — that would be a second Rust on the box next to rustup's, and rustup is the one that stays current. `scripts/update-ruby.sh` sources `~/.cargo/env` before `rbenv install` so ruby-build finds rustup's `rustc` regardless of the caller's `PATH`; the [Rust](#rust) section must be done first (it is, in the Full Update Pass order). The `rust` rpm that the earlier list had pulled in was removed 2026-09-02.
+- **php-build** ([php.watch's compile-from-source guide](https://php.watch/articles/compile-php-fedora-rhel-centos), plus `libtidy-devel`/`libxslt-devel` which that guide omits but the default `./configure` needs — confirmed by running it, see the PHP section's Verified note): `binutils glibc-devel libtool bison re2c automake libxml2-devel libcurl-devel gmp-devel libicu-devel openldap-devel oniguruma-devel libsodium-devel libzip-devel libpng-devel libjpeg-turbo-devel libwebp-devel libtidy-devel libxslt-devel`. `clang-devel` isn't a PHP build dependency — it's there for `bindgen` (used by `ext-php-rs-build` and `rb-sys`) to find `libclang`.
+- **swiftly** (per swift.org's Fedora tarball instructions): `libedit-devel python3-devel zip unzip` on top of `binutils libcurl-devel libicu-devel libuuid-devel libxml2-devel sqlite-devel` shared with the others.
 
 > **Note:** `scripts/update-base.sh` (the `base` module in the [Full Update Pass](#full-update-pass)) runs the `dnf install` line above on every pass — idempotent, fast no-op once installed. It deliberately skips the `dnf update -y` line: a blanket system-wide package upgrade is a much bigger, less predictable action than installing a fixed dependency list, so that stays a manual step you run yourself when you want it.
 
@@ -172,14 +188,7 @@ sdk update && sdk upgrade
 
 ## Python
 
-Install pyenv dependencies (Fedora — substitute package manager for other distros):
-
-```bash
-sudo dnf install -y make gcc zlib-devel bzip2 bzip2-devel readline-devel \
-  sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel gawk
-```
-
-Install pyenv:
+Build dependencies are in [Base Dependencies](#base-dependencies) (the pyenv group). Install pyenv:
 
 ```bash
 curl https://pyenv.run | bash
@@ -360,12 +369,7 @@ dotnet workload update
 
 ## Swift
 
-Install build dependencies (per swift.org's Fedora tarball instructions), then Swiftly, the official Swift toolchain manager — same role here as fnm/pyenv/rustup/SDKMAN play for their languages above:
-
-```bash
-sudo dnf install -y binutils gcc git libcurl-devel libedit-devel libicu-devel \
-  libuuid-devel libxml2-devel python3-devel sqlite-devel zip unzip
-```
+Build dependencies are in [Base Dependencies](#base-dependencies) (the swiftly group). Install Swiftly, the official Swift toolchain manager — same role here as fnm/pyenv/rustup/SDKMAN play for their languages above:
 
 ```bash
 ARCH=$(uname -m)
@@ -409,16 +413,9 @@ swiftly update
 
 ## Ruby
 
-Purpose here isn't a general Ruby dev environment — it's a host Ruby (with headers) to build and test Rust↔Ruby native extensions for the polyglot work: write the core in Rust, compile it as a Ruby native extension via [`rb-sys`](https://github.com/oxidize-rb/rb-sys)/[`magnus`](https://github.com/matsadler/magnus), wrap it in a thin Ruby gem. Whether a downstream consumer of that gem compiles it themselves or pulls a precompiled binary is their call — this section only covers the local dev/test loop.
+Purpose here isn't a general Ruby dev environment — it's host Rubies (with headers) to build and test the Rust-backed Ruby bindings for the polyglot work: write the core in Rust, compile it as a Ruby native extension via [`rb-sys`](https://github.com/oxidize-rb/rb-sys)/[`magnus`](https://github.com/matsadler/magnus) (the fast path), with [Fiddle](https://github.com/ruby/fiddle) dlopen-ing the plain `cdylib` as the zero-compile fallback the same gem carries. Whether a downstream consumer compiles the extension themselves or pulls a precompiled platform gem is their call — this section only covers the local dev/test loop, which mirrors one leg of `SkunkWerkx/.github`'s `hyper-build-native.yml`.
 
-Install build dependencies (Fedora 40+ — substitute package manager/package set for other distros; see [ruby-build's suggested build environment](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment) for RHEL/older-Fedora variants):
-
-```bash
-sudo dnf install -y autoconf gcc rust patch make bzip2 openssl-devel libyaml-devel libffi-devel \
-  readline-devel gdbm-devel ncurses-devel perl-FindBin zlib-ng-compat-devel
-```
-
-Install rbenv (version manager) + ruby-build (the plugin that actually compiles Ruby from source — same two-piece split as pyenv's underlying `python-build`):
+Build dependencies are in [Base Dependencies](#base-dependencies) (the ruby-build group). Install rbenv (version manager) + ruby-build (the plugin that actually compiles Ruby from source — same two-piece split as pyenv's underlying `python-build`):
 
 ```bash
 git clone https://github.com/rbenv/rbenv.git ~/.rbenv
@@ -434,33 +431,57 @@ EOF
 source ~/.bashrc
 ```
 
-Install latest stable Ruby:
+Install the Rubies — plural, and the reason is the CI this box reproduces. A Magnus extension is bound to a single Ruby minor (there is no `abi3` equivalent to collapse that axis the way PyO3 does for Python), so `hyper-build-native.yml` builds and tests it once per ABI: `ruby_version` (its default `4.0`, the current release, which the Fiddle suite also runs on) plus the caller's optional `ruby_compat_version`. HyperUuid's `ci.yml` sets that to `3.4`, and its `ruby/Rakefile` packs both (`ABIS = %w[3.4 4.0]`) into every platform gem. Running that leg locally therefore needs both Rubies installed side by side — the primary is the newest stable CRuby and is global, the compat one is selected per shell with `RBENV_VERSION`:
 
 ```bash
-RUBY_LATEST=$(rbenv install --list | grep -vE 'jruby|mruby|picoruby|truffleruby' | tail -1 | xargs)
-rbenv install ${RUBY_LATEST}
-rbenv global ${RUBY_LATEST}
+RUBY_PRIMARY=$(rbenv install --list | grep -vE 'jruby|mruby|picoruby|truffleruby' | tail -1 | xargs)
+RUBY_COMPAT=$(rbenv install --list | grep -E '^\s*3\.4\.' | xargs)
+rbenv install ${RUBY_PRIMARY}
+rbenv install ${RUBY_COMPAT}
+rbenv global ${RUBY_PRIMARY}
 ```
 
 Verify:
 
 ```bash
 ruby --version
+RBENV_VERSION=${RUBY_COMPAT} ruby --version
 gem --version
 ```
 
 > **Verified:** built Ruby 4.0.6 from source on this box (Fedora 44 aarch64) via `rbenv install` — confirmed working end to end, not just `--version`: `bundle gem --ext=rust rust_smoke` (Bundler's built-in Rust-extension scaffold, which wires up `rb-sys`/`magnus`/`rake-compiler` automatically) generated a gem, `bundle install && bundle exec rake compile` built the Rust side, and `ruby -Ilib -e 'require "rust_smoke"; puts RustSmoke.hello("...")'` called into the compiled Rust and printed the real result. `--no-rehash` in the `rbenv init` line matches ruby-build's own recommendation (skips a redundant shim rehash on every shell startup).
 
-**Updating Ruby:**
+> **Verified (two ABIs), 2026-09-02:** `scripts/update-ruby.sh` built 3.4.10 from source next to the existing 4.0.6 (global stayed 4.0.6, prune found nothing outside the kept set). Then the real thing, in HyperUuid: `cargo build --release --features ruby` once per ABI, each under its own `CARGO_TARGET_DIR`, staged as `ruby/lib/hyperuuid/{3.4,4.0}/hyperuuid_native.so`; `bundle exec rspec` under 3.4.10 and under 4.0.6 — 55 examples, 0 failures each, with `HyperUuid::BACKEND` confirmed `:native` under both (so the suite really went through the compiled extension, not the fallback); and `HYPERUUID_PURE=1 bundle exec rspec` on 4.0.6 — 55 examples, 0 failures, 6 pending, `BACKEND` `:fiddle`. Under 3.4.10, `bundle install` auto-installed the lockfile's `BUNDLED WITH 4.0.16` next to the interpreter's default bundler 2.6.9 on its own — the same thing `setup-ruby` does on the runner — so the script doesn't need a bundler step. Re-proved the same day after the `rust` rpm was removed: `rbenv uninstall 3.4.10`, then `./update-toolchain.sh ruby` from a deliberately bare `PATH` (no `~/.cargo/bin`, no rbenv) rebuilt it through the script's own `~/.cargo/env` sourcing — `RubyVM::YJIT.enabled?` true under `--yjit`, and HyperUuid's suite 55/55 on the rebuilt interpreter with `BACKEND` `:native` again.
+
+> **Building the Magnus extension against both ABIs locally** — the same shape as the workflow's `build-magnus.sh`, one ABI at a time, each in its own `CARGO_TARGET_DIR`:
+>
+> ```bash
+> cd ~/code/SkunkWerkx/HyperUuid/rust
+> for abi in 3.4 4.0; do
+>   RBENV_VERSION=$(rbenv versions --bare | grep "^${abi}\.") \
+>     CARGO_TARGET_DIR="target/ruby-${abi}" cargo build --release --features ruby
+>   mkdir -p "../ruby/lib/hyperuuid/${abi}"
+>   cp "target/ruby-${abi}/release/libhyperuuid.so" "../ruby/lib/hyperuuid/${abi}/hyperuuid_native.so"
+> done
+> ```
+>
+> Then `bundle exec rspec` in `ruby/` under each `RBENV_VERSION` — `lib/hyperuuid.rb` requires `hyperuuid/<minor>/hyperuuid_native` for whichever Ruby is running, so the same suite exercises each ABI's extension. The Fiddle fallback is `HYPERUUID_PURE=1 bundle exec rspec` (the workflow's `pure_env`), against `lib/hyperuuid/native/<rid>/libhyperuuid.so`.
+>
+> **Ruby 4.0 unbundled `fiddle`.** Through 3.x it was a default gem — effectively stdlib, always on the load path. 4.0 made it a bundled gem: still installed next to the interpreter by ruby-build, but no longer implicitly loadable under `bundle exec`, so a gem using it needs an explicit `spec.add_dependency "fiddle"`. HyperUuid hit exactly that `LoadError` on 4.0.6 before adding the line (see its gemspec).
+
+**Updating Ruby** — the primary tracks the newest stable CRuby automatically; the compat series is a fixed list, and it is the local twin of HyperUuid `ci.yml`'s `ruby_compat_version` input: when 3.4 goes EOL (2028-03-31) and leaves `ci.yml`, drop it here too and the next pass uninstalls it. Within each kept series only the newest patch survives; anything outside the kept set goes:
 
 ```bash
 cd ~/.rbenv/plugins/ruby-build && git pull
-RUBY_PREV=$(rbenv version-name)
-RUBY_LATEST=$(rbenv install --list | grep -vE 'jruby|mruby|picoruby|truffleruby' | tail -1 | xargs)
-rbenv install -s ${RUBY_LATEST}
-rbenv global ${RUBY_LATEST}
-[ "$RUBY_PREV" != "$RUBY_LATEST" ] && rbenv uninstall -f "$RUBY_PREV"
+RUBY_PRIMARY=$(rbenv install --list | grep -vE 'jruby|mruby|picoruby|truffleruby' | tail -1 | xargs)
+RUBY_COMPAT=$(rbenv install --list | grep -E '^\s*3\.4\.' | xargs)
+rbenv install -s ${RUBY_PRIMARY}
+rbenv install -s ${RUBY_COMPAT}
+rbenv global ${RUBY_PRIMARY}
+rbenv versions --bare | grep -vxF -e "${RUBY_PRIMARY}" -e "${RUBY_COMPAT}" | xargs -rn1 rbenv uninstall -f
 ```
+
+> `scripts/update-ruby.sh` is the replay-safe version of this (`RUBY_COMPAT_SERIES=(3.4)` at the top is the list to edit), and it hard-fails with a pointer at that list if a compat series has dropped out of `rbenv install --list` — that is what EOL looks like from ruby-build's side, and the right response is a deliberate edit, not a silent skip.
 
 ---
 
@@ -468,16 +489,7 @@ rbenv global ${RUBY_LATEST}
 
 Same purpose as the Ruby section above, mirrored for PHP: a host PHP (with headers) to build and test Rust↔PHP native code. Two paths ended up mattering here, both covered by this section: [`ext-php-rs`](https://github.com/davidcole1340/ext-php-rs) + its `cargo-php` CLI (a compiled native extension, PHP's Zend API linked directly), and PHP's built-in `FFI` extension (dlopen a plain `cdylib` at runtime — no compile step, no Zend API). HyperUuid's actual PHP binding ended up on the FFI path, matching the dlopen-based approach the Go/Swift/Ruby bindings all use against the same shared `libhyperuuid` — see the `--with-ffi` note below. WASM builds of PHP exist (e.g. `vmware-labs/webassembly-language-runtimes`) but are stale (frozen at PHP 8.2.6, no push since mid-2024, CGI-SAPI-only) — skipped in favor of this native path; WASM-target bridging, if any, happens on the GHA runner, not locally.
 
-Install build dependencies (Fedora — package list per [php.watch's compile-from-source guide](https://php.watch/articles/compile-php-fedora-rhel-centos), plus `libtidy-devel`/`libxslt-devel` which that guide omits but the default `./configure` needs — confirmed by running it, see the Verified note below):
-
-```bash
-sudo dnf install -y git make gcc gcc-c++ binutils glibc-devel autoconf libtool bison re2c automake \
-  libxml2-devel bzip2-devel libcurl-devel libffi-devel gmp-devel libicu-devel openldap-devel \
-  oniguruma-devel openssl-devel readline-devel libsodium-devel libzip-devel libpng-devel \
-  libjpeg-turbo-devel libwebp-devel sqlite-devel libtidy-devel libxslt-devel clang-devel
-```
-
-> `clang-devel` isn't a PHP build dependency — it's there for `bindgen` (used by `ext-php-rs-build` below) to find `libclang`.
+Build dependencies are in [Base Dependencies](#base-dependencies) (the php-build group — including the `libtidy-devel`/`libxslt-devel` pair the upstream guide omits, and `clang-devel` for `bindgen`).
 
 Install phpenv (version manager) + php-build (the plugin that compiles PHP from source — same rbenv-derived architecture as Ruby's rbenv/ruby-build pair above):
 
@@ -684,6 +696,49 @@ gh auth login
 ```
 
 **Updating gh:** Re-run the install block above — `sudo install` overwrites the existing binary in place.
+
+---
+
+## actionlint
+
+Static checker for GitHub Actions workflow files — catches YAML/`workflow` schema errors, bad `runs-on` labels, invalid `${{ }}` expressions and their type errors, unknown contexts, and shell mistakes in `run:` blocks, all before you push and burn a CI run finding out. Same release-tarball pattern as `gh`, auto-detecting architecture:
+
+```bash
+AL_VERSION=$(curl -s https://api.github.com/repos/rhysd/actionlint/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+wget https://github.com/rhysd/actionlint/releases/download/v${AL_VERSION}/actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz
+tar -xzf actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz actionlint
+sudo install actionlint /usr/local/bin/actionlint
+rm actionlint actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz
+
+actionlint --version
+```
+
+Run it from a repo root — with no arguments it finds and checks every workflow under `.github/workflows/`:
+
+```bash
+cd ~/code/some-repo
+actionlint
+```
+
+> **Gotcha:** the no-argument form walks up looking for a Git repository and hard-errors (`no project was found in any parent directories ...`, exit 3) outside one, even when `.github/workflows/` is sitting right there. Pass explicit file paths (`actionlint path/to/workflow.yml`) to lint a directory that isn't a repo. Exit codes: `0` clean, `1` problems found, `3` invalid usage.
+
+**Updating actionlint:** Re-run the install block above — `sudo install` overwrites the existing binary in place.
+
+### ShellCheck + pyflakes integrations
+
+`actionlint` shells out to `shellcheck` for `run:` script bodies and `pyflakes` for `python`-shell steps when either is on `PATH`, and *silently* skips those checks when it isn't — no warning, just fewer findings. Both are installed here, so both integrations are live:
+
+```bash
+sudo dnf install -y ShellCheck python3-pyflakes
+
+shellcheck --version
+pyflakes --version
+```
+
+> **Why dnf and not pip/pyenv for `pyflakes`:** a `pip install pyflakes` lands inside the pyenv-managed build, and `scripts/update-python.sh` uninstalls the superseded build on every Python upgrade — actionlint's python-step linting would quietly go dark after each pass. The dnf package is tied to the system `python3` instead and survives pyenv churn.
+
+> **Version note:** Fedora ships `python3-pyflakes` 3.1.0, behind upstream. Fine for what actionlint uses it for (undefined names, unused imports in inline `python` steps); if a newer pyflakes ever matters, that's the point to reconsider the pyenv/pip tradeoff above.
 
 ---
 
@@ -933,7 +988,8 @@ cargo     1.97.1
 nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-installed
 swiftly   1.1.3           toolchain manager
 swift     6.3.3           aarch64-unknown-linux-gnu (via swiftly --platform fedora39, see Swift section)
-ruby      4.0.6           aarch64-linux, via rbenv/ruby-build — host for rb-sys/magnus extension dev
+ruby      4.0.6           aarch64-linux, via rbenv/ruby-build, global — primary Magnus ABI + Fiddle suite host
+ruby      3.4.10          compat Magnus ABI (HyperUuid ci.yml ruby_compat_version), RBENV_VERSION-selected
 php       8.5.9           via phpenv/php-build, built --with-ffi — host for ext-php-rs and FFI extension dev
 cargo-php 0.1.21          ext-php-rs's build/install CLI
 dotnet    10.0.302       (+ 9.0.18, 8.0.29 runtimes for multi-target test execution)
@@ -941,8 +997,11 @@ dotnet-11 11.0.100-preview.6.26359.118   TEMPORARY preview channel (Norse DU wor
 mono      6.14.1         legacy net472/net462 test execution
 playwright-mcp 0.0.78    @playwright/mcp, via npx, no persistent install
 chromium  150.0.7871.114 dnf-managed, not Playwright-downloaded
-gh        2.96.0
-pwsh      7.6.3
+gh        2.99.0
+actionlint 1.7.12       GitHub Actions workflow linter
+shellcheck 0.11.0       dnf-managed; actionlint's `run:`-body integration
+pyflakes  3.1.0          dnf-managed (python3-pyflakes); actionlint's `python`-step integration
+pwsh      7.6.5
 claude    2.1.183        native, linux-arm64, auto-updates enabled
 posh-git-sh 1.5.1       ~/code/** only
 ```
@@ -954,6 +1013,9 @@ posh-git-sh 1.5.1       ~/code/** only
 *`swift` (via swiftly) added and verified 2026-08-26 — `swift build`/SPM confirmed with a real compiled-and-run executable, not just `--version`; see the `--platform fedora39` note in the Swift section for why that flag isn't `fedora41`.*
 *`ruby` (via rbenv/ruby-build) and `php` (via phpenv/php-build) added and verified 2026-08-26 for the write-in-Rust/wrap-per-language polyglot work — both confirmed by compiling a real `rb-sys`/`magnus` Ruby extension and a real `ext-php-rs` PHP extension and calling into the compiled Rust from each, not just `--version`. WASM builds of Ruby/PHP were evaluated and skipped: this repo's toolchain covers native compile+interop only, any WASM-target bridging happens on the GHA runner. See the Ruby and PHP sections for the `libtidy-devel`/`libxslt-devel` and `cargo-php`-needs-`php`-on-`PATH` gotchas hit along the way.*
 *Correction, 2026-08-27: the "WASM bridging happens on the GHA runner" line above was about HyperUuid's per-platform native `.so`/`.dll`/`.dylib` builds, which genuinely do run on GHA matrix runners (`build-packages.yml`) — not a decision against WASM tooling on this machine in general. See the new [WebAssembly (WASM)](#webassembly-wasm) section for the real first instance of that: Rust/.NET, added the same day.*
+*`actionlint` added and verified 2026-09-01 — confirmed both ways: a clean exit-0 pass over HyperUuid's four real workflows, and a deliberately broken workflow (bogus `runs-on` label, undefined `github.*` property) that it flagged on both counts with exit 1. `shellcheck` and `pyflakes` went in the same day and are verified live, not merely present: a workflow with an unquoted `$FOO` in a `run:` body and an unused import plus an undefined name in a `shell: python` step produced SC2086 from shellcheck and both pyflakes diagnostics, routed through actionlint's own output.*
+
+*`ruby` grew a second ABI 2026-09-02 — 3.4.10 alongside 4.0.6, because `SkunkWerkx/.github`'s `hyper-build-native.yml` builds the Magnus extension once per Ruby minor and HyperUuid's `ci.yml` asks for `ruby_compat_version: "3.4"` on top of the forge's `4.0` default. `scripts/update-ruby.sh` now keeps the newest patch per kept series (`RUBY_COMPAT_SERIES`, the local twin of that ci.yml input) instead of one Ruby, and the same day's consolidation folded the four per-language dnf prerequisite lists into the one [Base Dependencies](#base-dependencies) list (`dnf_build_deps` in `scripts/lib.sh`, a confirmed no-op on this box — every package was already installed) and the three copies of the GitHub-release-tarball install pattern in `update-tools.sh` into two `lib.sh` helpers (`github_latest_release`, `install_from_tarball` — exercised for real by the `gh` 2.96.0 → 2.99.0 upgrade in the verifying run). See the Ruby section's two-ABI Verified note for the HyperUuid build-and-rspec evidence.*
 *`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
@@ -967,7 +1029,7 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf packages), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, prunes the superseded Ruby build), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
 `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` and `wasm` are the two exceptions: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, and `wasm` depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`) — both hard-fail with a pointer back to the relevant section rather than bootstrapping a prerequisite themselves.
 

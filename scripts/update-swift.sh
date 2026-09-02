@@ -30,9 +30,8 @@ fi
 if ! command -v swiftly >/dev/null 2>&1; then
 	log "swiftly not found — bootstrapping (see TOOLCHAIN.md)"
 
-	log "Swift build dependencies"
-	sudo dnf install -y binutils gcc git libcurl-devel libedit-devel libicu-devel \
-		libuuid-devel libxml2-devel python3-devel sqlite-devel zip unzip
+	log "Build dependencies (shared dnf list, see lib.sh)"
+	dnf_build_deps
 
 	ARCH=$(uname -m)
 	TMP=$(mktemp -d)

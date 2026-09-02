@@ -1,29 +1,46 @@
 #!/usr/bin/env bash
 # Updates the remaining standalone tools from TOOLCHAIN.md's Full Update
-# Pass: GitHub CLI, PowerShell, Mono, Chromium, posh-git-sh. Not one of the
-# six language stacks you asked for individually, but skipping it would
-# leave the orchestrator short of the doc's full pass — drop this module
-# from update-toolchain.sh's MODULES list if you'd rather run it separately.
+# Pass: GitHub CLI, actionlint (+ ShellCheck/pyflakes), PowerShell, Mono,
+# Chromium, posh-git-sh. Not one of the six language stacks you asked for
+# individually, but skipping it would leave the orchestrator short of the
+# doc's full pass — drop this module from update-toolchain.sh's MODULES
+# list if you'd rather run it separately.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./lib.sh
 
 log "GitHub CLI"
-GH_LATEST=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+GH_LATEST=$(github_latest_release cli/cli)
 GH_CURRENT=$(gh --version 2>/dev/null | head -1 | awk '{print $3}' || true)
 if [[ "$GH_CURRENT" == "$GH_LATEST" ]]; then
 	echo "gh already at $GH_CURRENT — skipping"
 else
-	ARCH=$(arch_amd64_arm64)
-	TMP=$(mktemp -d)
-	wget -q -P "$TMP" "https://github.com/cli/cli/releases/download/v${GH_LATEST}/gh_${GH_LATEST}_linux_${ARCH}.tar.gz"
-	tar -xzf "$TMP/gh_${GH_LATEST}_linux_${ARCH}.tar.gz" -C "$TMP"
-	sudo install "$TMP/gh_${GH_LATEST}_linux_${ARCH}/bin/gh" /usr/local/bin/gh
-	rm -rf "$TMP"
+	GH_PKG="gh_${GH_LATEST}_linux_$(arch_amd64_arm64)"
+	install_from_tarball "https://github.com/cli/cli/releases/download/v${GH_LATEST}/${GH_PKG}.tar.gz" \
+		"${GH_PKG}/bin/gh" /usr/local/bin/gh
 fi
 
+log "actionlint"
+AL_LATEST=$(github_latest_release rhysd/actionlint)
+AL_CURRENT=$(actionlint --version 2>/dev/null | head -1 || true)
+if [[ "$AL_CURRENT" == "$AL_LATEST" ]]; then
+	echo "actionlint already at $AL_CURRENT — skipping"
+else
+	install_from_tarball "https://github.com/rhysd/actionlint/releases/download/v${AL_LATEST}/actionlint_${AL_LATEST}_linux_$(arch_amd64_arm64).tar.gz" \
+		actionlint /usr/local/bin/actionlint
+fi
+
+# actionlint shells out to these for `run:` script bodies and `python` steps —
+# it silently skips those checks when they aren't on PATH, so they're part of
+# the actionlint install, not optional extras. Both come from dnf rather than
+# pip/pyenv on purpose: a pip-installed pyflakes lives inside the pyenv build
+# that `update-python.sh` uninstalls on every Python upgrade, which would
+# quietly disable actionlint's python-step linting after each pass.
+log "ShellCheck + pyflakes (actionlint integrations)"
+sudo dnf install -y ShellCheck python3-pyflakes
+
 log "PowerShell"
-PS_LATEST=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+PS_LATEST=$(github_latest_release PowerShell/PowerShell)
 PS_CURRENT=$(pwsh --version 2>/dev/null | awk '{print $2}' || true)
 if [[ "$PS_CURRENT" == "$PS_LATEST" ]]; then
 	echo "pwsh already at $PS_CURRENT — skipping"
@@ -94,6 +111,9 @@ EOF
 fi
 
 gh --version
+actionlint --version | head -1
+shellcheck --version | grep version:
+pyflakes --version
 pwsh --version
 mono --version
 chromium-browser --version

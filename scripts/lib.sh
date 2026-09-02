@@ -11,6 +11,49 @@ require_cmd() {
 arch_amd64_arm64() { uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/'; }
 arch_x64_arm64() { uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/'; }
 
+# Latest release of a GitHub repo ("owner/name"), tag printed without its
+# leading "v" — the version-diff key for every release-tarball install
+# (gh, actionlint, pwsh) so that pattern lives once.
+github_latest_release() {
+	curl -s "https://api.github.com/repos/$1/releases/latest" | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/'
+}
+
+# Downloads a release tarball, extracts it into a scratch dir, and
+# `sudo install`s one file out of it (overwriting in place — that IS the
+# update path). Args: url, path-inside-tarball, destination.
+install_from_tarball() {
+	local url="$1" inner="$2" dest="$3" tmp
+	tmp=$(mktemp -d)
+	wget -q -P "$tmp" "$url"
+	tar -xzf "$tmp/$(basename "$url")" -C "$tmp"
+	sudo install "$tmp/$inner" "$dest"
+	rm -rf "$tmp"
+}
+
+# TOOLCHAIN.md's Base Dependencies block: the ONE dnf list every module's
+# from-source build draws on — the pyenv/ruby-build/php-build/swiftly
+# prerequisite sets used to be four separate lists, each transcribed from
+# its own doc section, overlapping the base list and each other. `dnf
+# install -y` is idempotent, so update-base.sh runs this on every pass and
+# each language module's first-time bootstrap calls it too (a single-module
+# run on a fresh box still gets its headers). Fedora-specific, matching this
+# box; substitute package manager for other distros per TOOLCHAIN.md.
+#
+# No `rust` here even though ruby-build's wiki lists it (YJIT needs rustc at
+# configure time): rustup's toolchain is the one this box keeps current, so
+# update-ruby.sh sources ~/.cargo/env instead — one Rust, not two.
+dnf_build_deps() {
+	sudo dnf install -y \
+		curl wget git gcc gcc-c++ make patch gawk binutils glibc-devel \
+		autoconf automake libtool bison re2c \
+		openssl-devel zlib-devel zlib-ng-compat-devel bzip2 bzip2-devel xz xz-devel \
+		readline-devel libedit-devel ncurses-devel gdbm-devel sqlite sqlite-devel \
+		libffi-devel libuuid-devel tk-devel libyaml-devel perl-FindBin \
+		libxml2-devel libxslt-devel libcurl-devel libicu-devel gmp-devel openldap-devel \
+		oniguruma-devel libsodium-devel libzip-devel libpng-devel libjpeg-turbo-devel \
+		libwebp-devel libtidy-devel clang-devel python3-devel zip unzip
+}
+
 # Appends stdin to ~/.bashrc once, keyed on marker (e.g. "# Go") already being
 # present. Used by first-time-bootstrap blocks whose installer doesn't wire
 # up ~/.bashrc itself (Go's raw tarball, dotnet-install.sh) — safe to call on

@@ -9,7 +9,7 @@
 # Bootstraps pyenv itself when missing (fresh machine / fresh distro), rather
 # than hard-failing like the other update-*.sh scripts do — this is the
 # install entry point TOOLCHAIN.md's Python section documents, transcribed
-# verbatim (dnf build deps, pyenv.run installer, ~/.bashrc block) so both
+# (pyenv.run installer, ~/.bashrc block; build deps come from lib.sh) so both
 # paths never drift apart. Fedora/dnf-specific, matching this box; substitute
 # package manager for other distros per TOOLCHAIN.md.
 set -euo pipefail
@@ -20,14 +20,13 @@ export PYENV_ROOT="$HOME/.pyenv"
 if [[ ! -d "$PYENV_ROOT/bin" ]]; then
 	log "pyenv not found — bootstrapping (see TOOLCHAIN.md)"
 
-	log "pyenv build dependencies"
-	sudo dnf install -y make gcc zlib-devel bzip2 bzip2-devel readline-devel \
-		sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel gawk
+	log "Build dependencies (shared dnf list, see lib.sh)"
+	dnf_build_deps
 
 	log "pyenv installer"
 	curl https://pyenv.run | bash
 
-	cat >>"$HOME/.bashrc" <<'EOF'
+	append_bashrc_once "# pyenv" <<'EOF'
 
 # pyenv
 export PYENV_ROOT="$HOME/.pyenv"
