@@ -44,7 +44,9 @@
       "Bash(dotnet ef database drop*)"
     ]
   },
-  "model": "sonnet",
+  "model": "Fable",
   "enabledPlugins": {},
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true
 }

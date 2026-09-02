@@ -12,7 +12,7 @@
 # favor of this native path.
 #
 # Bootstraps phpenv + php-build itself when missing (fresh machine / fresh
-# distro), transcribed verbatim from TOOLCHAIN.md's PHP section so both
+# distro), transcribed from TOOLCHAIN.md's PHP section so both
 # paths never drift apart. Fedora/dnf-specific, matching this box; substitute
 # package manager for other distros per TOOLCHAIN.md.
 set -euo pipefail
@@ -23,11 +23,8 @@ export PHPENV_ROOT="$HOME/.phpenv"
 if [[ ! -d "$PHPENV_ROOT" ]]; then
 	log "phpenv not found — bootstrapping (see TOOLCHAIN.md)"
 
-	log "PHP build dependencies"
-	sudo dnf install -y git make gcc gcc-c++ binutils glibc-devel autoconf libtool bison re2c automake \
-		libxml2-devel bzip2-devel libcurl-devel libffi-devel gmp-devel libicu-devel openldap-devel \
-		oniguruma-devel openssl-devel readline-devel libsodium-devel libzip-devel libpng-devel \
-		libjpeg-turbo-devel libwebp-devel sqlite-devel libtidy-devel libxslt-devel clang-devel
+	log "Build dependencies (shared dnf list, see lib.sh)"
+	dnf_build_deps
 
 	log "phpenv + php-build"
 	git clone https://github.com/phpenv/phpenv.git "$PHPENV_ROOT"
