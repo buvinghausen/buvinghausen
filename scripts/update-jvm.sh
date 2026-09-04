@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
-# Updates Java (Temurin), Kotlin, and Gradle via SDKMAN.
+# Updates Java (Temurin), GraalVM CE, Kotlin, and Gradle via SDKMAN.
+#
+# GraalVM CE is a second java *version* under the same SDKMAN candidate, kept
+# alongside the Temurin default — never made `current`. `sdk upgrade` can't
+# manage it: it only compares what's installed against the candidate's single
+# remote default (`candidates/default/java` → 25.0.4-tem), so a -graalce build
+# is invisible to it — never offered, never upgraded. The GraalVM step below
+# resolves the newest -graalce in the default's major series from the same
+# `versions/all` endpoint `sdk list` reads and installs it when missing; the
+# prune step then retires the one it superseded (series key 25-graalce).
 # `sdk upgrade` sometimes offers to uninstall what it supersedes, but not
 # reliably — old patch releases accumulate side by side (observed: java
 # 25.0.3-tem still present next to 25.0.4-tem). The prune step below is the
@@ -59,6 +68,26 @@ run_sdk update
 log "Java / Kotlin / Gradle upgrade"
 run_sdk upgrade
 
+# Tie GraalVM CE's major to the Temurin default's major (the LTS SDKMAN picks
+# for a bare `sdk install java`) rather than "newest -graalce overall", so a
+# non-LTS GraalVM (26.x once it exists next to 26.0.2-tem) is never pulled in
+# ahead of the LTS the rest of the JVM stack sits on. SDKMAN_CANDIDATES_API
+# and SDKMAN_PLATFORM are both exported by sdkman-init.sh.
+default_java=$(curl -fsS "$SDKMAN_CANDIDATES_API/candidates/default/java")
+[[ -n "$default_java" ]] || { echo "Could not resolve SDKMAN's default java" >&2; exit 1; }
+graal=$(curl -fsS "$SDKMAN_CANDIDATES_API/candidates/java/$SDKMAN_PLATFORM/versions/all" \
+	| tr ',' '\n' | grep -- "^${default_java%%.*}\..*-graalce\$" | sort -V | tail -1)
+[[ -n "$graal" ]] || { echo "No -graalce build for java ${default_java%%.*} on $SDKMAN_PLATFORM" >&2; exit 1; }
+if [[ ! -d "$SDKMAN_DIR/candidates/java/$graal" ]]; then
+	# `sdk install java <version>` asks "set as default? (Y/n)" whenever a
+	# `current` exists, and an empty answer (EOF on a non-tty stdin) means yes —
+	# so answer explicitly; `current` stays on Temurin.
+	log "GraalVM CE $graal not found — installing alongside $default_java (not made current)"
+	run_sdk install java "$graal" <<<"n"
+else
+	log "GraalVM CE $graal already installed"
+fi
+
 # Series key: major version + vendor suffix when present (25.0.4-tem → 25-tem,
 # gradle 9.6.1 → 9). Installed versions are real directories; `current` is a
 # symlink, which `-type d` (no -L) already excludes.
@@ -88,5 +117,6 @@ for dir in "$SDKMAN_DIR"/candidates/*/; do
 done
 
 java -version
+"$SDKMAN_DIR/candidates/java/$graal/bin/native-image" --version
 kotlin -version
 gradle --version

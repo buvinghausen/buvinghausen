@@ -166,6 +166,28 @@ sdk install kotlin
 sdk update && sdk upgrade
 ```
 
+### GraalVM CE (native-image)
+
+GraalVM Community Edition is a second `java` *version* under the same SDKMAN candidate — installed alongside the Temurin LTS, never made `current`. It's here for `native-image`: ahead-of-time compiling a JVM app to a standalone ELF executable. The `-graalce` identifier is the Community build; `-graal` is Oracle's own GraalVM build, which this setup does not use.
+
+```bash
+sdk install java 25.3.4+1.r25-graalce   # answer "n" to "set as default?" — Temurin stays current
+```
+
+Select it per shell when you want it, or pin it per project:
+
+```bash
+sdk use java 25.3.4+1.r25-graalce        # this shell only; `sdk use java 25.0.4-tem` to go back
+
+echo "java=25.3.4+1.r25-graalce" > .sdkmanrc && sdk env   # per project; `sdk env` re-reads it
+```
+
+`native-image` is in this build's `bin/` directly (there is no `gu` binary in it at all — no separate component install step), and the build below needed nothing beyond the [Base Dependencies](#base-dependencies) list: the resulting executable links against `libc` and `libz` only.
+
+> **Why `sdk upgrade` can't manage this:** `sdk upgrade` compares what's installed against the candidate's single remote default (`25.0.4-tem`), and that's the whole check — a `-graalce` build is never offered, never upgraded, and would sit at the version you first installed forever. `scripts/update-jvm.sh` therefore resolves the newest `-graalce` in the Temurin default's major series itself (from the same `versions/all` API endpoint `sdk list` reads — pinned to the default's major, not "newest overall", so a non-LTS GraalVM never lands ahead of the LTS the rest of the JVM stack runs on), installs it when missing with an explicit `n` piped to the default prompt (an empty answer on a non-tty stdin means *yes*, which would silently flip `current` off Temurin), and lets the existing series-key prune (`25-graalce` competes only with other `-graalce` builds) retire the one it superseded.
+
+> **Verified, 2026-09-04:** `Hello.java` → `javac` → `native-image -o hello Hello` under `25.3.4+1.r25-graalce` on this box: a 5.07 MiB stripped aarch64 PIE ELF, dynamically linked against only `libc`/`libz`, built in 36 s wall (3 min CPU), runs and prints `os.arch` = `aarch64`. Then the script path for real: `sdk uninstall java 25.3.4+1.r25-graalce`, `./update-toolchain.sh jvm` — it resolved the same identifier from the API, reinstalled it, answered the "set as default?" prompt itself, and `current` was still the Temurin symlink (mtime unchanged) afterwards; the rerun on top of that reported "already installed" and changed nothing.
+
 **IntelliJ config:** Settings → Build Tools → Gradle → Gradle JVM → `~/.sdkman/candidates/java/current`
 
 ---
@@ -980,6 +1002,7 @@ go        1.26.5         linux/arm64
 gopls     0.23.0
 dlv       1.27.0
 java      25.0.3         Temurin LTS
+graalvm   25.3.4+1.r25   GraalVM CE (java 25.0.4.1, native-image 25.0.4.1), SDKMAN-managed alongside Temurin — never `current`
 kotlin    2.4.10
 gradle    9.6.1
 python    3.14.5         GIL enabled (standard build; 3.14.5t available via pyenv local/shell for free-threaded testing)
@@ -1016,6 +1039,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`actionlint` added and verified 2026-09-01 — confirmed both ways: a clean exit-0 pass over HyperUuid's four real workflows, and a deliberately broken workflow (bogus `runs-on` label, undefined `github.*` property) that it flagged on both counts with exit 1. `shellcheck` and `pyflakes` went in the same day and are verified live, not merely present: a workflow with an unquoted `$FOO` in a `run:` body and an unused import plus an undefined name in a `shell: python` step produced SC2086 from shellcheck and both pyflakes diagnostics, routed through actionlint's own output.*
 
 *`ruby` grew a second ABI 2026-09-02 — 3.4.10 alongside 4.0.6, because `SkunkWerkx/.github`'s `hyper-build-native.yml` builds the Magnus extension once per Ruby minor and HyperUuid's `ci.yml` asks for `ruby_compat_version: "3.4"` on top of the forge's `4.0` default. `scripts/update-ruby.sh` now keeps the newest patch per kept series (`RUBY_COMPAT_SERIES`, the local twin of that ci.yml input) instead of one Ruby, and the same day's consolidation folded the four per-language dnf prerequisite lists into the one [Base Dependencies](#base-dependencies) list (`dnf_build_deps` in `scripts/lib.sh`, a confirmed no-op on this box — every package was already installed) and the three copies of the GitHub-release-tarball install pattern in `update-tools.sh` into two `lib.sh` helpers (`github_latest_release`, `install_from_tarball` — exercised for real by the `gh` 2.96.0 → 2.99.0 upgrade in the verifying run). See the Ruby section's two-ABI Verified note for the HyperUuid build-and-rspec evidence.*
+*`graalvm` (GraalVM CE via SDKMAN) added to the doc and the `jvm` module 2026-09-04 — it had been installed by hand on 2026-08-27 and was sitting outside the update pass entirely: `sdk upgrade` only ever tracks the Temurin default, so it would never have moved. Verified by a real `native-image` build of a running aarch64 executable and an uninstall-then-`./update-toolchain.sh jvm` round trip that left `current` on Temurin; see the [GraalVM CE](#graalvm-ce-native-image) subsection.*
 *`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
@@ -1029,7 +1053,7 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, plus [GraalVM CE](#graalvm-ce-native-image) resolved against the Temurin default's major since `sdk upgrade` can't see it; patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
 `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` and `wasm` are the two exceptions: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, and `wasm` depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`) — both hard-fail with a pointer back to the relevant section rather than bootstrapping a prerequisite themselves.
 
