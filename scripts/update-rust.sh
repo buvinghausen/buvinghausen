@@ -32,6 +32,9 @@ rustup update
 log "rustup components"
 rustup component add rust-analyzer clippy rustfmt
 
+log "bare-metal target (no_std check: cargo check --no-default-features --target thumbv7em-none-eabi)"
+rustup target add thumbv7em-none-eabi
+
 log "cargo tools"
 cargo install cargo-watch cargo-edit
 

@@ -63,5 +63,12 @@ if [[ -n "$PYTHON_PREV" && "$PYTHON_PREV" != "$PYTHON_NEW_GLOBAL" ]]; then
 	pyenv uninstall -f "$PYTHON_PREV"
 fi
 
+# Build/test/lint tooling for the Python bindings of the Rust-core projects
+# (HyperUuid: pyo3 abi3 extension built with maturin, pytest suite, ruff lint).
+# Installed into the pyenv global build, so this runs on every pass — the
+# uninstall above discards the superseded build's site-packages along with it.
+log "maturin / pytest / ruff"
+pip install --upgrade pip maturin pytest ruff
+
 python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
