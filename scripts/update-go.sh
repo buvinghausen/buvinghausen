@@ -41,6 +41,9 @@ log "gopls / dlv"
 go install golang.org/x/tools/gopls@latest
 go install github.com/go-delve/delve/cmd/dlv@latest
 
+log "revive (linter)"
+go install github.com/mgechev/revive@latest
+
 go version
 gopls version
 dlv version

@@ -42,13 +42,17 @@ if ! command -v swiftly >/dev/null 2>&1; then
 		tar zxf "swiftly-${ARCH}.tar.gz"
 		./swiftly init --assume-yes --quiet-shell-followup --no-modify-profile --platform fedora39
 	)
+fi
 
-	append_bashrc_once "# Swiftly (Swift toolchain manager)" <<EOF
+# Outside the bootstrap block on purpose: swiftly can already be installed (by a
+# hand run of the installer, or an earlier version of this script) without its
+# env line ever reaching ~/.bashrc, leaving swift invisible to new shells.
+# append_bashrc_once is keyed on the marker, so this is a no-op once wired.
+append_bashrc_once "# Swiftly (Swift toolchain manager)" <<EOF
 
 # Swiftly (Swift toolchain manager)
 . "$SWIFTLY_ENV"
 EOF
-fi
 
 source "$SWIFTLY_ENV"
 require_cmd swiftly "swiftly install failed — check the installer output above"

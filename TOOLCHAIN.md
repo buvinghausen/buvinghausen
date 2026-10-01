@@ -115,6 +115,7 @@ Install gopls (language server) and Delve (debugger) for JetBrains/GoLand:
 ```bash
 go install golang.org/x/tools/gopls@latest
 go install github.com/go-delve/delve/cmd/dlv@latest
+go install github.com/mgechev/revive@latest   # linter (HyperUuid's CI lints with it)
 ```
 
 **Updating Go:** Remove the old installation first, then re-run the install block above:
@@ -171,15 +172,15 @@ sdk update && sdk upgrade
 GraalVM Community Edition is a second `java` *version* under the same SDKMAN candidate — installed alongside the Temurin LTS, never made `current`. It's here for `native-image`: ahead-of-time compiling a JVM app to a standalone ELF executable. The `-graalce` identifier is the Community build; `-graal` is Oracle's own GraalVM build, which this setup does not use.
 
 ```bash
-sdk install java 25.3.4+1.r25-graalce   # answer "n" to "set as default?" — Temurin stays current
+sdk install java 25.4.4.1+1-graalce     # answer "n" to "set as default?" — Temurin stays current
 ```
 
 Select it per shell when you want it, or pin it per project:
 
 ```bash
-sdk use java 25.3.4+1.r25-graalce        # this shell only; `sdk use java 25.0.4-tem` to go back
+sdk use java 25.4.4.1+1-graalce          # this shell only; `sdk use java 25.0.4-tem` to go back
 
-echo "java=25.3.4+1.r25-graalce" > .sdkmanrc && sdk env   # per project; `sdk env` re-reads it
+echo "java=25.4.4.1+1-graalce" > .sdkmanrc && sdk env   # per project; `sdk env` re-reads it
 ```
 
 `native-image` is in this build's `bin/` directly (there is no `gu` binary in it at all — no separate component install step), and the build below needed nothing beyond the [Base Dependencies](#base-dependencies) list: the resulting executable links against `libc` and `libz` only.
@@ -187,6 +188,8 @@ echo "java=25.3.4+1.r25-graalce" > .sdkmanrc && sdk env   # per project; `sdk en
 > **Why `sdk upgrade` can't manage this:** `sdk upgrade` compares what's installed against the candidate's single remote default (`25.0.4-tem`), and that's the whole check — a `-graalce` build is never offered, never upgraded, and would sit at the version you first installed forever. `scripts/update-jvm.sh` therefore resolves the newest `-graalce` in the Temurin default's major series itself (from the same `versions/all` API endpoint `sdk list` reads — pinned to the default's major, not "newest overall", so a non-LTS GraalVM never lands ahead of the LTS the rest of the JVM stack runs on), installs it when missing with an explicit `n` piped to the default prompt (an empty answer on a non-tty stdin means *yes*, which would silently flip `current` off Temurin), and lets the existing series-key prune (`25-graalce` competes only with other `-graalce` builds) retire the one it superseded.
 
 > **Verified, 2026-09-04:** `Hello.java` → `javac` → `native-image -o hello Hello` under `25.3.4+1.r25-graalce` on this box: a 5.07 MiB stripped aarch64 PIE ELF, dynamically linked against only `libc`/`libz`, built in 36 s wall (3 min CPU), runs and prints `os.arch` = `aarch64`. Then the script path for real: `sdk uninstall java 25.3.4+1.r25-graalce`, `./update-toolchain.sh jvm` — it resolved the same identifier from the API, reinstalled it, answered the "set as default?" prompt itself, and `current` was still the Temurin symlink (mtime unchanged) afterwards; the rerun on top of that reported "already installed" and changed nothing.
+
+> **Verified on x86_64, 2026-10-01:** the module isn't arch-specific — the API lookup is keyed on `$SDKMAN_PLATFORM` (set by `sdkman-init.sh`), and `versions/all` for both `linuxx64` and `linuxarm64` resolves the same newest Java 25 build, `25.4.4.1+1-graalce` (superseding `25.3.4+1.r25-graalce`, which the API no longer lists). On an x86_64 WSL2 box with only Temurin installed, `./update-toolchain.sh jvm` installed it alongside `25.0.4-tem`, answered the default prompt itself, and left `current` on Temurin; the rerun reported "already installed". `native-image -o hello Hello` under it: a 5.00 MiB stripped x86-64 PIE ELF, dynamically linked against only `libc`/`libm`/`libz`, built in 24 s wall (4 min CPU), runs and prints `os.arch` = `amd64`. `native-image --version` reports `25.0.4.1.1`, GraalVM CE `25.4.4.1.1+1.1` (`jvmci-25.4-b23`).
 
 **IntelliJ config:** Settings → Build Tools → Gradle → Gradle JVM → `~/.sdkman/candidates/java/current`
 
@@ -246,6 +249,14 @@ python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
 ```
 
+Build, test, and lint tooling for Python bindings over a Rust core (HyperUuid: pyo3 abi3 extension via maturin, pytest suite, ruff lint):
+
+```bash
+pip install --upgrade pip maturin pytest ruff
+```
+
+> **Note:** these live in the global pyenv build's site-packages, so re-run the `pip install` after every Python upgrade — `update-python.sh` does, since it uninstalls the superseded build and its packages with it.
+
 > **Note:** The `t` suffix is the free-threaded build. Standard (GIL-enabled) is the current global default since some tools (yt-dlp) don't tolerate the GIL disabled. To test something against free-threading: `pyenv shell ${PYTHON_LATEST}t && export PYTHON_GIL=0` for that shell, or `pyenv local ${PYTHON_LATEST}t` to pin a project directory to it. Revert to free-threaded-by-default globally with `pyenv global ${PYTHON_LATEST}t` and restoring `export PYTHON_GIL=0` in `~/.bashrc`.
 
 > **Updating Python:** `pyenv update` first to get new versions, then re-run the install block. `pyenv latest 3` always resolves the current stable release — when 3.15 ships stable it will naturally pick that up.
@@ -275,6 +286,9 @@ source ~/.bashrc
 
 # Essential components
 rustup component add rust-analyzer clippy rustfmt
+
+# Bare-metal target for no_std checks (cargo check --no-default-features --target thumbv7em-none-eabi)
+rustup target add thumbv7em-none-eabi
 
 # Cargo tools
 cargo install cargo-watch cargo-edit
@@ -1001,10 +1015,10 @@ tsc       7.0.2          (Go-native compiler, GA since 2026-07-08 — no longer 
 go        1.26.5         linux/arm64
 gopls     0.23.0
 dlv       1.27.0
-java      25.0.3         Temurin LTS
-graalvm   25.3.4+1.r25   GraalVM CE (java 25.0.4.1, native-image 25.0.4.1), SDKMAN-managed alongside Temurin — never `current`
-kotlin    2.4.10
-gradle    9.6.1
+java      25.0.4         Temurin LTS
+graalvm   25.4.4.1+1     GraalVM CE (java 25.0.4.1.1, native-image 25.0.4.1.1), SDKMAN-managed alongside Temurin — never `current`
+kotlin    2.4.20
+gradle    9.8.0
 python    3.14.5         GIL enabled (standard build; 3.14.5t available via pyenv local/shell for free-threaded testing)
 rustc     1.97.1         aarch64-unknown-linux-gnu
 cargo     1.97.1
@@ -1040,6 +1054,7 @@ posh-git-sh 1.5.1       ~/code/** only
 
 *`ruby` grew a second ABI 2026-09-02 — 3.4.10 alongside 4.0.6, because `SkunkWerkx/.github`'s `hyper-build-native.yml` builds the Magnus extension once per Ruby minor and HyperUuid's `ci.yml` asks for `ruby_compat_version: "3.4"` on top of the forge's `4.0` default. `scripts/update-ruby.sh` now keeps the newest patch per kept series (`RUBY_COMPAT_SERIES`, the local twin of that ci.yml input) instead of one Ruby, and the same day's consolidation folded the four per-language dnf prerequisite lists into the one [Base Dependencies](#base-dependencies) list (`dnf_build_deps` in `scripts/lib.sh`, a confirmed no-op on this box — every package was already installed) and the three copies of the GitHub-release-tarball install pattern in `update-tools.sh` into two `lib.sh` helpers (`github_latest_release`, `install_from_tarball` — exercised for real by the `gh` 2.96.0 → 2.99.0 upgrade in the verifying run). See the Ruby section's two-ABI Verified note for the HyperUuid build-and-rspec evidence.*
 *`graalvm` (GraalVM CE via SDKMAN) added to the doc and the `jvm` module 2026-09-04 — it had been installed by hand on 2026-08-27 and was sitting outside the update pass entirely: `sdk upgrade` only ever tracks the Temurin default, so it would never have moved. Verified by a real `native-image` build of a running aarch64 executable and an uninstall-then-`./update-toolchain.sh jvm` round trip that left `current` on Temurin; see the [GraalVM CE](#graalvm-ce-native-image) subsection.*
+*`graalvm` bumped to `25.4.4.1+1-graalce` and verified on x86_64 2026-10-01 — the `jvm` module had never run on that box since GraalCE joined it, so only Temurin was present; one `./update-toolchain.sh jvm` run installed it with no script change (the lookup is keyed on `$SDKMAN_PLATFORM`), and a `native-image` build produced a running x86-64 executable. See the x86_64 Verified note in the [GraalVM CE](#graalvm-ce-native-image) subsection. The same run's version output refreshed the `java` (25.0.3 → 25.0.4), `kotlin` (2.4.10 → 2.4.20), and `gradle` (9.6.1 → 9.8.0) rows above.*
 *`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
