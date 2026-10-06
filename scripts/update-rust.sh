@@ -38,6 +38,14 @@ rustup target add thumbv7em-none-eabi
 log "cargo tools"
 cargo install cargo-watch cargo-edit
 
+# samply: the sampling profiler for the native core (and, through it, every
+# language binding that loads it) — records via perf events, opens the result
+# in the Firefox Profiler UI. cargo-semver-checks: the local twin of the Hyper
+# repos' check-semver CI job. Both are `--locked` because that is the install
+# line each project's own README gives.
+log "samply (profiler) / cargo-semver-checks"
+cargo install --locked samply cargo-semver-checks
+
 log "cargo-nextest (prebuilt binary — building from source takes 15+ min, see TOOLCHAIN.md)"
 NEXTEST_PLATFORM=$(uname -m | sed 's/x86_64/linux/;s/aarch64/linux-arm/')
 curl -LsSf "https://get.nexte.st/latest/${NEXTEST_PLATFORM}" | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
@@ -46,3 +54,5 @@ rustc --version
 cargo --version
 rust-analyzer --version
 cargo nextest --version
+samply --version
+cargo semver-checks --version

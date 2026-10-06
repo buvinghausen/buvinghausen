@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Updates Java (Temurin), GraalVM CE, Kotlin, and Gradle via SDKMAN.
+# Updates Java (Temurin), GraalVM CE, Kotlin, and Gradle via SDKMAN, plus
+# async-profiler from its GitHub release tarball.
 #
 # GraalVM CE is a second java *version* under the same SDKMAN candidate, kept
 # alongside the Temurin default — never made `current`. `sdk upgrade` can't
@@ -116,7 +117,29 @@ for dir in "$SDKMAN_DIR"/candidates/*/; do
 	unset newest
 done
 
+# async-profiler: sampling CPU/allocation/lock profiler for the JVM, next to
+# the JFR every JDK here already bundles (`jcmd <pid> JFR.start`, `jfr print`).
+# Not an SDKMAN candidate, so it takes pwsh's shape from update-tools.sh: a
+# multi-file tarball (asprof loads ../lib/libasyncProfiler.so relative to its
+# own resolved path) unpacked under /opt, entry points symlinked onto PATH.
+log "async-profiler"
+ASPROF_LATEST=$(github_latest_release async-profiler/async-profiler)
+ASPROF_CURRENT=$(asprof --version 2>/dev/null | awk '{print $2}' || true)
+if [[ "$ASPROF_CURRENT" == "$ASPROF_LATEST" ]]; then
+	echo "async-profiler already at $ASPROF_CURRENT — skipping"
+else
+	ASPROF_TGZ="async-profiler-${ASPROF_LATEST}-linux-$(arch_x64_arm64).tar.gz"
+	ASPROF_TMP=$(mktemp -d)
+	wget -q -P "$ASPROF_TMP" "https://github.com/async-profiler/async-profiler/releases/download/v${ASPROF_LATEST}/${ASPROF_TGZ}"
+	sudo mkdir -p /opt/async-profiler
+	sudo tar -xzf "$ASPROF_TMP/$ASPROF_TGZ" -C /opt/async-profiler --strip-components=1
+	sudo ln -sf /opt/async-profiler/bin/asprof /usr/local/bin/asprof
+	sudo ln -sf /opt/async-profiler/bin/jfrconv /usr/local/bin/jfrconv
+	rm -rf "$ASPROF_TMP"
+fi
+
 java -version
 "$SDKMAN_DIR/candidates/java/$graal/bin/native-image" --version
+asprof --version
 kotlin -version
 gradle --version

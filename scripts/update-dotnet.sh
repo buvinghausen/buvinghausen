@@ -145,6 +145,21 @@ fi
 log "dotnet new — template updates"
 dotnet new update
 
+# The update loop below only ever touches tools that are already installed,
+# so the diagnostics pair this toolchain expects gets its first install here:
+# dotnet-trace (EventPipe CPU/event traces — .nettrace, convertible to
+# speedscope) and dotnet-counters (live runtime counters: GC, allocation rate,
+# thread pool, exceptions). Formatting needs no tool — `dotnet format` is part
+# of the SDK.
+log "dotnet tool — diagnostics tools (dotnet-trace, dotnet-counters)"
+for id in dotnet-trace dotnet-counters; do
+	if dotnet tool list --global | awk -v id="$id" 'NR > 2 && $1 == id {found = 1} END {exit !found}'; then
+		echo "$id already installed"
+	else
+		dotnet tool install --global "$id"
+	fi
+done
+
 log "dotnet tool — global tool updates"
 # Per-tool instead of `--all`: dotnet-ef rides the 11.0 preview channel
 # alongside the preview SDK, and `--all` hard-fails the moment any installed
@@ -176,3 +191,5 @@ fi
 
 dotnet --list-sdks
 dotnet --list-runtimes
+dotnet-trace --version
+dotnet-counters --version
