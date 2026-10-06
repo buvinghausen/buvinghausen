@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Updates the remaining standalone tools from TOOLCHAIN.md's Full Update
 # Pass: GitHub CLI, actionlint (+ ShellCheck/pyflakes), PowerShell, Mono,
-# Chromium, posh-git-sh. Not one of the six language stacks you asked for
+# Chromium, the cross-language perf tools (perf, hyperfine, valgrind,
+# heaptrack), posh-git-sh. Not one of the six language stacks you asked for
 # individually, but skipping it would leave the orchestrator short of the
 # doc's full pass — drop this module from update-toolchain.sh's MODULES
 # list if you'd rather run it separately.
@@ -61,6 +62,22 @@ sudo dnf install -y mono-complete
 log "Chromium (Playwright MCP browser)"
 sudo dnf install -y chromium
 
+# Language-agnostic performance tooling — everything here works on a process
+# or a binary, not a language, so it lives in this module rather than under any
+# one stack: perf (kernel sampling/counters), hyperfine (command-level A/B
+# timing with warmup and outlier detection), valgrind (callgrind/cachegrind/
+# memcheck for the native core), heaptrack (heap allocation profiling).
+log "perf / hyperfine / valgrind (cross-language perf tooling)"
+sudo dnf install -y perf hyperfine valgrind
+
+# Its own line because of the flag: Fedora ships heaptrack as ONE package with
+# the KDE GUI inside it, so it drags in Qt6 + KDE Frameworks 6 either way (76
+# packages / 262 MiB), and with dnf's default weak dependencies on top that
+# becomes 130 packages / 336 MiB of udisks2, kio-extras, filesystem tools and
+# Qt translations nothing here uses. The flag is scoped to this one install.
+log "heaptrack (heap profiler — no weak deps, see comment above)"
+sudo dnf install -y --setopt=install_weak_deps=False heaptrack
+
 log "posh-git-sh"
 curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master/git-prompt.sh
 
@@ -117,3 +134,7 @@ pyflakes --version
 pwsh --version
 mono --version
 chromium-browser --version
+perf --version
+hyperfine --version
+valgrind --version
+heaptrack --version

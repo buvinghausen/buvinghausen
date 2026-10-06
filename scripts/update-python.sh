@@ -64,11 +64,20 @@ if [[ -n "$PYTHON_PREV" && "$PYTHON_PREV" != "$PYTHON_NEW_GLOBAL" ]]; then
 fi
 
 # Build/test/lint tooling for the Python bindings of the Rust-core projects
-# (HyperUuid: pyo3 abi3 extension built with maturin, pytest suite, ruff lint).
+# (HyperUuid: pyo3 abi3 extension built with maturin, pytest suite, ruff
+# lint + `ruff format`), plus the rest of what those bindings' extras and CI
+# name: mypy (the `test` extra — tests/test_typing.py skips without it),
+# pyperf (the `bench` extra — what bench_*.py are written against), and py-spy
+# (sampling profiler; attaches from outside, no code changes to the target).
 # Installed into the pyenv global build, so this runs on every pass — the
 # uninstall above discards the superseded build's site-packages along with it.
-log "maturin / pytest / ruff"
-pip install --upgrade pip maturin pytest ruff
+log "maturin / pytest / ruff / mypy / pyperf / py-spy"
+pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
 
 python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
+ruff --version
+mypy --version
+# pyperf's CLI has no version flag — ask the module.
+python -c "import pyperf; print('pyperf', pyperf.__version__)"
+py-spy --version

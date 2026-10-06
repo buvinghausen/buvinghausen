@@ -12,10 +12,13 @@ arch_amd64_arm64() { uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/'; }
 arch_x64_arm64() { uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/'; }
 
 # Latest release of a GitHub repo ("owner/name"), tag printed without its
-# leading "v" — the version-diff key for every release-tarball install
-# (gh, actionlint, pwsh) so that pattern lives once.
+# leading "v" — the version-diff key for every release-archive install
+# (gh, actionlint, pwsh, async-profiler, rbspy, SwiftLint) so that pattern
+# lives once. The "v" is optional: SwiftLint tags its releases bare ("0.65.1").
+# Anchored on the key, not on line shape: the API usually pretty-prints one
+# field per line but has been seen returning the whole object on one line.
 github_latest_release() {
-	curl -s "https://api.github.com/repos/$1/releases/latest" | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/'
+	curl -s "https://api.github.com/repos/$1/releases/latest" | grep '"tag_name"' | sed 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/'
 }
 
 # Downloads a release tarball, extracts it into a scratch dir, and

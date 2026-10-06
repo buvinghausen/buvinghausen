@@ -116,7 +116,10 @@ Install gopls (language server) and Delve (debugger) for JetBrains/GoLand:
 go install golang.org/x/tools/gopls@latest
 go install github.com/go-delve/delve/cmd/dlv@latest
 go install github.com/mgechev/revive@latest   # linter (HyperUuid's CI lints with it)
+go install golang.org/x/perf/cmd/benchstat@latest   # significance-tested comparison of two `go test -bench` runs
 ```
+
+> **Note:** formatting and profiling need nothing installed — `gofmt` (the Hyper repos' CI gate is `gofmt -l .`) and `go tool pprof` both ship inside the Go distribution. `benchstat` is the one piece of the benchmark loop that doesn't: `go test -bench=. -count=8 > old.txt`, make the change, `> new.txt`, then `benchstat old.txt new.txt` prints the per-benchmark delta for time, bytes and allocations with a p-value, instead of two columns to eyeball. It has no version flag — `go version -m ~/go/bin/benchstat` reads the module version out of the binary.
 
 **Updating Go:** Remove the old installation first, then re-run the install block above:
 
@@ -191,6 +194,34 @@ echo "java=25.4.4.1+1-graalce" > .sdkmanrc && sdk env   # per project; `sdk env`
 
 > **Verified on x86_64, 2026-10-01:** the module isn't arch-specific — the API lookup is keyed on `$SDKMAN_PLATFORM` (set by `sdkman-init.sh`), and `versions/all` for both `linuxx64` and `linuxarm64` resolves the same newest Java 25 build, `25.4.4.1+1-graalce` (superseding `25.3.4+1.r25-graalce`, which the API no longer lists). On an x86_64 WSL2 box with only Temurin installed, `./update-toolchain.sh jvm` installed it alongside `25.0.4-tem`, answered the default prompt itself, and left `current` on Temurin; the rerun reported "already installed". `native-image -o hello Hello` under it: a 5.00 MiB stripped x86-64 PIE ELF, dynamically linked against only `libc`/`libm`/`libz`, built in 24 s wall (4 min CPU), runs and prints `os.arch` = `amd64`. `native-image --version` reports `25.0.4.1.1`, GraalVM CE `25.4.4.1.1+1.1` (`jvmci-25.4-b23`).
 
+### async-profiler
+
+Sampling CPU/allocation/lock profiler for the JVM, alongside the JFR every JDK here already bundles. Not an SDKMAN candidate, so it installs from its GitHub release tarball in the same shape as [PowerShell](#powershell) — a multi-file tarball unpacked under `/opt` (`asprof` loads `../lib/libasyncProfiler.so` relative to its own resolved path, so the tree has to stay together), entry points symlinked onto `PATH`:
+
+```bash
+AP_VERSION=$(curl -s https://api.github.com/repos/async-profiler/async-profiler/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
+wget https://github.com/async-profiler/async-profiler/releases/download/v${AP_VERSION}/async-profiler-${AP_VERSION}-linux-${ARCH}.tar.gz
+sudo mkdir -p /opt/async-profiler
+sudo tar -xzf async-profiler-${AP_VERSION}-linux-${ARCH}.tar.gz -C /opt/async-profiler --strip-components=1
+sudo ln -sf /opt/async-profiler/bin/asprof /usr/local/bin/asprof
+sudo ln -sf /opt/async-profiler/bin/jfrconv /usr/local/bin/jfrconv
+rm async-profiler-${AP_VERSION}-linux-${ARCH}.tar.gz
+
+asprof --version
+```
+
+```bash
+asprof -d 30 -f flame.html <pid>                          # CPU flame graph of a running JVM
+asprof -d 30 -e cpu -o collapsed -f cpu.collapsed <pid>   # collapsed stacks, for diffing/other viewers
+jcmd <pid> JFR.start duration=30s filename=rec.jfr        # the bundled alternative — no install at all
+jfr summary rec.jfr
+```
+
+> **Verified on x86_64, 2026-10-06:** `./update-toolchain.sh jvm` installed 4.5 through the script; attached to a running `java Busy` (Temurin 25.0.4) with no sudo and no JVM flags, `asprof -d 3 -e cpu -o collapsed` attributed all 300 samples to `Busy.main;Busy.hot` and `-f flame.html` wrote the flame graph, both through the `/usr/local/bin` symlink. On the same pid, `jcmd JFR.start` + `jfr summary` recorded 45 `jdk.ExecutionSample` events — JFR needs nothing beyond the JDK. The release also publishes `linux-arm64`; that path has not been run on the Snapdragon yet.
+
+**Updating async-profiler:** re-run the install block — `tar -xzf` overwrites in place, the symlinks are stable.
+
 **IntelliJ config:** Settings → Build Tools → Gradle → Gradle JVM → `~/.sdkman/candidates/java/current`
 
 ---
@@ -249,11 +280,19 @@ python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
 ```
 
-Build, test, and lint tooling for Python bindings over a Rust core (HyperUuid: pyo3 abi3 extension via maturin, pytest suite, ruff lint):
+Build, test, lint, benchmark, and profiling tooling for Python bindings over a Rust core (HyperUuid: pyo3 abi3 extension via maturin, pytest suite, ruff lint and `ruff format` — the formatter is the same binary), plus the rest of what those bindings' extras and CI name: mypy (the `test` extra — `tests/test_typing.py` skips without it), pyperf (the `bench` extra — what `bench_*.py` is written against), and py-spy (sampling profiler; attaches from outside, no changes to the target):
 
 ```bash
-pip install --upgrade pip maturin pytest ruff
+pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
 ```
+
+```bash
+py-spy record -o prof.svg -- python script.py   # flame graph of a whole run
+py-spy dump --pid <pid>                         # what a live process is doing right now
+python -m pyperf timeit -s 'setup' 'stmt'       # calibrated, multi-process timing
+```
+
+> **Verified on x86_64, 2026-10-06:** on the pyenv 3.14.8 build, `py-spy record` (0.4.2) sampled a child `python` for 3 s — 299 samples, 0 errors, 98% in the hot function by line — and `py-spy dump --pid` attached to an already-running interpreter and printed its stack, both without sudo (`kernel.yama.ptrace_scope` is 0 under WSL2 here). `pyperf timeit` ran its worker processes and reported a mean ± std dev; `mypy` (2.4.0, compiled) flagged a deliberate `arg-type` error. pyperf's CLI has no version flag — `python -c "import pyperf; print(pyperf.__version__)"`.
 
 > **Note:** these live in the global pyenv build's site-packages, so re-run the `pip install` after every Python upgrade — `update-python.sh` does, since it uninstalls the superseded build and its packages with it.
 
@@ -292,6 +331,7 @@ rustup target add thumbv7em-none-eabi
 
 # Cargo tools
 cargo install cargo-watch cargo-edit
+cargo install --locked samply cargo-semver-checks   # profiler; local twin of the Hyper repos' check-semver CI job
 curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
 ```
 
@@ -302,7 +342,13 @@ rustc --version
 cargo --version
 rust-analyzer --version
 cargo nextest --version
+samply --version
+cargo semver-checks --version
 ```
+
+> **Note:** `rustfmt` (a component above) is the formatter — the CI gate is `cargo fmt --check` — and the benchmark harness is criterion, a dev-dependency of each crate (`cargo bench`), so neither needs anything more here. `samply` is the profiler: `samply record ./target/release/<bin>` samples through perf events and opens the result in the Firefox Profiler UI (`--save-only -o prof.json` to just write the profile). Every language binding loads the same Rust core, so it is also the profiler for the native side of any of them. `cargo-semver-checks` is what the `check-semver` CI job runs through its action; locally, `cargo semver-checks --manifest-path rust/Cargo.toml --default-features`. Both install `--locked` because that is the install line each project's README gives. `cargo install` is a no-op when the installed version is current and a from-source rebuild when it isn't: the 0.50.0 → 0.51.0 `cargo-semver-checks` rebuild took 3 m 36 s on the x86_64 box (i9-11900H). Neither build has been timed on the Snapdragon.
+>
+> **Verified on x86_64, 2026-10-06:** both had been `cargo install`ed by hand on that box and sat outside the update pass; `./update-toolchain.sh rust` now owns them (samply 0.13.1 already current, cargo-semver-checks upgraded in that run). `samply record --save-only` wrote a profile for a C binary and for a `swiftc -O -g` Swift binary; `cargo semver-checks` 0.51.0 against HyperUuid's `rust/Cargo.toml` with default features ran 202 checks, 202 pass, against the 0.6.1 baseline from crates.io.
 
 > **Note:** `cargo-nextest` installs from nextest's own prebuilt `aarch64-unknown-linux-gnu` binary (`get.nexte.st/latest/linux-arm`), not `cargo install` — building it from source takes 15+ minutes on Snapdragon (dozens of transitive crates, `--locked` release profile) versus seconds for the tarball. Substitute `linux-arm-musl` in the URL for a fully static binary with no glibc dependency, or `linux-x64`/`linux-x64-musl` on amd64. `cargo-watch`/`cargo-edit` don't ship prebuilt binaries this way, so those stay on `cargo install`.
 
@@ -310,6 +356,7 @@ cargo nextest --version
 
 ```bash
 rustup update
+cargo install --locked samply cargo-semver-checks
 curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
 ```
 
@@ -328,6 +375,14 @@ rustup target add wasm32-wasip1 wasm32-unknown-unknown wasm32-unknown-emscripten
 ```
 
 > **Note:** three targets, three different stories, picked for a reason. `wasm32-wasip1` (WASI) gets a real OS-like syscall surface — `random_get`/`clock_time_get` work out of the box, no extra glue needed — the natural target for proving core logic (RNG, clock reads) survives a WASM sandbox at all. `wasm32-unknown-unknown` has no such syscalls; anything touching randomness or the clock needs a JS-side shim (`wasm-bindgen`, or a custom `getrandom` backend) — the target for idiomatic browser/npm consumption. `wasm32-unknown-emscripten` is what pairs with .NET's Blazor WebAssembly `NativeFileReference` native-interop story below; unlike the other two, its linker is `emcc`, not `rust-lld` — needs the Emscripten SDK (next).
+
+`wasm-pack` — drives the wasm-bindgen test crates for `wasm32-unknown-unknown` (`wasm-pack test --headless --chrome` over `rust/browser-test`, what `SkunkWerkx/.github`'s `hyper-build-wasm.yml` runs), fetching the matching wasm-bindgen test runner and chromedriver itself:
+
+```bash
+cargo install wasm-pack
+```
+
+> **Note:** like `samply` and `cargo-semver-checks` in the [Rust](#rust) section, this had been installed by hand on the x86_64 box (0.15.0) and was outside the update pass until 2026-10-06; `update-wasm.sh` now runs the same `cargo install`, a no-op when current.
 
 Emscripten SDK (`emcc`, the linker `wasm32-unknown-emscripten` needs) — installed via `git clone` per [the project's own recommended method](https://github.com/emscripten-core/emsdk); no distro package, no curl-pipe installer:
 
@@ -387,6 +442,7 @@ Verify:
 
 ```bash
 rustup target list --installed | grep wasm
+wasm-pack --version
 emcc --version
 wasmtime --version
 dotnet workload list
@@ -396,6 +452,7 @@ dotnet workload list
 
 ```bash
 rustup target add wasm32-wasip1 wasm32-unknown-unknown wasm32-unknown-emscripten
+cargo install wasm-pack
 (cd ~/emsdk && git pull && ./emsdk install latest && ./emsdk activate latest)
 curl https://wasmtime.dev/install.sh -sSf | bash
 dotnet workload update
@@ -436,12 +493,32 @@ swift --version
 >
 > **Verified:** ran this exact sequence on this box (Fedora 44 aarch64) — `swiftly init --platform fedora39` installed swiftly 1.1.3 and Swift 6.3.3 (`aarch64-unknown-linux-gnu`) cleanly. Confirmed working end to end, not just `--version`: `swift package init --type executable` + `swift build` compiled and linked a real executable, which ran and printed `Hello, world!`. Also confirmed the `~/.bashrc` wiring works in a fresh non-login interactive shell (`bash -lc 'swift --version'`), not just the shell that ran the installer.
 
+SwiftLint — the Hyper repos' `lint-docs-swift` CI gate (`swiftlint lint --strict Sources`, with a `.swiftlint.yml` that enables only `missing_docs`). The formatter is not a separate install: `swift format` ships in the toolchain, and the CI format gate is `swift format lint --strict --recursive`.
+
+```bash
+SL_VERSION=$(curl -s https://api.github.com/repos/realm/SwiftLint/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+wget https://github.com/realm/SwiftLint/releases/download/${SL_VERSION}/swiftlint_linux_${ARCH}.zip
+unzip swiftlint_linux_${ARCH}.zip swiftlint-static
+sudo install swiftlint-static /usr/local/bin/swiftlint
+rm swiftlint-static swiftlint_linux_${ARCH}.zip
+
+swiftlint version
+swift format --version
+```
+
+> **Note:** the release zip carries two binaries. This installs `swiftlint-static` (as `swiftlint`), the one CI runs: it needs neither a Swift toolchain nor the `libxml2.so.2` soname the dynamically linked `swiftlint` is built against — the reason the forge's CI switched to it when Ubuntu 26.04 moved to `libxml2.so.16`. SwiftLint tags its releases bare (`0.65.1`, no `v`), unlike every other release-archive install in this doc. CI pins 0.65.1; this tracks latest, same as `revive` and `ruff`.
+>
+> **Verified on x86_64, 2026-10-06:** `./update-toolchain.sh swift` installed 0.65.1. From `HyperUuid/swift`, CI's own `swiftlint lint --strict Sources` passed (5 files, 0 violations); against a scratch file with three undocumented `public` declarations under the same `.swiftlint.yml` it reported all three and exited 2. `swift format lint --strict --recursive` (6.3.3, bundled) flagged the same scratch file's indentation and exited 1. The release also publishes `swiftlint_linux_arm64.zip`; not yet run on the Snapdragon.
+
 **Updating Swift:**
 
 ```bash
 swiftly self-update
 swiftly update
 ```
+
+Re-run the SwiftLint block for a new release — `sudo install` overwrites the binary in place.
 
 > **Note:** `swiftly update` with no argument updates the currently in-use toolchain to the latest available and uninstalls the superseded one as part of the same command — no separate prune step, same auto-resolving-over-pinned convention as `rustup update` above.
 
@@ -505,6 +582,27 @@ gem --version
 >
 > **Ruby 4.0 unbundled `fiddle`.** Through 3.x it was a default gem — effectively stdlib, always on the load path. 4.0 made it a bundled gem: still installed next to the interpreter by ruby-build, but no longer implicitly loadable under `bundle exec`, so a gem using it needs an explicit `spec.add_dependency "fiddle"`. HyperUuid hit exactly that `LoadError` on 4.0.6 before adding the line (see its gemspec).
 
+rbspy — sampling profiler for Ruby. A standalone release binary rather than a gem, on purpose: a gem profiler (stackprof, Vernier) lives inside one Ruby's gem directory and would have to be reinstalled into every kept ABI after each rebuild, where one binary outside rbenv profiles whichever interpreter it is pointed at. Formatting and benchmarking are per-repo Gemfile dependencies (`bundle exec rubocop`, layout cops only; `benchmark-ips`), not installs here.
+
+```bash
+RBSPY_VERSION=$(curl -s https://api.github.com/repos/rbspy/rbspy/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
+RBSPY_PKG=rbspy-$(uname -m)-unknown-linux-gnu
+wget https://github.com/rbspy/rbspy/releases/download/v${RBSPY_VERSION}/${RBSPY_PKG}.tar.gz
+tar -xzf ${RBSPY_PKG}.tar.gz
+sudo install ${RBSPY_PKG} /usr/local/bin/rbspy
+rm ${RBSPY_PKG} ${RBSPY_PKG}.tar.gz
+
+rbspy --version
+```
+
+```bash
+rbspy record -- ruby script.rb                                        # flame graph of a whole run
+RBENV_VERSION=${RUBY_COMPAT} rbspy record -- ruby script.rb           # same, under the compat ABI
+rbspy record --format summary --file out.txt --duration 30 --pid <pid>
+```
+
+> **Verified on x86_64, 2026-10-06:** `./update-toolchain.sh ruby` installed 0.53.0. `rbspy record --format summary --duration 3 -- ruby busy.rb` ran under both kept Rubies (3.4.11 and 4.0.7, selected with `RBENV_VERSION`, launched through the rbenv shim) without sudo, and each summary attributed ~98% of samples to the block inside the hot method by file and line. rbspy also drops the raw samples in `~/.cache/rbspy/` on every `record`. The release publishes `aarch64-unknown-linux-gnu` too; not yet run on the Snapdragon.
+
 **Updating Ruby** — the primary tracks the newest stable CRuby automatically; the compat series is a fixed list, and it is the local twin of HyperUuid `ci.yml`'s `ruby_compat_version` input: when 3.4 goes EOL (2028-03-31) and leaves `ci.yml`, drop it here too and the next pass uninstalls it. Within each kept series only the newest patch survives; anything outside the kept set goes:
 
 ```bash
@@ -551,6 +649,8 @@ PHP_BUILD_CONFIGURE_OPTS="--with-ffi" phpenv install ${PHP_LATEST}
 phpenv global ${PHP_LATEST}
 phpenv rehash
 ```
+
+> **What php-build brings along, with nothing to install here:** every PHP it builds also gets **Xdebug** (the definition file pins it — `install_xdebug "3.5.3"` for 8.5.10 — and it lands enabled, `xdebug.mode=develop`, via `etc/conf.d/xdebug.ini`), **Composer**, and **PIE**, all in that version's `bin/`. Xdebug is the profiler: `XDEBUG_MODE=profile php -d xdebug.output_dir=. script.php` writes a `cachegrind.out.<pid>.gz` (confirmed on 8.5.10, 2026-10-06). It is also why every benchmark here runs `XDEBUG_MODE=off` — a loaded Xdebug inflates timings ~14x, uniformly, and looks plausible. Composer is what supplies the rest per repo: `vendor/bin/phpcs` is the format/lint gate and `vendor/bin/phpbench` the benchmark harness, both `require-dev`.
 
 Install `cargo-php`, the build/install CLI for `ext-php-rs` extensions:
 
@@ -606,6 +706,22 @@ source ~/.bashrc
 dotnet --version
 dotnet --list-sdks
 ```
+
+Diagnostics tools — `dotnet-trace` (EventPipe CPU/event traces) and `dotnet-counters` (live runtime counters). Formatting and benchmarking need no install: `dotnet format` is part of the SDK (the CI gate is `dotnet format whitespace <sln> --verify-no-changes`), and BenchmarkDotNet is a package reference in each repo's `*.Benchmarks` project.
+
+```bash
+dotnet tool install --global dotnet-trace
+dotnet tool install --global dotnet-counters
+```
+
+```bash
+dotnet-trace collect -o app.nettrace -- dotnet app.dll        # or: --process-id <pid>
+dotnet-trace convert app.nettrace --format Speedscope         # → app.speedscope.json, opens in speedscope.app
+dotnet-counters monitor --process-id <pid>                    # live GC / allocation rate / CPU / thread pool
+dotnet-counters collect --format csv -o counters.csv -- dotnet app.dll
+```
+
+> **Verified on x86_64, 2026-10-06:** `./update-toolchain.sh dotnet` installed both at 10.0.745401 (first install is the module's own step — its update loop only touches tools already present). Against a `net11.0` console app: `dotnet-trace collect --duration 00:00:00:04` wrote a 407 KB `.nettrace`, `convert --format Speedscope` produced a profile carrying the app's hot method by name, and `dotnet-counters collect --format csv` recorded `dotnet.gc.heap.total_allocated` and `dotnet.process.cpu.time` once a second. The tools themselves ran with the 8.0/9.0/10.0/11.0 runtimes all present.
 
 > **Note:** `--channel LTS` always resolves the latest LTS SDK patch release transparently — no version pinning required. arm64 is auto-detected. The package manager version is intentionally avoided to ensure `dotnet update` picks up patch releases (10.0.100 → 10.0.301+) without distro feed lag.
 
@@ -709,12 +825,64 @@ curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 11.0 
 
 ---
 
+## Formatting / Profiling / Performance
+
+What each toolchain uses for the three, and where it comes from. **Bold** is installed by this doc's modules; everything else is either bundled with the toolchain itself or a per-repo dependency the build tool resolves, so there is nothing to install for it. The formatting and performance columns are not picks — they are what the Hyper repos' CI gates and benchmark suites already run.
+
+| Toolchain | Formatting | Profiling | Performance |
+|---|---|---|---|
+| Node / TypeScript | — (no repo carries a JS/TS formatter config) | `node --cpu-prof` (bundled) | — |
+| [Go](#go) | `gofmt` (bundled) | `go tool pprof` (bundled) | `go test -bench` (bundled) + **benchstat** |
+| [JVM](#java--kotlin-sdkman) | Spotless + palantir-java-format (Gradle plugin, per repo) | JFR (bundled) + **[async-profiler](#async-profiler)** | JMH (Gradle plugin, per repo) |
+| [.NET](#net) | `dotnet format` (SDK) | **dotnet-trace**, **dotnet-counters** | BenchmarkDotNet (package, per repo) |
+| [Rust](#rust) | **rustfmt** (rustup component) | **samply** | criterion (dev-dependency, per repo) |
+| [WASM](#webassembly-wasm) | — | — | — |
+| [Swift](#swift) | `swift format` (bundled) + **SwiftLint** (doc-comment lint gate) | **samply** / **perf** — a Swift executable is a native ELF | package-benchmark (SwiftPM, per repo) |
+| [Ruby](#ruby) | rubocop (Gemfile, per repo) | **rbspy** | benchmark-ips (Gemfile, per repo) |
+| [PHP](#php) | phpcs (Composer, per repo) | Xdebug (comes with php-build) | phpbench (Composer, per repo) — `XDEBUG_MODE=off` |
+| [Python](#python) | **ruff** (`ruff format`) | **py-spy** | **pyperf** |
+| any process | — | **perf**, **valgrind**, **heaptrack** | **hyperfine** |
+
+The last row is the language-agnostic set — it works on a process or a binary, not a language, so it lives in the `tools` module rather than under any one stack:
+
+```bash
+sudo dnf install -y perf hyperfine valgrind
+sudo dnf install -y --setopt=install_weak_deps=False heaptrack
+
+perf --version
+hyperfine --version
+valgrind --version
+heaptrack --version
+```
+
+> **Why heaptrack gets its own line and a flag:** Fedora ships it as a single package with the KDE GUI (`heaptrack_gui`) inside, so Qt6 and KDE Frameworks 6 come with it no matter what — 76 packages, 262 MiB. With dnf's default weak dependencies on top it is 130 packages, 336 MiB, the difference being udisks2, kio-extras, a set of filesystem tools and the Qt translations, none of which anything here uses. `install_weak_deps=False` is scoped to that one install; every other dnf line in this doc keeps the default.
+
+```bash
+perf stat -- ./bin                         # counters: cycles, instructions, branch/cache misses
+perf record -g -- ./bin && perf report     # sampled call graph
+hyperfine --warmup 3 'cmd-a' 'cmd-b'       # command-level A/B timing, mean ± σ and the ratio
+valgrind --tool=callgrind ./bin            # exact instruction counts per function (callgrind_annotate)
+valgrind --leak-check=full ./bin           # memcheck
+heaptrack --record-only -o heap ./bin      # who allocated what → heap.gz; then heaptrack_print heap.gz
+heaptrack -o heap ./bin                    # same, but opens heaptrack_gui on the result when it finishes
+```
+
+> **Verified on x86_64, 2026-10-06** (`./update-toolchain.sh tools`: perf 7.2.8, hyperfine 1.20.0, valgrind 3.27.1), against one small C workload: `perf stat` returned real **hardware** counters (`cycles`, `instructions`, `branch-misses`, `cache-misses`) under the WSL2 6.18 kernel — not just software clocks — and `perf record -g` / `perf report` put 98% in the hot function with its call chain (`kernel.perf_event_paranoid` is 1 here, no sudo needed). `hyperfine` measured a 2x workload as 1.98 ± 0.15x slower. `valgrind` memcheck found the deliberate 64-byte leak at its `malloc` line and honored `--error-exitcode`; callgrind attributed 99.04% of instructions to the hot function. The bundled cells were checked the same day rather than assumed: `node --cpu-prof` wrote a `.cpuprofile` naming the hot function, `go tool pprof -top` read a `go test -cpuprofile` capture, `perf` resolved a `swiftc -O -g` binary's hot symbol at 99%.
+>
+> `heaptrack` 1.5.0 went in through the same module (76 packages, 262 MiB, matching the dry run). `heaptrack --record-only` wrote `heap.gz` and `heaptrack_print` named the workload's one `malloc` by source line. Without `--record-only` the wrapper script opens `heaptrack_gui` on the result as soon as the run ends, and **blocks until that window is closed** — fine at a terminal (the GUI did come up through WSLg), a hang in anything unattended; found by having a scripted run stall on exactly that.
+>
+> **Not yet run on the Snapdragon.** Hardware counters in particular are a property of what the hypervisor exposes to the WSL2 kernel on that CPU, so the `perf stat` result above is an x86_64 finding, not a claim about arm64. The forge README's note that the arm64 WSL2 clock defeats the vDSO (~1µs per wall-clock read) applies to any timing done there.
+
+> **Benchmarking rules that travel with these tools** (from `SkunkWerkx/.github`'s README, where they were learned): `XDEBUG_MODE=off` for PHP; never run benchmarks concurrently with builds or with each other; name the machine in every table.
+
+---
+
 ## GitHub CLI
 
 Auto-detects architecture at install time:
 
 ```bash
-GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz
 tar -xzf gh_${GH_VERSION}_linux_${ARCH}.tar.gz
@@ -740,7 +908,7 @@ gh auth login
 Static checker for GitHub Actions workflow files — catches YAML/`workflow` schema errors, bad `runs-on` labels, invalid `${{ }}` expressions and their type errors, unknown contexts, and shell mistakes in `run:` blocks, all before you push and burn a CI run finding out. Same release-tarball pattern as `gh`, auto-detecting architecture:
 
 ```bash
-AL_VERSION=$(curl -s https://api.github.com/repos/rhysd/actionlint/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+AL_VERSION=$(curl -s https://api.github.com/repos/rhysd/actionlint/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 wget https://github.com/rhysd/actionlint/releases/download/v${AL_VERSION}/actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz
 tar -xzf actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz actionlint
@@ -783,7 +951,7 @@ pyflakes --version
 Microsoft's RHEL/CentOS repos only ship x86_64 RPMs — no aarch64 packages. Install from the GitHub releases tarball instead, which ships arm64 and amd64 binaries:
 
 ```bash
-PS_VERSION=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"v\([^"]*\)".*/\1/')
+PS_VERSION=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
 wget https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 sudo mkdir -p /opt/microsoft/powershell/7
@@ -1015,22 +1183,34 @@ tsc       7.0.2          (Go-native compiler, GA since 2026-07-08 — no longer 
 go        1.26.5         linux/arm64
 gopls     0.23.0
 dlv       1.27.0
+benchstat v0.0.0-20260929162123-406019bb8b68   golang.org/x/perf, `go test -bench` comparison (x86_64, 2026-10-06)
 java      25.0.4         Temurin LTS
 graalvm   25.4.4.1+1     GraalVM CE (java 25.0.4.1.1, native-image 25.0.4.1.1), SDKMAN-managed alongside Temurin — never `current`
+async-profiler 4.5      /opt/async-profiler, asprof + jfrconv symlinked into /usr/local/bin (x86_64, 2026-10-06)
 kotlin    2.4.20
 gradle    9.8.0
 python    3.14.5         GIL enabled (standard build; 3.14.5t available via pyenv local/shell for free-threaded testing)
+mypy      2.4.0          pip, pyenv global build — the bindings' `test` extra (x86_64, 2026-10-06)
+pyperf    2.10.0         pip, pyenv global build — the bindings' `bench` extra (x86_64, 2026-10-06)
+py-spy    0.4.2          pip, pyenv global build — sampling profiler (x86_64, 2026-10-06)
 rustc     1.97.1         aarch64-unknown-linux-gnu
 cargo     1.97.1
 nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-installed
+samply    0.13.1          cargo install --locked — profiler for the native core (x86_64, 2026-10-06)
+cargo-semver-checks 0.51.0  cargo install --locked — local twin of the check-semver CI job (x86_64, 2026-10-06)
+wasm-pack 0.15.0          cargo install — wasm-bindgen test runner, `wasm` module (x86_64, 2026-10-06)
 swiftly   1.1.3           toolchain manager
 swift     6.3.3           aarch64-unknown-linux-gnu (via swiftly --platform fedora39, see Swift section)
+swiftlint 0.65.1          swiftlint-static from the release zip, installed as /usr/local/bin/swiftlint (x86_64, 2026-10-06)
 ruby      4.0.6           aarch64-linux, via rbenv/ruby-build, global — primary Magnus ABI + Fiddle suite host
 ruby      3.4.10          compat Magnus ABI (HyperUuid ci.yml ruby_compat_version), RBENV_VERSION-selected
+rbspy     0.53.0          release binary in /usr/local/bin — profiles both Ruby ABIs (x86_64, 2026-10-06)
 php       8.5.9           via phpenv/php-build, built --with-ffi — host for ext-php-rs and FFI extension dev
 cargo-php 0.1.21          ext-php-rs's build/install CLI
 dotnet    10.0.302       (+ 9.0.18, 8.0.29 runtimes for multi-target test execution)
 dotnet-11 11.0.100-preview.6.26359.118   TEMPORARY preview channel (Norse DU work) — see its own section
+dotnet-trace    10.0.745401   global tool — EventPipe traces (x86_64, 2026-10-06)
+dotnet-counters 10.0.745401   global tool — live runtime counters (x86_64, 2026-10-06)
 mono      6.14.1         legacy net472/net462 test execution
 playwright-mcp 0.0.78    @playwright/mcp, via npx, no persistent install
 chromium  150.0.7871.114 dnf-managed, not Playwright-downloaded
@@ -1039,6 +1219,10 @@ actionlint 1.7.12       GitHub Actions workflow linter
 shellcheck 0.11.0       dnf-managed; actionlint's `run:`-body integration
 pyflakes  3.1.0          dnf-managed (python3-pyflakes); actionlint's `python`-step integration
 pwsh      7.6.5
+perf      7.2.8          dnf-managed — hardware counters confirmed under WSL2 on x86_64 (2026-10-06)
+hyperfine 1.20.0         dnf-managed — command-level A/B timing (x86_64, 2026-10-06)
+valgrind  3.27.1         dnf-managed — callgrind / memcheck (x86_64, 2026-10-06)
+heaptrack 1.5.0          dnf-managed, installed without weak deps — heap allocation profiler (x86_64, 2026-10-06)
 claude    2.1.183        native, linux-arm64, auto-updates enabled
 posh-git-sh 1.5.1       ~/code/** only
 ```
@@ -1055,6 +1239,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`ruby` grew a second ABI 2026-09-02 — 3.4.10 alongside 4.0.6, because `SkunkWerkx/.github`'s `hyper-build-native.yml` builds the Magnus extension once per Ruby minor and HyperUuid's `ci.yml` asks for `ruby_compat_version: "3.4"` on top of the forge's `4.0` default. `scripts/update-ruby.sh` now keeps the newest patch per kept series (`RUBY_COMPAT_SERIES`, the local twin of that ci.yml input) instead of one Ruby, and the same day's consolidation folded the four per-language dnf prerequisite lists into the one [Base Dependencies](#base-dependencies) list (`dnf_build_deps` in `scripts/lib.sh`, a confirmed no-op on this box — every package was already installed) and the three copies of the GitHub-release-tarball install pattern in `update-tools.sh` into two `lib.sh` helpers (`github_latest_release`, `install_from_tarball` — exercised for real by the `gh` 2.96.0 → 2.99.0 upgrade in the verifying run). See the Ruby section's two-ABI Verified note for the HyperUuid build-and-rspec evidence.*
 *`graalvm` (GraalVM CE via SDKMAN) added to the doc and the `jvm` module 2026-09-04 — it had been installed by hand on 2026-08-27 and was sitting outside the update pass entirely: `sdk upgrade` only ever tracks the Temurin default, so it would never have moved. Verified by a real `native-image` build of a running aarch64 executable and an uninstall-then-`./update-toolchain.sh jvm` round trip that left `current` on Temurin; see the [GraalVM CE](#graalvm-ce-native-image) subsection.*
 *`graalvm` bumped to `25.4.4.1+1-graalce` and verified on x86_64 2026-10-01 — the `jvm` module had never run on that box since GraalCE joined it, so only Temurin was present; one `./update-toolchain.sh jvm` run installed it with no script change (the lookup is keyed on `$SDKMAN_PLATFORM`), and a `native-image` build produced a running x86-64 executable. See the x86_64 Verified note in the [GraalVM CE](#graalvm-ce-native-image) subsection. The same run's version output refreshed the `java` (25.0.3 → 25.0.4), `kotlin` (2.4.10 → 2.4.20), and `gradle` (9.6.1 → 9.8.0) rows above.*
+*Formatting / profiling / performance tooling added 2026-10-06, on the x86_64 box — see the [matrix](#formatting--profiling--performance). New installs: `benchstat` (`go`), `async-profiler` (`jvm`), `dotnet-trace`/`dotnet-counters` (`dotnet`), `rbspy` (`ruby`), `SwiftLint` (`swift`), `mypy`/`pyperf`/`py-spy` (`python`), `perf`/`hyperfine`/`valgrind`/`heaptrack` (`tools`). Folded into the pass from hand-run installs that had been sitting outside it, the same drift the 2026-09-04 GraalVM entry describes: `samply` and `cargo-semver-checks` (`rust`), `wasm-pack` (`wasm`). Every one was installed by its own module's `./update-toolchain.sh <module>` run and then exercised against a real workload, not just `--version`; the Verified notes in each section carry the receipts. Rows above marked `(x86_64, 2026-10-06)` have **not** been run on the Snapdragon: each release-archive install publishes an arm64 asset and py-spy an aarch64 wheel (checked), but nothing arm64 was executed. `scripts/lib.sh`'s `github_latest_release` changed in the same pass — it now anchors on the `tag_name` key, because SwiftLint tags releases without a `v` and because the API was caught returning the whole release object on one line (for `rhysd/actionlint`), a shape the old line-oriented pattern survived only by accident.*
 *`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
@@ -1068,7 +1253,7 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go`, `jvm` (Java/Kotlin/Gradle, plus [GraalVM CE](#graalvm-ce-native-image) resolved against the Temurin default's major since `sdk upgrade` can't see it; patch-release prune), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust`, `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python`, `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go` (plus gopls, dlv, revive, benchstat), `jvm` (Java/Kotlin/Gradle, plus [GraalVM CE](#graalvm-ce-native-image) resolved against the Temurin default's major since `sdk upgrade` can't see it; patch-release prune; [async-profiler](#async-profiler) from its release tarball), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, first install of `dotnet-trace`/`dotnet-counters`, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust` (rustup, components, cargo tools including `samply` and `cargo-semver-checks`, nextest), `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, `wasm-pack`, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself; SwiftLint from its release zip), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else; `rbspy` from its release tarball), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python` (plus maturin, pytest, ruff, mypy, pyperf, py-spy into the global build), `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, perf/hyperfine/valgrind/heaptrack, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
 `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` and `wasm` are the two exceptions: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, and `wasm` depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`) — both hard-fail with a pointer back to the relevant section rather than bootstrapping a prerequisite themselves.
 

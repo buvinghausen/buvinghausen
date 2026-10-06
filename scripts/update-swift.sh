@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Updates Swift via swiftly: self-updates swiftly, then updates the in-use
-# toolchain to latest. `swiftly update` uninstalls the superseded toolchain
+# toolchain to latest, then SwiftLint from its release zip. `swiftly update` uninstalls the superseded toolchain
 # as part of the same command — no separate prune step needed, unlike the
 # Go/JVM/.NET modules above.
 #
@@ -63,5 +63,26 @@ swiftly self-update --assume-yes
 log "Swift toolchain update (swiftly removes the superseded toolchain automatically)"
 swiftly update --assume-yes
 
+# SwiftLint: the Hyper repos' lint-docs-swift CI gate (`swiftlint lint --strict
+# Sources`). The release zip carries two binaries; this installs
+# `swiftlint-static`, the one CI runs — it needs neither a Swift toolchain nor
+# the libxml2 soname the dynamically linked `swiftlint` is built against. The
+# formatter is not a separate install: `swift format` ships in the toolchain.
+log "SwiftLint"
+SWIFTLINT_LATEST=$(github_latest_release realm/SwiftLint)
+SWIFTLINT_CURRENT=$(swiftlint version 2>/dev/null || true)
+if [[ "$SWIFTLINT_CURRENT" == "$SWIFTLINT_LATEST" ]]; then
+	echo "swiftlint already at $SWIFTLINT_CURRENT — skipping"
+else
+	SWIFTLINT_ZIP="swiftlint_linux_$(arch_amd64_arm64).zip"
+	SWIFTLINT_TMP=$(mktemp -d)
+	wget -q -P "$SWIFTLINT_TMP" "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_LATEST}/${SWIFTLINT_ZIP}"
+	unzip -q "$SWIFTLINT_TMP/$SWIFTLINT_ZIP" swiftlint-static -d "$SWIFTLINT_TMP"
+	sudo install "$SWIFTLINT_TMP/swiftlint-static" /usr/local/bin/swiftlint
+	rm -rf "$SWIFTLINT_TMP"
+fi
+
 swiftly --version
 swift --version
+swift format --version
+swiftlint version

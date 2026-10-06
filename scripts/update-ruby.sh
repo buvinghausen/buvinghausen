@@ -94,7 +94,23 @@ while IFS= read -r v; do
 	rbenv uninstall -f "$v"
 done < <(rbenv versions --bare)
 
+# rbspy: sampling profiler for Ruby. A standalone release binary rather than
+# a gem on purpose — a gem (stackprof, vernier) would have to be reinstalled
+# into every kept Ruby after each rebuild above, where one binary outside
+# rbenv profiles whichever interpreter it is pointed at and survives them all.
+log "rbspy (profiler)"
+RBSPY_LATEST=$(github_latest_release rbspy/rbspy)
+RBSPY_CURRENT=$(rbspy --version 2>/dev/null | awk '{print $2}' || true)
+if [[ "$RBSPY_CURRENT" == "$RBSPY_LATEST" ]]; then
+	echo "rbspy already at $RBSPY_CURRENT — skipping"
+else
+	RBSPY_PKG="rbspy-$(uname -m)-unknown-linux-gnu"
+	install_from_tarball "https://github.com/rbspy/rbspy/releases/download/v${RBSPY_LATEST}/${RBSPY_PKG}.tar.gz" \
+		"$RBSPY_PKG" /usr/local/bin/rbspy
+fi
+
 for v in "${RUBY_KEEP[@]}"; do
 	RBENV_VERSION="$v" ruby --version
 done
 gem --version
+rbspy --version

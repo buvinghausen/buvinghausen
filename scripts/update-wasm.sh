@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Updates the cross-cutting WASM toolchain used by multiple language stacks:
 # Rust's wasm32-wasip1/wasm32-unknown-unknown/wasm32-unknown-emscripten targets,
-# the Emscripten SDK (emcc — the linker wasm32-unknown-emscripten needs, since
+# wasm-pack (the wasm-bindgen test runner for wasm32-unknown-unknown), the
+# Emscripten SDK (emcc — the linker wasm32-unknown-emscripten needs, since
 # unlike the other two targets it doesn't use rust-lld), wasmtime (a standalone
 # WASI runtime for testing wasm32-wasip1 binaries without a browser/Node in the
 # loop), and .NET's wasm-tools workload (Blazor WebAssembly + native interop via
@@ -18,6 +19,12 @@ require_cmd dotnet "dotnet not found — run the dotnet module first (see TOOLCH
 
 log "Rust wasm targets"
 rustup target add wasm32-wasip1 wasm32-unknown-unknown wasm32-unknown-emscripten
+
+# wasm-pack drives the wasm-bindgen test crates (`wasm-pack test --headless
+# --chrome` over rust/browser-test — what hyper-build-wasm.yml runs), fetching
+# the matching wasm-bindgen test runner and chromedriver itself.
+log "wasm-pack"
+cargo install wasm-pack
 
 log "Emscripten SDK"
 if [[ ! -d "$HOME/emsdk" ]]; then
@@ -69,6 +76,7 @@ for sdk_pack in "$DOTNET_ROOT/packs"/Microsoft.NET.Runtime.Emscripten.*.Sdk.*; d
 done
 
 rustup target list --installed | grep wasm
+wasm-pack --version
 emcc --version
 wasmtime --version
 dotnet workload list
