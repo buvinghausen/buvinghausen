@@ -1174,6 +1174,75 @@ curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master
 
 ---
 
+## Dell XPS-15-9510 (CUDA + llama.cpp)
+
+Machine-specific: everything in this section applies only to the Dell XPS-15-9510 and is **not** part of `./update-toolchain.sh` — no module installs or updates any of it.
+
+**Hardware, as WSL2 sees it:** Intel Core i9-11900H (8 cores / 16 threads; AVX2, AVX-512 F/BW/VL, AVX-512 VNNI), NVIDIA GeForce RTX 3050 Ti Laptop GPU (compute capability 8.6, 4 GiB VRAM, ~3.3 GiB free at idle), and the 40 GB / 12 processors / 8 GB swap that `.wslconfig` hands the distro.
+
+### CUDA toolkit
+
+The GPU driver lives on Windows; WSL2 exposes it through `/usr/lib/wsl/lib` (`libcuda.so`, `nvidia-smi`). Inside the distro you install the **toolkit only, never a driver package** — NVIDIA's CUDA-on-WSL guide says the same: no Linux display driver in WSL2, and install the `cuda-toolkit` package rather than the `cuda`/`cuda-drivers` meta-packages, which pull a driver. Confirmed after the install below: `rpm -qa` shows no `nvidia-driver`/`libnvidia`/`xorg-x11-drv-nvidia` packages.
+
+Match the toolkit's minor version to the `CUDA UMD Version` that `nvidia-smi` reports (13.3 at the time of writing). The repo also carries a newer toolkit (13.4.x), which would only run via minor-version compatibility against an older driver — not worth it.
+
+```bash
+nvidia-smi | head -4                     # read "CUDA UMD Version"
+sudo dnf config-manager addrepo --from-repofile=https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/cuda-fedora44.repo
+sudo dnf install -y cuda-toolkit-13-3 cmake gcc15 gcc15-c++
+```
+
+The toolkit installs to `/usr/local/cuda-13.3` (with `/usr/local/cuda` and `/usr/local/cuda-13` symlinks) and is **not** put on `PATH` — the build below references `nvcc` by absolute path.
+
+> **Gotcha — host compiler:** `nvcc` 13.3 rejects GCC newer than 15 (`crt/host_config.h`: `#if __GNUC__ > 15`), and Fedora 44's default `gcc` is 16. Fedora ships `gcc15`/`gcc15-c++` as compat packages (`/usr/bin/gcc-15`, `/usr/bin/g++-15`); point nvcc at them with `-ccbin g++-15` or, under CMake, `-DCMAKE_CUDA_HOST_COMPILER=g++-15`. No `-allow-unsupported-compiler`.
+
+### llama.cpp
+
+Built from source into `~/code/ggml-org/llama.cpp` — CUDA for sm_86, plus `-march=native` on the CPU backend so the AVX-512 paths are compiled in:
+
+```bash
+git clone --depth 1 https://github.com/ggml-org/llama.cpp ~/code/ggml-org/llama.cpp
+L=~/code/ggml-org/llama.cpp
+cmake -S $L -B $L/build -G Ninja \
+  -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86 \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-13.3/bin/nvcc \
+  -DCMAKE_CUDA_HOST_COMPILER=g++-15 \
+  -DGGML_NATIVE=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build $L/build -j 12 --target llama-server llama-cli llama-bench
+
+$L/build/bin/llama-cli --list-devices    # expect CUDA0: NVIDIA GeForce RTX 3050 Ti Laptop GPU
+```
+
+### Model: Qwen3-30B-A3B-Instruct-2507 (Q4_K_M)
+
+4 GiB of VRAM holds only a ~4B dense model at Q4 with little room left for KV cache. The better fit for this box is a mixture-of-experts model whose ~3B active parameters per token make CPU-side expert evaluation fast enough: attention and KV cache on the GPU, expert tensors in system RAM. Qwen3-30B-A3B at Q4_K_M is 18.56 GB, which fits in the 40 GB WSL allocation with plenty to spare.
+
+```bash
+mkdir -p ~/models
+curl -L --fail -o ~/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf \
+  https://huggingface.co/unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF/resolve/main/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf
+sha256sum ~/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf
+# 6c997b8af17debdfb01d890214400ccbab00db6acc0ba8da5de1cc906c4774d0 (the file's LFS oid on Hugging Face)
+```
+
+Serve it (OpenAI-compatible API at `http://localhost:8080/v1`, web UI at `http://localhost:8080`):
+
+```bash
+~/code/ggml-org/llama.cpp/build/bin/llama-server \
+  -m ~/models/Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf \
+  -ngl 99 -ot exps=CPU -t 6 -fa on -c 16384 --port 8080
+```
+
+- `-ngl 99 -ot exps=CPU` — every layer on the GPU *except* the MoE expert tensors, which the override pins to CPU.
+- `-t 6` — measured faster than `-t 12` (below); the 12 WSL processors are hyperthreads over 8 physical cores.
+- **Don't** spend the spare VRAM on experts (`--n-cpu-moe` < 48): it measured no faster, and at `--n-cpu-moe 40` prompt processing collapsed to ~61 t/s — consistent with the Windows driver spilling VRAM into shared system memory, though that cause wasn't confirmed.
+
+> **Verified, 2026-10-08:** llama.cpp `71ad059`, CUDA 13.3.73 with GCC 15.3.1 as host compiler. A standalone `nvcc -ccbin g++-15 -arch=sm_86` test kernel wrote `42` into device memory and copied it back with `no error`. `llama-bench` (pp512 / tg128, `-fa 1`, `-ngl 99 -ot exps=CPU`): `-t 6` 285.99 ± 10.53 / 13.10 ± 1.50 t/s; `-t 12` 241.52 ± 14.77 / 12.45 ± 0.61 t/s. Throughput degraded across back-to-back runs — a later 5-rep rerun of the same `-t 6` config measured 196.28 ± 28.20 / 8.01 ± 3.14 t/s — so treat any single number as noisy; sustained-load throttling is the suspected cause but CPU thermals aren't visible from inside WSL, so it's unverified. End to end through `llama-server`: a real `/v1/chat/completions` request returned a correct answer, generating at 18.50 t/s (40 tokens), with 2,683 MiB VRAM in use.
+
+**Updating:** `git -C ~/code/ggml-org/llama.cpp pull` and re-run the `cmake` configure + build lines. If a Windows driver update raises `nvidia-smi`'s `CUDA UMD Version`, install the matching `cuda-toolkit-13-N`, `dnf remove` the old one, swap the `cuda-13.3` path in the configure line, and re-check `crt/host_config.h` for the newest GCC that toolkit accepts.
+
+---
+
 ## Verified Environment
 
 ```
