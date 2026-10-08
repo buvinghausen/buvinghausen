@@ -460,6 +460,78 @@ dotnet workload update
 
 ---
 
+## Android (NDK)
+
+The second cross-cutting compile target after [WASM](#webassembly-wasm): a Hyper* core built as an Android shared library. What CI does for Android is a lint — HyperUuid's `lint-rust` job runs `cargo clippy --target aarch64-linux-android -- -D warnings` because `entropy.rs` compiles a ChaCha20-for-batches path there that nothing else exercises — and clippy never links, so a rustup target alone covers it. Actually *building* the cdylib for Android needs a linker and sysroot for the target, and that is the NDK. Depends on `rust` already being installed (runs after it in `MODULES`).
+
+**x86_64 only.** Google ships NDK host builds for Linux x86_64, macOS and Windows and nothing else — [the downloads page](https://developer.android.com/ndk/downloads) lists exactly one Linux package, `android-ndk-<release>-linux.zip`, and there is no linux-aarch64 one. On the Snapdragon box `update-android.sh` prints `SKIPPED: the Android NDK has no aarch64 Linux host build` and exits 0 so the full pass carries on; the Android targets and `cargo-ndk` below are not installed there either, since without the NDK they have nothing to link against. Anything Android is vetted on the XPS.
+
+The NDK itself — the release zip straight from `dl.google.com`, not `sdkmanager`: `sdkmanager` needs the whole command-line-tools package and a JDK to download one zip, and nothing here needs the rest of the Android SDK (no platforms, build-tools or emulator — the NDK is the linker and sysroot, which is all a cdylib build needs). Unpacked under `/opt` like pwsh and async-profiler, with a version-free `/opt/android-ndk` symlink as the stable path:
+
+```bash
+NDK=r30   # update-android.sh resolves this from android/ndk's GitHub releases — see note
+wget -q https://dl.google.com/android/repository/android-ndk-${NDK}-linux.zip
+sudo unzip -q android-ndk-${NDK}-linux.zip -d /opt    # lands at /opt/android-ndk-r30
+sudo ln -sfn /opt/android-ndk-${NDK} /opt/android-ndk
+
+cat >> ~/.bashrc << 'EOF'
+
+# Android NDK
+export ANDROID_NDK_HOME=/opt/android-ndk
+EOF
+
+source ~/.bashrc
+```
+
+> **Note:** the version comes from the [android/ndk](https://github.com/android/ndk/releases) GitHub releases, which carry every NDK release with betas/rcs flagged prerelease — but not through `lib.sh`'s `github_latest_release`. GitHub's "latest" is the most recently *created* stable release, and NDK point releases of an older line land after newer majors (r27d was published 2025-07-15, a week after r28c), so "latest" can walk backwards onto an LTS point release. `update-android.sh` reads the release list instead: stable tags only, highest by `sort -V` (r28c < r29 < r30). The zip is ~700 MB and unpacks to 2.3 GB. `source.properties` inside carries the `ndkVersion` form (`Pkg.Revision = 30.0.16248370`); the script keys its already-current check on the symlink's target name, which is the release form.
+>
+> Nothing from the NDK goes on `PATH` on purpose: its `toolchains/llvm/prebuilt/linux-x86_64/bin` carries its own `clang`, `lld` and `llvm-*` that would shadow the Fedora ones. `cargo-ndk` finds it through `ANDROID_NDK_HOME`; inspect outputs by path (`$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf`).
+
+Rust Android targets — `aarch64-linux-android` is every real device and the one CI lints; `x86_64-linux-android` is the emulator's ABI:
+
+```bash
+rustup target add aarch64-linux-android x86_64-linux-android
+```
+
+> **Note:** both had been `rustup target add`ed by hand on the x86_64 box (alongside a dozen other cross targets that remain outside the pass) and sat outside it until 2026-10-08, the same drift as GraalVM and `samply` before them.
+
+`cargo-ndk` — points cargo's linker and cc-rs's `CC`/`AR` at the NDK's per-target, per-API-level clang wrappers (`aarch64-linux-android21-clang` and friends) for the ABI asked for, so no per-target `linker =` lines in any `.cargo/config.toml`:
+
+```bash
+cargo install cargo-ndk
+```
+
+Usage — `-t` takes an Android ABI name or a Rust triple, everything after it is the cargo invocation, so the Hyper repos' `cargo cdylib` alias passes straight through:
+
+```bash
+cd ~/code/SkunkWerkx/HyperUuid/rust
+cargo ndk -t arm64-v8a cdylib          # → target/aarch64-linux-android/release/libhyperuuid.so
+cargo ndk -t x86_64 cdylib             # → target/x86_64-linux-android/release/libhyperuuid.so
+cargo ndk -t arm64-v8a -o jniLibs cdylib   # -o additionally copies into jniLibs/<abi>/ for an APK
+```
+
+`--platform` (API level) defaults to 21, which is also NDK r30's own minimum (`meta/platforms.json`: min 21, max 37) and Rust's floor for the Android targets — nothing to set unless a build needs a newer `libc.so` symbol.
+
+Verify:
+
+```bash
+grep Pkg.Revision $ANDROID_NDK_HOME/source.properties
+$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --version
+rustup target list --installed | grep android
+cargo ndk --version
+```
+
+> **Verified on x86_64, 2026-10-08:** `./update-toolchain.sh android` installed r30 (clang 21.0.0, `Pkg.Revision = 30.0.16248370`) in 49 s wall; a second run was a clean no-op (`NDK already at r30 — skipping`, cargo-ndk `already installed`). Against HyperUuid's real `rust/` crate at `d32eb49`: `cargo ndk -t arm64-v8a cdylib` and `cargo ndk -t x86_64 cdylib` both linked, producing 20,224-byte (AArch64) and 24,296-byte (X86-64) `libhyperuuid.so` files whose only `NEEDED` is `libc.so` (Bionic — no `libgcc`, no `libc++`), each exporting the same 18 `uuid_*`/`hyperuuid_*` symbols, `hyperuuid_version`/`uuid_new_v4`/`uuid_new_v7`/`uuid_new_v7_batch` among them — the symbol set the iOS smoke test in `ci.yml` greps for. The CI lint line (`cargo clippy --target aarch64-linux-android -- -D warnings`) passes clean. Not run on a device or emulator: the toolchain covers compile+link, and there is no Android SDK or emulator on this machine.
+
+**Updating:**
+
+```bash
+./update-toolchain.sh android     # resolves the newest stable NDK, swaps the /opt symlink, removes the superseded unpack
+cargo install cargo-ndk
+```
+
+---
+
 ## Swift
 
 Build dependencies are in [Base Dependencies](#base-dependencies) (the swiftly group). Install Swiftly, the official Swift toolchain manager — same role here as fnm/pyenv/rustup/SDKMAN play for their languages above:
@@ -1268,6 +1340,8 @@ nextest   0.9.140         prebuilt aarch64-unknown-linux-gnu binary, not cargo-i
 samply    0.13.1          cargo install --locked — profiler for the native core (x86_64, 2026-10-06)
 cargo-semver-checks 0.51.0  cargo install --locked — local twin of the check-semver CI job (x86_64, 2026-10-06)
 wasm-pack 0.15.0          cargo install — wasm-bindgen test runner, `wasm` module (x86_64, 2026-10-06)
+android-ndk r30           30.0.16248370, clang 21.0.0 — /opt/android-ndk symlink, ANDROID_NDK_HOME; x86_64 host only, `android` module (x86_64, 2026-10-08)
+cargo-ndk 4.1.2           cargo install — NDK linker/sysroot wiring for aarch64-/x86_64-linux-android (x86_64, 2026-10-08)
 swiftly   1.1.3           toolchain manager
 swift     6.3.3           aarch64-unknown-linux-gnu (via swiftly --platform fedora39, see Swift section)
 swiftlint 0.65.1          swiftlint-static from the release zip, installed as /usr/local/bin/swiftlint (x86_64, 2026-10-06)
@@ -1309,6 +1383,7 @@ posh-git-sh 1.5.1       ~/code/** only
 *`graalvm` (GraalVM CE via SDKMAN) added to the doc and the `jvm` module 2026-09-04 — it had been installed by hand on 2026-08-27 and was sitting outside the update pass entirely: `sdk upgrade` only ever tracks the Temurin default, so it would never have moved. Verified by a real `native-image` build of a running aarch64 executable and an uninstall-then-`./update-toolchain.sh jvm` round trip that left `current` on Temurin; see the [GraalVM CE](#graalvm-ce-native-image) subsection.*
 *`graalvm` bumped to `25.4.4.1+1-graalce` and verified on x86_64 2026-10-01 — the `jvm` module had never run on that box since GraalCE joined it, so only Temurin was present; one `./update-toolchain.sh jvm` run installed it with no script change (the lookup is keyed on `$SDKMAN_PLATFORM`), and a `native-image` build produced a running x86-64 executable. See the x86_64 Verified note in the [GraalVM CE](#graalvm-ce-native-image) subsection. The same run's version output refreshed the `java` (25.0.3 → 25.0.4), `kotlin` (2.4.10 → 2.4.20), and `gradle` (9.6.1 → 9.8.0) rows above.*
 *Formatting / profiling / performance tooling added 2026-10-06, on the x86_64 box — see the [matrix](#formatting--profiling--performance). New installs: `benchstat` (`go`), `async-profiler` (`jvm`), `dotnet-trace`/`dotnet-counters` (`dotnet`), `rbspy` (`ruby`), `SwiftLint` (`swift`), `mypy`/`pyperf`/`py-spy` (`python`), `perf`/`hyperfine`/`valgrind`/`heaptrack` (`tools`). Folded into the pass from hand-run installs that had been sitting outside it, the same drift the 2026-09-04 GraalVM entry describes: `samply` and `cargo-semver-checks` (`rust`), `wasm-pack` (`wasm`). Every one was installed by its own module's `./update-toolchain.sh <module>` run and then exercised against a real workload, not just `--version`; the Verified notes in each section carry the receipts. Rows above marked `(x86_64, 2026-10-06)` have **not** been run on the Snapdragon: each release-archive install publishes an arm64 asset and py-spy an aarch64 wheel (checked), but nothing arm64 was executed. `scripts/lib.sh`'s `github_latest_release` changed in the same pass — it now anchors on the `tag_name` key, because SwiftLint tags releases without a `v` and because the API was caught returning the whole release object on one line (for `rhysd/actionlint`), a shape the old line-oriented pattern survived only by accident.*
+*`android` module added 2026-10-08 on the x86_64 box — see [Android (NDK)](#android-ndk). The NDK (r30) from Google's release zip under `/opt`, Rust's two Android targets (already on the box by hand, folded into the pass), and `cargo-ndk`. Verified by linking HyperUuid's real cdylib for both `aarch64-linux-android` and `x86_64-linux-android` through the NDK and inspecting the ELF outputs with the NDK's `llvm-readelf`, plus the CI lint line; the section's Verified note has the receipts. Not runnable on the Snapdragon: Google publishes no linux-aarch64 NDK host build, so there the module is a loud exit-0 skip rather than a failed pass.*
 *`php` rebuilt `--with-ffi` and re-verified 2026-08-27 — HyperUuid's actual Ruby/PHP bindings ended up on the same dlopen-a-shared-`cdylib` architecture as the Go/Swift bindings (Fiddle for Ruby, `FFI` for PHP) rather than the compiled-native-extension path (`rb-sys`/`ext-php-rs`) the 2026-08-26 entry above verified — that path stays documented since it's still a legitimate way to build Rust↔Ruby/PHP native extensions, just not the one this project used. Ruby's `Fiddle` needed no toolchain change (stdlib); PHP's `FFI` extension wasn't in the default `php-build` configure line at all, hence the rebuild.*
 
 ---
@@ -1322,8 +1397,8 @@ Run this periodically to bring the entire toolchain current:
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go` (plus gopls, dlv, revive, benchstat), `jvm` (Java/Kotlin/Gradle, plus [GraalVM CE](#graalvm-ce-native-image) resolved against the Temurin default's major since `sdk upgrade` can't see it; patch-release prune; [async-profiler](#async-profiler) from its release tarball), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, first install of `dotnet-trace`/`dotnet-counters`, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust` (rustup, components, cargo tools including `samply` and `cargo-semver-checks`, nextest), `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, `wasm-pack`, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself; SwiftLint from its release zip), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else; `rbspy` from its release tarball), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python` (plus maturin, pytest, ruff, mypy, pyperf, py-spy into the global build), `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, perf/hyperfine/valgrind/heaptrack, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
+`update-toolchain.sh` is the executable, replay-safe version of this pass — each `scripts/update-*.sh` module is a no-op or clean overwrite when already current, and the `Go`, `jvm`, `.NET`, and `docker` modules additionally remove whatever they're superseding (old `/usr/local/go`; superseded SDKMAN patch releases within each major series; every stale SDK/runtime/pack/manifest-band across all four .NET channels, not just the 11.0 preview one; dangling images and containers pinned to a superseded image) rather than leaving it to accumulate. Modules: `base` (the [Base Dependencies](#base-dependencies) dnf list — the single one every language module's from-source build shares), `node` (npm + TypeScript), `go` (plus gopls, dlv, revive, benchstat), `jvm` (Java/Kotlin/Gradle, plus [GraalVM CE](#graalvm-ce-native-image) resolved against the Temurin default's major since `sdk upgrade` can't see it; patch-release prune; [async-profiler](#async-profiler) from its release tarball), `dotnet` (LTS + 9.0/8.0 runtimes + 11.0 preview, full stale-version prune, first install of `dotnet-trace`/`dotnet-counters`, `dotnet new`/`tool`/`workload` updates — prerelease-versioned tools like `dotnet-ef` track the preview channel until GA outranks it), `rust` (rustup, components, cargo tools including `samply` and `cargo-semver-checks`, nextest), `wasm` ([WebAssembly (WASM)](#webassembly-wasm): Rust's `wasm32-wasip1`/`wasm32-unknown-unknown`/`wasm32-unknown-emscripten` targets, `wasm-pack`, Emscripten SDK, wasmtime, .NET's `wasm-tools` workload), `android` ([Android (NDK)](#android-ndk): the NDK release zip under `/opt` with the superseded unpack removed, Rust's `aarch64-linux-android`/`x86_64-linux-android` targets, `cargo-ndk` — x86_64 host only, a loud exit-0 skip on the Snapdragon), `swift` (swiftly self-update + in-use toolchain update, which prunes the superseded toolchain itself; SwiftLint from its release zip), `ruby` (rbenv/ruby-build, newest patch of the primary series + each `RUBY_COMPAT_SERIES` entry, prunes everything else; `rbspy` from its release tarball), `php` (phpenv/php-build, prunes the superseded PHP build, re-installs `cargo-php` against the new build), `python` (plus maturin, pytest, ruff, mypy, pyperf, py-spy into the global build), `tools` (gh, [actionlint](#actionlint) + ShellCheck/pyflakes, pwsh, Mono, Chromium, perf/hyperfine/valgrind/heaptrack, posh-git-sh), `docker` (image refresh, dangling-image prune, clean-slate container removal). Claude Code isn't a module — it auto-updates itself on the `latest` channel.
 
-`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker` and `wasm` are the two exceptions: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, and `wasm` depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`) — both hard-fail with a pointer back to the relevant section rather than bootstrapping a prerequisite themselves.
+`base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `swift`, `ruby`, `php`, and `python` all bootstrap their own prerequisite when it's missing (fnm, Go itself, SDKMAN, dotnet, rustup, swiftly, rbenv, phpenv, pyenv respectively) rather than hard-failing — a fresh machine with nothing but `git`/`curl` on it runs `./update-toolchain.sh` end to end. `tools` never had a hard-fail prerequisite to begin with (every install there is unconditional or version-diffed). `docker`, `wasm` and `android` are the three exceptions: Docker Desktop's WSL integration is a manual Windows-side toggle (see [Docker](#docker)) that can't be scripted from inside WSL, `wasm` depends on `rust` and `dotnet` already being installed (both run earlier in `MODULES`), and `android` on `rust` — all hard-fail with a pointer back to the relevant section rather than bootstrapping a prerequisite themselves. `android` has one more exit that isn't a failure: on a non-x86_64 host it prints that no NDK host build exists for the architecture and exits 0, so a Snapdragon full pass keeps going (see [Android (NDK)](#android-ndk)).
 
 The command-by-command breakdown for each stack lives in that stack's own section above (e.g. [Go](#go), [.NET](#net)) — treat those as the reference for *what* each step does; `scripts/update-*.sh` is the reference for *exact, current* invocation. If they drift, the scripts win — update the docs above to match rather than editing this block, since this block just points at them.
