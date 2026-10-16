@@ -130,7 +130,7 @@ if [[ "$ASPROF_CURRENT" == "$ASPROF_LATEST" ]]; then
 else
 	ASPROF_TGZ="async-profiler-${ASPROF_LATEST}-linux-$(arch_x64_arm64).tar.gz"
 	ASPROF_TMP=$(mktemp -d)
-	wget -q -P "$ASPROF_TMP" "https://github.com/async-profiler/async-profiler/releases/download/v${ASPROF_LATEST}/${ASPROF_TGZ}"
+	curl -fsSL -o "$ASPROF_TMP/$ASPROF_TGZ" "https://github.com/async-profiler/async-profiler/releases/download/v${ASPROF_LATEST}/${ASPROF_TGZ}"
 	sudo mkdir -p /opt/async-profiler
 	sudo tar -xzf "$ASPROF_TMP/$ASPROF_TGZ" -C /opt/async-profiler --strip-components=1
 	sudo ln -sf /opt/async-profiler/bin/asprof /usr/local/bin/asprof

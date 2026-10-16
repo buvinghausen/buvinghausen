@@ -48,7 +48,7 @@ if [[ "$PS_CURRENT" == "$PS_LATEST" ]]; then
 else
 	ARCH=$(arch_x64_arm64)
 	TMP=$(mktemp -d)
-	wget -q -P "$TMP" "https://github.com/PowerShell/PowerShell/releases/download/v${PS_LATEST}/powershell-${PS_LATEST}-linux-${ARCH}.tar.gz"
+	curl -fsSL -o "$TMP/powershell-${PS_LATEST}-linux-${ARCH}.tar.gz" "https://github.com/PowerShell/PowerShell/releases/download/v${PS_LATEST}/powershell-${PS_LATEST}-linux-${ARCH}.tar.gz"
 	sudo mkdir -p /opt/microsoft/powershell/7
 	sudo tar -xzf "$TMP/powershell-${PS_LATEST}-linux-${ARCH}.tar.gz" -C /opt/microsoft/powershell/7
 	sudo chmod +x /opt/microsoft/powershell/7/pwsh
@@ -67,8 +67,8 @@ sudo dnf install -y chromium
 # one stack: perf (kernel sampling/counters), hyperfine (command-level A/B
 # timing with warmup and outlier detection), valgrind (callgrind/cachegrind/
 # memcheck for the native core), heaptrack (heap allocation profiling).
-log "perf / hyperfine / valgrind (cross-language perf tooling)"
-sudo dnf install -y perf hyperfine valgrind
+log "hyperfine / valgrind (cross-language perf tooling; perf itself is WSL-provided, see TOOLCHAIN.md)"
+sudo dnf install -y hyperfine valgrind
 
 # Its own line because of the flag: Fedora ships heaptrack as ONE package with
 # the KDE GUI inside it, so it drags in Qt6 + KDE Frameworks 6 either way (76

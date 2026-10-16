@@ -63,7 +63,7 @@ else
 	NDK_ZIP="android-ndk-${NDK_LATEST}-linux.zip"
 	NDK_TMP=$(mktemp -d)
 	echo "Downloading $NDK_ZIP (~700 MB)"
-	wget -q -P "$NDK_TMP" "https://dl.google.com/android/repository/${NDK_ZIP}"
+	curl -fsSL -o "$NDK_TMP/$NDK_ZIP" "https://dl.google.com/android/repository/${NDK_ZIP}"
 	# The zip's single top-level directory is android-ndk-<release>, so
 	# extracting straight into /opt lands it at the versioned path.
 	sudo unzip -q "$NDK_TMP/$NDK_ZIP" -d /opt
