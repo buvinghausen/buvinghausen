@@ -34,7 +34,7 @@ else
 	ARCH=$(arch_amd64_arm64)
 	TMP=$(mktemp -d)
 	trap 'rm -rf "$TMP"' EXIT
-	wget -q -P "$TMP" "https://go.dev/dl/${GO_LATEST}.linux-${ARCH}.tar.gz"
+	curl -fsSL -o "$TMP/${GO_LATEST}.linux-${ARCH}.tar.gz" "https://go.dev/dl/${GO_LATEST}.linux-${ARCH}.tar.gz"
 	sudo rm -rf /usr/local/go
 	sudo tar -C /usr/local -xzf "$TMP/${GO_LATEST}.linux-${ARCH}.tar.gz"
 fi
@@ -76,7 +76,7 @@ else
 	log "TinyGo $TINYGO_CURRENT -> $TINYGO_LATEST"
 	ARCH=$(arch_amd64_arm64)
 	TINYGO_TMP=$(mktemp -d)
-	wget -q -P "$TINYGO_TMP" "https://github.com/tinygo-org/tinygo/releases/download/v${TINYGO_LATEST}/tinygo${TINYGO_LATEST}.linux-${ARCH}.tar.gz"
+	curl -fsSL -o "$TINYGO_TMP/tinygo${TINYGO_LATEST}.linux-${ARCH}.tar.gz" "https://github.com/tinygo-org/tinygo/releases/download/v${TINYGO_LATEST}/tinygo${TINYGO_LATEST}.linux-${ARCH}.tar.gz"
 	tar -xzf "$TINYGO_TMP/tinygo${TINYGO_LATEST}.linux-${ARCH}.tar.gz" -C "$TINYGO_TMP"
 	rm -rf "$TINYGO_HOME"
 	mv "$TINYGO_TMP/tinygo" "$TINYGO_HOME"

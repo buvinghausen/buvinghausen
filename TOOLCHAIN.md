@@ -21,7 +21,7 @@ The one `dnf` list every from-source build in this doc draws on. It used to be f
 ```bash
 sudo dnf update -y
 sudo dnf install -y \
-  curl wget git gcc gcc-c++ make patch gawk binutils glibc-devel \
+  curl git gcc gcc-c++ make patch gawk binutils glibc-devel \
   autoconf automake libtool bison re2c \
   openssl-devel zlib-devel zlib-ng-compat-devel bzip2 bzip2-devel xz xz-devel \
   readline-devel libedit-devel ncurses-devel gdbm-devel sqlite sqlite-devel \
@@ -33,13 +33,15 @@ sudo dnf install -y \
 
 Who needs what (every line is the union of these, deduplicated):
 
-- **Everything / cargo builds:** `curl wget git gcc gcc-c++ make patch gawk`.
+- **Everything / cargo builds:** `curl git gcc gcc-c++ make patch gawk`.
 - **pyenv** ([suggested build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)): `zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel`.
 - **ruby-build** ([suggested build environment](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment), Fedora 40+ variant): `autoconf libyaml-devel gdbm-devel ncurses-devel perl-FindBin zlib-ng-compat-devel` on top of the shared compiler/ssl/readline/ffi set. The wiki also lists `rust` (YJIT is compiled at configure time and needs `rustc`); deliberately *not* installed from dnf here — that would be a second Rust on the box next to rustup's, and rustup is the one that stays current. `scripts/update-ruby.sh` sources `~/.cargo/env` before `rbenv install` so ruby-build finds rustup's `rustc` regardless of the caller's `PATH`; the [Rust](#rust) section must be done first (it is, in the Full Update Pass order). The `rust` rpm that the earlier list had pulled in was removed 2026-09-02.
 - **php-build** ([php.watch's compile-from-source guide](https://php.watch/articles/compile-php-fedora-rhel-centos), plus `libtidy-devel`/`libxslt-devel` which that guide omits but the default `./configure` needs — confirmed by running it, see the PHP section's Verified note): `binutils glibc-devel libtool bison re2c automake libxml2-devel libcurl-devel gmp-devel libicu-devel openldap-devel oniguruma-devel libsodium-devel libzip-devel libpng-devel libjpeg-turbo-devel libwebp-devel libtidy-devel libxslt-devel`. `clang-devel` isn't a PHP build dependency — it's there for `bindgen` (used by `ext-php-rs-build` and `rb-sys`) to find `libclang`.
 - **swiftly** (per swift.org's Fedora tarball instructions): `libedit-devel python3-devel zip unzip` on top of `binutils libcurl-devel libicu-devel libuuid-devel libxml2-devel sqlite-devel` shared with the others.
 
 > **Note:** `scripts/update-base.sh` (the `base` module in the [Full Update Pass](#full-update-pass)) runs the `dnf install` line above on every pass — idempotent, fast no-op once installed. It deliberately skips the `dnf update -y` line: a blanket system-wide package upgrade is a much bigger, less predictable action than installing a fixed dependency list, so that stays a manual step you run yourself when you want it.
+
+> **Downloads are `curl`, not `wget`, as of 2026-10-16.** Fedora's `wget` has been wget2 since Fedora 40 ([Wget2asWget](https://fedoraproject.org/wiki/Changes/Wget2asWget)); it arrived here as `wget2-wget` 2.3.0 in the 2026-10-14 `dnf upgrade`, and the first run after it broke on PowerShell with `tar: Cannot open: No such file or directory`. Cause: wget2 treats `-P /abs/dir` as relative to the current directory, so `wget -q -P "$TMP" <url>` exited 0 and left the tarball at `scripts/tmp/tmp.XXXX/...` instead of in `$TMP`. Every scripted download used that idiom (seven call sites: `install_from_tarball` in `lib.sh`, PowerShell, Go, TinyGo, async-profiler, SwiftLint, the Android NDK). They are now `curl -fsSL -o "$dir/<file>" <url>` and the manual blocks in this doc are `curl -fsSLO <url>`: `-f` fails on an HTTP error instead of saving the error page, `-L` follows GitHub's release-asset redirect, `-sS` is quiet except for errors. `curl` was already a base dependency and already what `github_latest_release`, rustup, pyenv, fnm, sdkman, wasmtime and dotnet-install go through, so nothing new is needed on either box.
 
 ---
 
@@ -94,7 +96,7 @@ Auto-detects architecture at install time:
 ```bash
 GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -1)
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://go.dev/dl/${GO_VERSION}.linux-${ARCH}.tar.gz
+curl -fsSLO https://go.dev/dl/${GO_VERSION}.linux-${ARCH}.tar.gz
 sudo tar -C /usr/local -xzf ${GO_VERSION}.linux-${ARCH}.tar.gz
 rm ${GO_VERSION}.linux-${ARCH}.tar.gz
 
@@ -126,7 +128,7 @@ go install golang.org/x/perf/cmd/benchstat@latest   # significance-tested compar
 ```bash
 TINYGO_VERSION=$(curl -s https://api.github.com/repos/tinygo-org/tinygo/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://github.com/tinygo-org/tinygo/releases/download/v${TINYGO_VERSION}/tinygo${TINYGO_VERSION}.linux-${ARCH}.tar.gz
+curl -fsSLO https://github.com/tinygo-org/tinygo/releases/download/v${TINYGO_VERSION}/tinygo${TINYGO_VERSION}.linux-${ARCH}.tar.gz
 tar -xzf tinygo${TINYGO_VERSION}.linux-${ARCH}.tar.gz
 rm -rf ~/.local/tinygo
 mv tinygo ~/.local/tinygo
@@ -224,7 +226,7 @@ Sampling CPU/allocation/lock profiler for the JVM, alongside the JFR every JDK h
 ```bash
 AP_VERSION=$(curl -s https://api.github.com/repos/async-profiler/async-profiler/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
-wget https://github.com/async-profiler/async-profiler/releases/download/v${AP_VERSION}/async-profiler-${AP_VERSION}-linux-${ARCH}.tar.gz
+curl -fsSLO https://github.com/async-profiler/async-profiler/releases/download/v${AP_VERSION}/async-profiler-${AP_VERSION}-linux-${ARCH}.tar.gz
 sudo mkdir -p /opt/async-profiler
 sudo tar -xzf async-profiler-${AP_VERSION}-linux-${ARCH}.tar.gz -C /opt/async-profiler --strip-components=1
 sudo ln -sf /opt/async-profiler/bin/asprof /usr/local/bin/asprof
@@ -493,7 +495,7 @@ The NDK itself — the release zip straight from `dl.google.com`, not `sdkmanage
 
 ```bash
 NDK=r30   # update-android.sh resolves this from android/ndk's GitHub releases — see note
-wget -q https://dl.google.com/android/repository/android-ndk-${NDK}-linux.zip
+curl -fsSLO https://dl.google.com/android/repository/android-ndk-${NDK}-linux.zip
 sudo unzip -q android-ndk-${NDK}-linux.zip -d /opt    # lands at /opt/android-ndk-r30
 sudo ln -sfn /opt/android-ndk-${NDK} /opt/android-ndk
 
@@ -593,7 +595,7 @@ SwiftLint — the Hyper repos' `lint-docs-swift` CI gate (`swiftlint lint --stri
 ```bash
 SL_VERSION=$(curl -s https://api.github.com/repos/realm/SwiftLint/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://github.com/realm/SwiftLint/releases/download/${SL_VERSION}/swiftlint_linux_${ARCH}.zip
+curl -fsSLO https://github.com/realm/SwiftLint/releases/download/${SL_VERSION}/swiftlint_linux_${ARCH}.zip
 unzip swiftlint_linux_${ARCH}.zip swiftlint-static
 sudo install swiftlint-static /usr/local/bin/swiftlint
 rm swiftlint-static swiftlint_linux_${ARCH}.zip
@@ -682,7 +684,7 @@ rbspy — sampling profiler for Ruby. A standalone release binary rather than a 
 ```bash
 RBSPY_VERSION=$(curl -s https://api.github.com/repos/rbspy/rbspy/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 RBSPY_PKG=rbspy-$(uname -m)-unknown-linux-gnu
-wget https://github.com/rbspy/rbspy/releases/download/v${RBSPY_VERSION}/${RBSPY_PKG}.tar.gz
+curl -fsSLO https://github.com/rbspy/rbspy/releases/download/v${RBSPY_VERSION}/${RBSPY_PKG}.tar.gz
 tar -xzf ${RBSPY_PKG}.tar.gz
 sudo install ${RBSPY_PKG} /usr/local/bin/rbspy
 rm ${RBSPY_PKG} ${RBSPY_PKG}.tar.gz
@@ -932,16 +934,16 @@ What each toolchain uses for the three, and where it comes from. **Bold** is ins
 | [.NET](#net) | `dotnet format` (SDK) | **dotnet-trace**, **dotnet-counters** | BenchmarkDotNet (package, per repo) |
 | [Rust](#rust) | **rustfmt** (rustup component) | **samply** | criterion (dev-dependency, per repo) |
 | [WASM](#webassembly-wasm) | — | — | — |
-| [Swift](#swift) | `swift format` (bundled) + **SwiftLint** (doc-comment lint gate) | **samply** / **perf** — a Swift executable is a native ELF | package-benchmark (SwiftPM, per repo) |
+| [Swift](#swift) | `swift format` (bundled) + **SwiftLint** (doc-comment lint gate) | **samply** / perf (bundled with WSL 3.0) — a Swift executable is a native ELF | package-benchmark (SwiftPM, per repo) |
 | [Ruby](#ruby) | rubocop (Gemfile, per repo) | **rbspy** | benchmark-ips (Gemfile, per repo) |
 | [PHP](#php) | phpcs (Composer, per repo) | Xdebug (comes with php-build) | phpbench (Composer, per repo) — `XDEBUG_MODE=off` |
 | [Python](#python) | **ruff** (`ruff format`) | **py-spy** | **pyperf** |
-| any process | — | **perf**, **valgrind**, **heaptrack** | **hyperfine** |
+| any process | — | perf (bundled with WSL 3.0), **valgrind**, **heaptrack** | **hyperfine** |
 
 The last row is the language-agnostic set — it works on a process or a binary, not a language, so it lives in the `tools` module rather than under any one stack:
 
 ```bash
-sudo dnf install -y perf hyperfine valgrind
+sudo dnf install -y hyperfine valgrind
 sudo dnf install -y --setopt=install_weak_deps=False heaptrack
 
 perf --version
@@ -949,6 +951,8 @@ hyperfine --version
 valgrind --version
 heaptrack --version
 ```
+
+> **perf comes from WSL, not Fedora, as of WSL 3.0** (verified 2026-10-16 on WSL 3.0.3, kernel 6.18.54.1): WSL bind-mounts a kernel-matched static `perf` from its system VHD, read-only, over `/usr/bin/perf`, and alongside it `/usr/lib/linux-tools/$(uname -r)` (with `perf` and `trace`) and `/usr/src/linux-headers-$(uname -r)`. `findmnt -T /usr/bin/perf` shows the source as `/dev/sdb[/<kernel>/perf/bin/perf]`, and `perf --version` reports the kernel's version string (`6.18.54.1.g26d1ceb55087`), not Fedora's 7.2.x. That shadows the Fedora package: RPM unpacks the new file next to the path and then renames it over `/usr/bin/perf`, you can't rename over a mount point, so `dnf upgrade` fails on `perf` with `cpio: rename failed - No data available` and the whole transaction ends in `Error` (the other packages in it do go through — transaction 39 here upgraded 17 of 18). The fix is `excludepkgs=perf` under `[main]` in `/etc/dnf/dnf.conf`. With that in place `dnf install perf` fails with `Argument 'perf' matches only excluded packages`, which is why the install line above no longer names it. The rpm database stays at whatever Fedora `perf` was installed before the exclusion (7.2.9 here) and `rpm -V perf` will keep flagging `/usr/bin/perf` as a size/checksum mismatch — that's the mount, not tampering. Upstream change: microsoft/WSL PR #41400, "Expose kernel headers and perf to distributions". No `wsl.conf` / `.wslconfig` key to turn the shadowing off was found as of 3.0.3.
 
 > **Why heaptrack gets its own line and a flag:** Fedora ships it as a single package with the KDE GUI (`heaptrack_gui`) inside, so Qt6 and KDE Frameworks 6 come with it no matter what — 76 packages, 262 MiB. With dnf's default weak dependencies on top it is 130 packages, 336 MiB, the difference being udisks2, kio-extras, a set of filesystem tools and the Qt translations, none of which anything here uses. `install_weak_deps=False` is scoped to that one install; every other dnf line in this doc keeps the default.
 
@@ -979,7 +983,7 @@ Auto-detects architecture at install time:
 ```bash
 GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz
+curl -fsSLO https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz
 tar -xzf gh_${GH_VERSION}_linux_${ARCH}.tar.gz
 sudo install gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh
 rm -rf gh_${GH_VERSION}_linux_${ARCH} gh_${GH_VERSION}_linux_${ARCH}.tar.gz
@@ -1005,7 +1009,7 @@ Static checker for GitHub Actions workflow files — catches YAML/`workflow` sch
 ```bash
 AL_VERSION=$(curl -s https://api.github.com/repos/rhysd/actionlint/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-wget https://github.com/rhysd/actionlint/releases/download/v${AL_VERSION}/actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz
+curl -fsSLO https://github.com/rhysd/actionlint/releases/download/v${AL_VERSION}/actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz
 tar -xzf actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz actionlint
 sudo install actionlint /usr/local/bin/actionlint
 rm actionlint actionlint_${AL_VERSION}_linux_${ARCH}.tar.gz
@@ -1048,7 +1052,7 @@ Microsoft's RHEL/CentOS repos only ship x86_64 RPMs — no aarch64 packages. Ins
 ```bash
 PS_VERSION=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
 ARCH=$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')
-wget https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
+curl -fsSLO https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 sudo mkdir -p /opt/microsoft/powershell/7
 sudo tar -xzf powershell-${PS_VERSION}-linux-${ARCH}.tar.gz -C /opt/microsoft/powershell/7
 sudo chmod +x /opt/microsoft/powershell/7/pwsh

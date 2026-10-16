@@ -76,7 +76,7 @@ if [[ "$SWIFTLINT_CURRENT" == "$SWIFTLINT_LATEST" ]]; then
 else
 	SWIFTLINT_ZIP="swiftlint_linux_$(arch_amd64_arm64).zip"
 	SWIFTLINT_TMP=$(mktemp -d)
-	wget -q -P "$SWIFTLINT_TMP" "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_LATEST}/${SWIFTLINT_ZIP}"
+	curl -fsSL -o "$SWIFTLINT_TMP/$SWIFTLINT_ZIP" "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_LATEST}/${SWIFTLINT_ZIP}"
 	unzip -q "$SWIFTLINT_TMP/$SWIFTLINT_ZIP" swiftlint-static -d "$SWIFTLINT_TMP"
 	sudo install "$SWIFTLINT_TMP/swiftlint-static" /usr/local/bin/swiftlint
 	rm -rf "$SWIFTLINT_TMP"

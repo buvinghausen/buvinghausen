@@ -27,7 +27,7 @@ github_latest_release() {
 install_from_tarball() {
 	local url="$1" inner="$2" dest="$3" tmp
 	tmp=$(mktemp -d)
-	wget -q -P "$tmp" "$url"
+	curl -fsSL -o "$tmp/$(basename "$url")" "$url"
 	tar -xzf "$tmp/$(basename "$url")" -C "$tmp"
 	sudo install "$tmp/$inner" "$dest"
 	rm -rf "$tmp"
@@ -47,7 +47,7 @@ install_from_tarball() {
 # update-ruby.sh sources ~/.cargo/env instead — one Rust, not two.
 dnf_build_deps() {
 	sudo dnf install -y \
-		curl wget git gcc gcc-c++ make patch gawk binutils glibc-devel \
+		curl git gcc gcc-c++ make patch gawk binutils glibc-devel \
 		autoconf automake libtool bison re2c \
 		openssl-devel zlib-devel zlib-ng-compat-devel bzip2 bzip2-devel xz xz-devel \
 		readline-devel libedit-devel ncurses-devel gdbm-devel sqlite sqlite-devel \
