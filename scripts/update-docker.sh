@@ -29,7 +29,7 @@ log "Images on record"
 docker images
 
 log "Pulling latest for each"
-docker images --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort -u | while IFS= read -r image; do
+{ docker images --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' || true; } | sort -u | while IFS= read -r image; do
 	echo
 	echo "-- $image"
 	docker pull "$image" || echo "   skipped — likely a local-only build with no upstream to pull"

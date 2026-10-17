@@ -12,6 +12,8 @@ All languages, compilers, and build tools live in WSL2. Windows is the display l
 
 > **Distro note:** The `dnf` dependency block is the only Fedora-specific section. For other distros substitute `apt`, `pacman`, etc. for the same package list. Everything else is distro-independent.
 
+> **macOS note:** the Mac mini runs the same pass natively — `update-toolchain.sh` picks `scripts/macos/` on Darwin — and [TOOLCHAIN-macos.md](TOOLCHAIN-macos.md) documents only where that differs (Homebrew for dnf, `~/.local` for `/usr/local`+`/opt`, `~/.zshrc` for `~/.bashrc`, Apple's Swift, Homebrew's php) and carries the macOS receipts. The sections below stay the reference for what each tool is for.
+
 ---
 
 ## Base Dependencies
@@ -1160,6 +1162,8 @@ docker context ls
 Lists every locally-pulled image (`docker images`), then re-pulls each `repository:tag` pair. Images pinned to an immutable version tag are effectively a no-op (already at that digest); floating tags (`:latest`, etc.) actually refresh. Local-only builds with no upstream repository fail their pull individually and are skipped without aborting the rest of the sweep.
 
 > **Note — clean-slate policy, deliberate:** a container built from a tag that's since moved shows up in `docker ps -a` with a raw image ID instead of a name. The script force-removes any container in that state (`docker rm -f`, never `-v` — named *and* anonymous volumes are always left behind) and then prunes the now-unreferenced image. It does **not** try to reconstruct the container's `docker run` config (bind mounts, networks, replication topology) — that's easy to get subtly wrong, and anything worth keeping either lives in a named volume (survives regardless) or is owned by an orchestrator that already knows how to recreate its own containers correctly. Confirmed live on this machine: Aspire's Norse Architecture postgres primary/replica pair (`pg-primary-*`/`pg-replica-*`) bind-mounts ephemeral, session-specific init scripts from `/run/desktop/mnt/host/wsl/docker-desktop-bind-mounts/...` that only Aspire itself can regenerate correctly — the pair comes back on the next AppHost run, rebuilt against the fresh image, data intact via the `norse-pg-primary`/`norse-pg-replica` volumes. This is tuned for solo personal-machine use — if anyone else ever runs this against a shared box, they inherit the clean-slate trade-off, not just the script.
+
+> **Zero images is a no-op, not a failure:** found on the first macOS run (TOOLCHAIN-macos.md), where the box had no images yet — `docker images … | grep -v '<none>' | sort -u | while …` aborted the script at "Pulling latest for each" because grep exits 1 on empty input and `pipefail` fails the pipeline. The grep is now `|| true` inside a group, so an empty image list runs through to the (empty) prune and the after-table. No behaviour change when at least one image exists.
 
 ---
 
