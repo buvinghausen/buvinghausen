@@ -10,6 +10,14 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# scripts/ is the Fedora/WSL2 pass (TOOLCHAIN.md); scripts/macos/ is the
+# macOS one (TOOLCHAIN-macos.md). Same module names, same policies, each
+# written and verified on its own platform.
+case "$(uname -s)" in
+	Darwin) MODULE_DIR="$SCRIPT_DIR/scripts/macos" ;;
+	*) MODULE_DIR="$SCRIPT_DIR/scripts" ;;
+esac
+
 MODULES=(base node go jvm dotnet rust wasm android swift ruby php python tools docker)
 
 usage() {
@@ -27,7 +35,7 @@ TARGETS=("$@")
 [[ ${#TARGETS[@]} -eq 0 ]] && TARGETS=("${MODULES[@]}")
 
 for m in "${TARGETS[@]}"; do
-	script="$SCRIPT_DIR/scripts/update-${m}.sh"
+	script="$MODULE_DIR/update-${m}.sh"
 	if [[ ! -f "$script" ]]; then
 		echo "Unknown module '$m' (no $script)" >&2
 		usage
@@ -35,6 +43,10 @@ for m in "${TARGETS[@]}"; do
 	fi
 	echo
 	echo "########## $m ##########"
+	# Re-resolve `bash` each time: on macOS the base module installs Homebrew
+	# bash 5 and later modules need it, but this shell would keep the hashed
+	# /bin/bash 3.2 from the first lookup otherwise.
+	hash -r
 	bash "$script"
 done
 

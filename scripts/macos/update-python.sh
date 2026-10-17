@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Updates Python via pyenv (standard + free-threaded builds) and removes the
+# superseded global build once the new one is active. Darwin twin of
+# scripts/update-python.sh — read that header for the flavor-preservation
+# policy (standard/GIL-enabled is the global default; free-threaded `t` is
+# opt-in via `pyenv local`/`pyenv shell`).
+#
+# Darwin differences: build deps from Homebrew (python-build finds Homebrew's
+# openssl@3/readline/sqlite/xz/zlib itself); ~/.zshrc; no tcl-tk (Homebrew's
+# tcl-tk@8 is deprecated and nothing here needs tkinter — pyenv builds without
+# it and says so in its warnings). py-spy's arm64 wheel installs fine, but
+# attaching to a running process needs sudo on macOS (SIP); `py-spy record --
+# python x.py` does not.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+source ./lib-macos.sh
+
+export PYENV_ROOT="$HOME/.pyenv"
+if [[ ! -d "$PYENV_ROOT/bin" ]]; then
+	log "pyenv not found — bootstrapping (see TOOLCHAIN-macos.md)"
+
+	log "Build dependencies (shared Homebrew list, see lib-macos.sh)"
+	brew_build_deps
+
+	log "pyenv installer"
+	curl https://pyenv.run | bash
+
+	append_zshrc_once "# pyenv" <<'EOF2'
+
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - zsh)"
+
+# GIL enabled by default (yt-dlp and other GIL-dependent tools need it).
+# Flip to free-threaded for testing: export PYTHON_GIL=0
+EOF2
+fi
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - bash)"
+
+log "pyenv update"
+pyenv update
+
+PYTHON_PREV=$(cat "$PYENV_ROOT/version" 2>/dev/null || true)
+PYTHON_LATEST=$(pyenv latest -k 3)
+
+log "Python ${PYTHON_LATEST} (standard + free-threaded)"
+pyenv install -s "${PYTHON_LATEST}"
+pyenv install -s "${PYTHON_LATEST}t"
+
+if [[ "$PYTHON_PREV" == *t ]]; then
+	PYTHON_NEW_GLOBAL="${PYTHON_LATEST}t"
+	export PYTHON_GIL=0
+else
+	PYTHON_NEW_GLOBAL="${PYTHON_LATEST}"
+fi
+pyenv global "${PYTHON_NEW_GLOBAL}"
+
+if [[ -n "$PYTHON_PREV" && "$PYTHON_PREV" != "$PYTHON_NEW_GLOBAL" ]]; then
+	log "Removing superseded build: $PYTHON_PREV"
+	pyenv uninstall -f "$PYTHON_PREV"
+fi
+
+log "maturin / pytest / ruff / mypy / pyperf / py-spy"
+pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
+
+python --version
+python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
+ruff --version
+mypy --version
+python -c "import pyperf; print('pyperf', pyperf.__version__)"
+py-spy --version
