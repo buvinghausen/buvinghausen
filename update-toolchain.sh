@@ -13,12 +13,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # scripts/ is the Fedora/WSL2 pass (TOOLCHAIN.md); scripts/macos/ is the
 # macOS one (TOOLCHAIN-macos.md). Same module names, same policies, each
 # written and verified on its own platform.
-# `llm` (Ollama + the local-llm MCP server, TOOLCHAIN-macos.md) exists only
-# in the macOS pass so far; it sits after `tools` (pipx) and before `docker`.
 case "$(uname -s)" in
 	Darwin)
 		MODULE_DIR="$SCRIPT_DIR/scripts/macos"
-		MODULES=(base node go jvm dotnet rust wasm android swift ruby php python tools llm docker)
+		MODULES=(base node go jvm dotnet rust wasm android swift ruby php python tools docker)
 		;;
 	*)
 		MODULE_DIR="$SCRIPT_DIR/scripts"
