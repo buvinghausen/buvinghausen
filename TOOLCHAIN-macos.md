@@ -346,56 +346,33 @@ claude mcp list                        # plugin:playwright:playwright: npx @play
 
 ---
 
-## Local LLM (Ollama · local-llm MCP server · claude-local)
-
-The hybrid split: the frontier model in a normal Claude Code session keeps the judgment work — architecture, subtle debugging, final review — and farms the mechanical, high-volume work (summarise these files, first-draft these tests, extract from this log) to an open-weight model running on the box. Two ways in, both from one module:
-
-1. **`local-llm` MCP server** (`scripts/local-llm-mcp.py`, installed to `~/.local/bin`, registered in Claude Code at user scope). A frontier session sees two tools: `local_llm` (prompt in, text out) and `local_llm_files` (the *server* reads the files and sends them to the local model, so their contents never enter the frontier context — only the answer does). Claude Code's own docs give no way to point a subagent at a non-Anthropic model (`model:` takes Anthropic IDs only; `ANTHROPIC_BASE_URL` is process-wide), so a tool is the supported extension point for mixing providers inside one session.
-2. **`claude-local`** (`~/.local/bin`, a wrapper that `exec`s `claude` with `ANTHROPIC_BASE_URL` pointed at Ollama's Anthropic-compatible endpoint) — a whole Claude Code session on the local model, for throwaway work where cost matters more than quality. Anthropic documents this as unsupported for non-Claude models; Ollama, LM Studio and llama.cpp all serve the Messages format and document the setup. What works through it on this box: multi-turn, streaming, thinking, tool calls (a two-turn `tool_use` → `tool_result` round trip returned the right answer). What Ollama's compatibility doc says doesn't: prompt caching, `tool_choice`, `count_tokens`.
-
-```zsh
-./update-toolchain.sh llm
-```
-
-does, in order: `brew install ollama` (0.40.6 — on Apple Silicon the formula pulls `mlx` with it); `brew services start ollama` unless something already answers on `:11434` (Homebrew's plist sets `OLLAMA_FLASH_ATTENTION=1` and `OLLAMA_KV_CACHE_TYPE=q8_0`, logs to `/opt/homebrew/var/log/ollama.log`); `ollama pull qwen3.6:35b-a3b`; `ollama create local-llm` from a two-line Modelfile (`FROM qwen3.6:35b-a3b` / `PARAMETER num_ctx 65536`); `pipx install "mcp[cli]"` (the MCP Python SDK and its `mcp run` launcher — its own venv on Homebrew's python, outside the pyenv build the python module replaces, the same reason pyflakes is pipx); `install` the server script; `claude mcp add -s user -t stdio local-llm -- ~/.local/bin/mcp run ~/.local/bin/local-llm-mcp.py` (remove-then-add: `claude mcp add` refuses an existing name; `-t stdio` because an absolute command path trips its looks-like-a-URL warning); write the `claude-local` wrapper. Every step is a no-op or a clean overwrite on replay.
-
-**Why this model — the memory-bandwidth receipt.** The M6 in this box has 170 GB/s of memory bandwidth (Apple's figure for the 24/32 GB configurations; 153 GB/s at 16 GB). Token generation is bandwidth-bound: tokens/s ≈ bandwidth ÷ bytes of weights read per token. A dense model reads all of them every token; a mixture-of-experts model reads only its active experts. Measured here, same box, same prompts, thinking off, `num_predict 256`, Ollama's own `prompt_eval`/`eval` timings:
-
-| Model (Ollama tag, resolved to MLX nvfp4 on this box) | Prompt tokens | Prompt processing | Generation | Resident |
-|---|---|---|---|---|
-| `qwen3.6:35b-a3b` — MoE, 36 B total / ~3 B active, 23 GB | 27 | — | **53 tok/s** | 23 GB |
-| | 4,617 | 1,100 tok/s | 51 tok/s | 24 GB |
-| | 18,237 | 1,320 tok/s | 45 tok/s | 25 GB |
-| | 37,090 | 1,660 tok/s | 35 tok/s | 26 GB |
-| | 60,083 (64K nearly full) | 1,460 tok/s (41 s to first token) | 26 tok/s | 27 GB |
-| `qwen3.6:27b` — dense, 27.8 B, 19 GB | 27 | — | 18 tok/s | 19 GB |
-| | 4,617 | 280 tok/s | 18 tok/s | 20 GB |
-| | 18,237 | 260 tok/s (71 s to first token) | 14.5 tok/s | 22 GB |
-
-Three× the generation rate and five× the prompt-processing rate for the MoE. The dense 27B does score higher on SWE-bench Verified (77.2 vs 73.4, per the model cards as relayed by InsiderLLM's Mac guide), so the trade is a few benchmark points for an assistant that answers at reading speed instead of one that takes over a minute to read 18K tokens — on a 170 GB/s part that is the right trade for grunt work. (Community figures for the same MoE: 44 tok/s on a base M4 at 120 GB/s, ~98 tok/s on an M5 Pro at 307 GB/s — the bandwidth line holds. The dense model was pulled for this table only and removed.) Every run reported `100% GPU`, runner `mlx`: the registry hands Apple Silicon the MLX nvfp4 build of the tag — `ollama show qwen3.6:35b-a3b` prints `quantization nvfp4`, not the Q4_K_M the web page lists for the same tag.
-
-**The 64K context fits, barely — that is the number to watch on a 32 GB box.** Metal gets ~25 GiB of the 32 GB (Ollama logs `total="25.0 GiB"` at startup). The model is 23 GB loaded; the KV cache grows ~65 MB per 1K tokens on top (the Resident column), so a full 64K is ~27 GB and the box was at 10% free with swap growing from 1.0 to 2.2 GB during that last row — with Docker Desktop closed, this Claude Code session being the main other tenant. Generation stayed on the GPU throughout; the cost was the rest of the system paging, not inference. So: 64K is Ollama's own floor for coding tools (Claude Code's system prompt and tool schemas alone are ~20K), it works, and `NUM_CTX` in the module is the one knob to turn down (32768 halves the headroom problem) if a long `claude-local` session is run beside Docker Desktop and Chrome. The MCP-tool path never comes near it — those prompts are one file set at a time, capped by `LOCAL_LLM_MAX_BYTES` (400 KB ≈ 100K tokens, deliberately above the context so the cap is the model's, not the server's).
-
-**Why an alias tag.** Context length is a server-side setting in Ollama: the native API takes `num_ctx` per request, but the Anthropic-compatible endpoint Claude Code talks to has no such field, `brew services` has no supported way to carry `OLLAMA_CONTEXT_LENGTH`, and the default on a 25 GiB GPU is 32K. Baking `num_ctx` into a derived tag (`ollama create` writes a new manifest over the same blobs — no second copy) gives every client the same context, and `local-llm` is what both the MCP server and `claude-local` name, so `BASE_MODEL` in the module can change without rewiring either.
-
-**`claude-local` and the aliases.** Besides `ANTHROPIC_BASE_URL`/`ANTHROPIC_AUTH_TOKEN=ollama`/`ANTHROPIC_API_KEY=` (Ollama's documented trio), the wrapper pins `ANTHROPIC_MODEL` and all three `ANTHROPIC_DEFAULT_{SONNET,HAIKU,OPUS}_MODEL` to `local-llm`: `~/.claude/settings.json` says `"model": "sonnet"`, background tasks use the haiku alias, and an unpinned alias would ask Ollama for a Claude ID it doesn't have. `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` strips the beta headers and body fields a non-Anthropic upstream rejects; `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` turns off the update/telemetry/feedback traffic that has nothing to do with a local session. `CLAUDE_CODE_MAX_CONTEXT_TOKENS=65536` declares the window: an ID Claude Code doesn't recognise is assumed to be 200K (it says so at startup) and compaction would otherwise wait for a limit Ollama hits first. The session also prints that claude.ai connectors are off because an auth source is set — expected: nothing in it talks to Anthropic. The user-scope `local-llm` MCP server is visible in a `claude-local` session too — harmless, the local model just has itself as a tool.
-
-```zsh
-ollama ps                                   # after a call: 100% GPU, CONTEXT 65536, RUNNER mlx — any CPU% here means the context no longer fits
-claude mcp list                             # local-llm: ~/.local/bin/mcp run ~/.local/bin/local-llm-mcp.py - ✔ Connected
-claude-local -p 'say hi'                    # the all-local session; /status inside it shows the base URL
-tail -f /opt/homebrew/var/log/ollama.log    # the service's log
-```
-
-> **Scope.** Local inference needs the whole GPU: run one local session at a time, and expect the frontier session's `local_llm_files` call to take tens of seconds on a large file set (prompt processing at ~1.4K tok/s is the cost; generation is the cheap part). `OLLAMA_KEEP_ALIVE` is the default 5 minutes — the first call after idle pays a ~6 s load.
-
----
-
 ## Docker
 
 Docker Desktop for Mac — installed, CLI on `~/.docker/bin` (its installer wired `~/.zprofile`), updates itself. `scripts/macos/update-docker.sh` just runs the Fedora `scripts/update-docker.sh`, which only talks to the docker CLI and is OS-neutral; the clean-slate container policy documented there applies here unchanged.
 
 > Docker Desktop has to be **running** for the module: with it closed, `docker images` fails on the socket (`failed to connect to the docker API at unix:///Users/buvy/.docker/run/docker.sock`) and the module stops there with exit 1 — which is what it should do, there is no daemon to talk to. Start Docker Desktop and rerun `./update-toolchain.sh docker`.
+
+---
+
+## Tailscale
+
+Standalone Tailscale.app (`io.tailscale.ipn.macsys`, not the App Store build) — installed, updates itself. The CLI is the app bundle's own binary, `/Applications/Tailscale.app/Contents/MacOS/Tailscale`, and nothing puts it on `PATH`; `~/.local/bin/tailscale` is a two-line wrapper that `exec`s it by that path:
+
+```zsh
+cat ~/.local/bin/tailscale
+#!/bin/sh
+exec /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
+```
+
+> **A symlink does not work here**, unlike `pwsh`/`asprof`. The binary resolves its app bundle from the executable path, and launched through `~/.local/bin/tailscale -> …/MacOS/Tailscale` it aborted with `Tailscale/BundleIdentifiers.swift:49: Fatal error: The current bundleIdentifier is unknown to the registry` (1.104.1). A wrapper that `exec`s the real path keeps the bundle lookup intact; an alias would too, but only in interactive zsh.
+
+Verify:
+
+```zsh
+which tailscale        # /Users/buvy/.local/bin/tailscale
+tailscale version      # 1.104.1
+tailscale status       # the tailnet's peers, from the running app
+```
 
 ---
 
@@ -494,10 +471,7 @@ sample/leaks/heap/malloc_history/vmmap   bundled with macOS 27.0.1
 google-chrome 155.0.8059.85  Homebrew cask, auto-updates; Playwright's default browser (opened once by hand, see Playwright)
 playwright plugin ea10b213686c  claude-plugins-official, user scope — npx @playwright/mcp@latest, server 0.0.83
 docker    29.8.2         CLI from Docker Desktop (~/.docker/bin)
-ollama    0.40.6         Homebrew, login service (brew services) — Metal/MLX runner, 25 GiB GPU budget of the 32 GB
-qwen3.6:35b-a3b          MLX nvfp4, 23 GB — aliased as local-llm @ num_ctx 65536 (ollama create)
-mcp       2.3.0          pipx (MCP Python SDK + `mcp run`) — runs ~/.local/bin/local-llm-mcp.py, user-scope MCP server `local-llm`
-claude-local             ~/.local/bin wrapper: Claude Code on the local model via Ollama's Anthropic-compatible endpoint
+tailscale 1.104.1        standalone Tailscale.app (io.tailscale.ipn.macsys), exec wrapper in ~/.local/bin — a symlink aborts
 claude    2.1.302        native, auto-updates enabled
 posh-git-sh              ~/Developer/** only, zsh precmd
 ```
@@ -516,7 +490,6 @@ posh-git-sh              ~/Developer/** only, zsh precmd
 - *`php`: `composer install` + `vendor/bin/phpunit` — 114 tests, 27,596 assertions, 2 skipped, OK, through Homebrew php's FFI; `vendor/bin/phpcs` clean. Composer was the one thing missing after the first run (php-build bundles it, Homebrew's php doesn't) — added to the module.*
 - *`python`: in a venv, `maturin develop --release` + `pytest` — 425 passed in 5.2 s (an `abi3` `_native` built in place under `src/hyperuuid/`; a plain `pip install ./python[test]` is the wrong shape here — the tests import from `src/`, which then has no `_native`). `ruff check` / `ruff format --check` clean.*
 - *`tools`: `actionlint` over HyperUuid's four workflows ran with both integrations live — shellcheck and pyflakes findings surfaced through it, and a deliberately broken workflow produced SC2086 plus pyflakes' unused-import and undefined-name — its own exit was 1 because 1.7.12's runner-label list predates `ubuntu-26.04`, a stale-tool finding, not a toolchain one. `hyperfine` measured a 2x workload at 2.0x; `leaks --atExit` found the deliberate `malloc` leak in `main`; `sample` wrote a call graph for a live process; `pwsh` 7.6.7 ran. Playwright MCP: the plugin installed, `claude mcp list` shows it `✔ Connected`, and `example.com` loaded through the server with its default browser, Google Chrome (see [Playwright](#playwright-claude-code-browser-automation) for the one-time GUI launch Chrome needed first).*
-- *`llm` (added 2026-10-18, box otherwise idle: Bitwarden, RustDesk and Tailscale running, Docker Desktop and Chrome closed): first run from a box with no Ollama — `brew install ollama` (pulls `mlx` 0.32.4 and `mlx-c`), `brew services start ollama` came up on `:11434`, the 23 GB pull at ~75 MB/s, `ollama create local-llm` wrote one new manifest layer over the existing blobs, `pipx install "mcp[cli]"` 2.3.0, `claude mcp list` → `local-llm … ✔ Connected`. The MCP server probed over stdio with the SDK's own client before registration: both tools listed, a relative path and an unknown model both came back as `is_error` results with their text (the SDK hides a bare exception's message from the model — the server raises its `ToolError`). Through a real frontier session, `claude -p … --allowedTools mcp__local-llm__local_llm_files` summarised `fedora-wsl-signing-quirk.md` in three correct bullets in 14.5 s wall, the tool's trailer reporting `prompt 906 tok, output 173 tok` on the local model — those 906 tokens never entered the frontier context. `claude-local -p` answered through Ollama in 27 s cold (model load plus Claude Code's ~20K-token system prompt at ~1.4K tok/s), named itself `local-llm`. The benchmark table above is this run; the dense `qwen3.6:27b` was pulled, measured and `ollama rm`'d. Replay: `brew` `already installed and up-to-date`, `ollama pull` re-verified the manifest with no download, `ollama create` re-used every layer, pipx `already at latest version 2.3.0`, remove-then-add re-registered the server, the wrapper rewritten.*
 - *`docker`: with Docker Desktop closed the module stops on the socket error (the loud failure it should give). With it running, on a box with **zero images**, it aborted at `Pulling latest for each` with exit 1: `docker images … | grep -v '<none>' | sort -u | while …` — grep exits 1 on empty input and `pipefail` turns the empty pull list into a failed pipeline. Fixed in the Fedora `scripts/update-docker.sh` (the one OS-neutral edit made to it: `|| true` on the grep, inside a group so `sort -u` still sees the empty list); rerun exits 0 and prints the empty before/after image tables. It can't be rerun on Fedora from here; the change is a no-op whenever at least one image exists.*
 - *Replay (`./update-toolchain.sh base node go jvm dotnet rust wasm android swift ruby php python tools`, docker left out for the daemon reason above): every module took its no-op path — Homebrew `already installed and up-to-date` for all 23 formulae, `Go already at go1.27.2`, `TinyGo already at 0.43.0`, SDKMAN `All candidates are up-to-date`, `async-profiler already at 4.5`, every dotnet-install.sh SDK/runtime `already installed`, rustup `unchanged`, every `cargo install` `Ignored package … already installed` (cargo-php and cargo-ndk are `--force` rebuilds by design), emsdk `All SDK components already installed`, `NDK already at r30`, `rbspy already at 0.53.0`, `xdebug already loaded`, pip `Requirement already satisfied` for all seven tools, `pyflakes is already at latest version 4.0.3`, `pwsh already at 7.6.7`; clean overwrites where the upstream installer always downloads (wasmtime's install.sh, posh-git-sh). The first replay attempt stopped in `php` with exit 1 — the `php -m | grep -q` pipefail race described under [PHP](#php) — and completed after the in-process check replaced it; `php python tools` reran clean on the fix.*
 
@@ -530,6 +503,6 @@ posh-git-sh              ~/Developer/** only, zsh precmd
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-Same orchestrator as Fedora — on Darwin it runs `scripts/macos/update-<module>.sh` for each of `base node go jvm dotnet rust wasm android swift ruby php python tools llm docker` (`llm` is macOS-only so far; the Fedora list has no such module). Every module is a no-op or clean overwrite when current; `go`, `jvm`, `dotnet`, `ruby`, `python` and `docker` remove what they supersede. `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `ruby`, `python` bootstrap their own prerequisite when missing, so a fresh Mac with Homebrew and the CLT runs the pass end to end; `wasm`, `android`, `ruby` and `php` hard-fail with a pointer if `rust`/`dotnet` haven't run first (they're earlier in the order), `llm` likewise for `tools` (pipx); `swift` hard-fails only for an installed-but-unselected Xcode, and `tools` for a Google Chrome that has never been opened from the GUI — both one-time manual steps, both printed by the module. Nothing in the pass asks for a password.
+Same orchestrator as Fedora — on Darwin it runs `scripts/macos/update-<module>.sh` for each of `base node go jvm dotnet rust wasm android swift ruby php python tools docker`. Every module is a no-op or clean overwrite when current; `go`, `jvm`, `dotnet`, `ruby`, `python` and `docker` remove what they supersede. `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `ruby`, `python` bootstrap their own prerequisite when missing, so a fresh Mac with Homebrew and the CLT runs the pass end to end; `wasm`, `android`, `ruby` and `php` hard-fail with a pointer if `rust`/`dotnet` haven't run first (they're earlier in the order); `swift` hard-fails only for an installed-but-unselected Xcode, and `tools` for a Google Chrome that has never been opened from the GUI — both one-time manual steps, both printed by the module. Nothing in the pass asks for a password.
 
 The command-by-command reference for each stack is its section above where macOS differs, and the same-named section of [TOOLCHAIN.md](TOOLCHAIN.md) where it doesn't; `scripts/macos/update-*.sh` is the reference for the exact, current invocation. If they drift, the scripts win.
