@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Swift on macOS is Apple's toolchain, not swiftly's: the Command Line Tools
+# Swift on macOS is Apple's toolchain (swift.org's sits beside it only for
+# Swift SDKs, see below): the Command Line Tools
 # ship `swift`, `swift build`/SPM and `swift format`, and full Xcode adds the
 # platform SDKs (iOS — the Hyper repos' iOS smoke test) and Instruments/xctrace.
 # Both update through Apple (`softwareupdate` / the App Store), so there is no
@@ -49,6 +50,61 @@ EOF2
 log "SwiftLint (Homebrew)"
 brew_ensure swiftlint
 
+# swift.org's toolchain beside Apple's, for one job: Swift SDKs. The Hyper
+# repos cross-build their Swift suite for Android with swift.org's Android SDK
+# (android_build_suite.sh), and Apple's compiler refuses that SDK's modules
+# ("compiled module was created by a different version of the compiler",
+# hit on the first run with Xcode 27.1's Swift 6.4). swiftly installs the
+# swift.org release of the same minor as Xcode's Swift into
+# ~/Library/Developer/Toolchains; it is deliberately NOT on PATH (init runs
+# with --no-modify-profile), so `swift` and `xcrun swift` stay Apple's
+# everywhere else. A job that needs it puts its usr/bin first for that run:
+#   PATH="$HOME/Library/Developer/Toolchains/swift-latest.xctoolchain/usr/bin:$PATH"
+# The static-Linux and wasm SDKs need no host toolchain here: the Forge runs
+# them inside swift:<version> containers.
+log "swiftly + swift.org toolchain (Swift SDKs only, off PATH)"
+SWIFTLY="$HOME/.swiftly/bin/swiftly"
+if [[ ! -x "$SWIFTLY" ]]; then
+	SWIFTLY_TMP=$(mktemp -d)
+	curl -fsSL -o "$SWIFTLY_TMP/swiftly.pkg" https://download.swift.org/swiftly/darwin/swiftly.pkg
+	# Notarized by swift.org's Developer ID; refuse anything else.
+	pkgutil --check-signature "$SWIFTLY_TMP/swiftly.pkg" | grep -F "Notarization: trusted by the Apple notary service" >/dev/null \
+		|| { echo "swiftly.pkg is not notarized — not installing it" >&2; exit 1; }
+	installer -pkg "$SWIFTLY_TMP/swiftly.pkg" -target CurrentUserHomeDirectory
+	rm -rf "$SWIFTLY_TMP"
+	"$SWIFTLY" init --no-modify-profile --skip-install --assume-yes --quiet-shell-followup
+fi
+"$SWIFTLY" self-update --assume-yes
+APPLE_SWIFT_MINOR=$(xcrun swift --version 2>&1 | sed -n 's/.*Apple Swift version \([0-9]*\.[0-9]*\).*/\1/p' | head -1)
+[[ -n "$APPLE_SWIFT_MINOR" ]] || { echo "Could not read Apple's Swift version from xcrun swift --version" >&2; exit 1; }
+"$SWIFTLY" install "$APPLE_SWIFT_MINOR" --assume-yes
+# Newest installed release of that minor kept; every other swift.org release goes.
+SWIFT_KEEP=$(find "$HOME/Library/Developer/Toolchains" -maxdepth 1 -name "swift-${APPLE_SWIFT_MINOR}*-RELEASE.xctoolchain" \
+	| sed 's|.*/swift-\(.*\)-RELEASE.xctoolchain|\1|' | sort -V | tail -1)
+[[ -n "$SWIFT_KEEP" ]] || { echo "swiftly install $APPLE_SWIFT_MINOR left no swift-${APPLE_SWIFT_MINOR}*-RELEASE.xctoolchain" >&2; exit 1; }
+while IFS= read -r v; do
+	[[ -z "$v" || "$v" == "$SWIFT_KEEP" ]] && continue
+	echo "  swift.org $v (kept $SWIFT_KEEP)"
+	"$SWIFTLY" uninstall "$v" --assume-yes
+done < <(find "$HOME/Library/Developer/Toolchains" -maxdepth 1 -name 'swift-*-RELEASE.xctoolchain' | sed 's|.*/swift-\(.*\)-RELEASE.xctoolchain|\1|')
+
+# Swift SDKs are installed per job (android_build_suite.sh installs the one
+# matching the toolchain on PATH) and only work with that exact release, so
+# a superseded one is dead weight — and worse: with 6.4.0's and 6.4.1's
+# Android SDKs both installed, `--swift-sdk aarch64-unknown-linux-android28`
+# stopped with "matched multiple SDKs". Every swift-<version>-RELEASE_* SDK
+# whose version is not the kept toolchain's is removed.
+SWIFT_ORG="$HOME/Library/Developer/Toolchains/swift-${SWIFT_KEEP}-RELEASE.xctoolchain/usr/bin/swift"
+while IFS= read -r sdk; do
+	[[ "$sdk" =~ ^swift-([0-9.]+)-RELEASE_ ]] || continue
+	[[ "${BASH_REMATCH[1]}" == "$SWIFT_KEEP" ]] && continue
+	echo "  Swift SDK $sdk (toolchain is $SWIFT_KEEP)"
+	"$SWIFT_ORG" sdk remove "$sdk"
+done < <("$SWIFT_ORG" sdk list 2>/dev/null)
+
 swift --version
 swift format --version
 swiftlint version
+"$SWIFTLY" --version
+"$SWIFT_ORG" --version 2>&1 | head -1
+"$SWIFT_ORG" sdk list

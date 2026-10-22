@@ -22,6 +22,20 @@ if ! xcode-select -p >/dev/null 2>&1; then
 fi
 xcode-select -p
 
+# Rosetta runs the x86_64 half of the Hyper repos' macOS legs on this arm64
+# box: the osx-x64 cdylib's own `cargo test`, and any x86_64 binary a suite
+# launches. Its installer needs sudo, so like Xcode's selection it is a
+# one-time manual step this fails loudly on rather than running.
+log "Rosetta 2"
+if ! arch -x86_64 /usr/bin/true 2>/dev/null; then
+	cat >&2 <<'MSG'
+Rosetta 2 is not installed (x86_64 binaries fail with "Bad CPU type"). One-time, by hand (needs sudo):
+  sudo softwareupdate --install-rosetta --agree-to-license
+MSG
+	exit 1
+fi
+echo "x86_64 binaries run"
+
 log "Base dependencies (Homebrew)"
 brew_build_deps
 
