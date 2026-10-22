@@ -307,10 +307,10 @@ python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
 ```
 
-Build, test, lint, benchmark, and profiling tooling for Python bindings over a Rust core (HyperUuid: pyo3 abi3 extension via maturin, pytest suite, ruff lint and `ruff format` — the formatter is the same binary), plus the rest of what those bindings' extras and CI name: mypy (the `test` extra — `tests/test_typing.py` skips without it), pyperf (the `bench` extra — what `bench_*.py` is written against), and py-spy (sampling profiler; attaches from outside, no changes to the target):
+Build, test, lint, benchmark, and profiling tooling for Python bindings over a Rust core (HyperUuid: pyo3 abi3 extension via maturin, pytest suite, ruff lint and `ruff format` — the formatter is the same binary), plus the rest of what those bindings' extras and CI name: mypy (the `test` extra — `tests/test_typing.py` skips without it), pyperf (the `bench` extra — what `bench_*.py` is written against), and py-spy (sampling profiler; attaches from outside, no changes to the target), and openpyxl (HyperTabular's `corpus/workbook/make_fixtures.py` writes the committed `.xlsx` fixtures with it):
 
 ```bash
-pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
+pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy openpyxl
 ```
 
 ```bash

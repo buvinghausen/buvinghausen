@@ -68,11 +68,13 @@ fi
 # lint + `ruff format`), plus the rest of what those bindings' extras and CI
 # name: mypy (the `test` extra — tests/test_typing.py skips without it),
 # pyperf (the `bench` extra — what bench_*.py are written against), and py-spy
-# (sampling profiler; attaches from outside, no code changes to the target).
+# (sampling profiler; attaches from outside, no code changes to the target). openpyxl is
+# HyperTabular's: corpus/workbook/make_fixtures.py writes the committed .xlsx
+# fixtures with it (regeneration only; the test suites read the files).
 # Installed into the pyenv global build, so this runs on every pass — the
 # uninstall above discards the superseded build's site-packages along with it.
-log "maturin / pytest / ruff / mypy / pyperf / py-spy"
-pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
+log "maturin / pytest / ruff / mypy / pyperf / py-spy / openpyxl"
+pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy openpyxl
 
 python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
@@ -81,3 +83,4 @@ mypy --version
 # pyperf's CLI has no version flag — ask the module.
 python -c "import pyperf; print('pyperf', pyperf.__version__)"
 py-spy --version
+python -c "import openpyxl; print('openpyxl', openpyxl.__version__)"
