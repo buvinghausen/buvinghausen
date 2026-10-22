@@ -137,6 +137,16 @@ EOF
 	exit 1
 fi
 
+# `google-chrome` on PATH, as the Forge's browser checks call it (Ubuntu runner
+# images ship one; the cask puts nothing on PATH): the TinyGo and ruby.wasm
+# pages, the Swift static suite's browser leg, the Pyodide browser pass. An exec
+# wrapper, not a symlink: Chrome finds its framework from the path it was
+# started by, and through a symlink headless launches print nothing.
+log "google-chrome on PATH (exec wrapper in ~/.local/bin)"
+ensure_local_dirs
+printf '#!/bin/sh\nexec "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" "$@"\n' >"$LOCAL_BIN/google-chrome"
+chmod +x "$LOCAL_BIN/google-chrome"
+
 log "Playwright MCP plugin (claude-plugins-official)"
 claude plugin install playwright@claude-plugins-official
 
@@ -150,7 +160,7 @@ hyperfine --version
 "$(brew --prefix llvm)/bin/llvm-nm" --version | sed -n 2p
 "$(brew --prefix llvm)/bin/llvm-readobj" --version | sed -n 2p
 lld-link --version
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
+google-chrome --version
 claude plugin list | grep -A3 'playwright@' | grep -E 'playwright@|Status'
 # The macOS-bundled process tools that stand in for perf/valgrind/heaptrack.
 for t in sample leaks heap malloc_history vmmap; do printf '%-15s %s\n' "$t" "$(command -v "$t")"; done
