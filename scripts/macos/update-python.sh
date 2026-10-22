@@ -81,8 +81,10 @@ while IFS= read -r v; do
 	pyenv uninstall -f "$v"
 done < <(pyenv versions --bare | grep -E "^${PYTHON_PYODIDE_SERIES//./\\.}\.[0-9]+\$" || true)
 
-log "maturin / pytest / ruff / mypy / pyperf / py-spy"
-pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
+# openpyxl: HyperTabular's corpus/workbook/make_fixtures.py writes the committed
+# .xlsx fixtures with it (regeneration only; the test suites read the files).
+log "maturin / pytest / ruff / mypy / pyperf / py-spy / openpyxl"
+pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy openpyxl
 
 python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
@@ -90,5 +92,6 @@ ruff --version
 mypy --version
 python -c "import pyperf; print('pyperf', pyperf.__version__)"
 py-spy --version
+python -c "import openpyxl; print('openpyxl', openpyxl.__version__)"
 PYENV_VERSION="$PYTHON_PYODIDE" python --version
 PYENV_VERSION="$PYTHON_PYODIDE" pyodide --version

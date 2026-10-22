@@ -514,6 +514,7 @@ ruff      0.17.1
 mypy      2.4.0
 pyperf    2.10.0
 py-spy    0.4.2          sudo to attach on macOS
+openpyxl  3.1.5          HyperTabular's fixture writer (corpus/workbook/make_fixtures.py: same parts as the committed files bar docProps/core.xml's timestamps)
 rustc     1.99.1         aarch64-apple-darwin; + x86_64-apple-darwin, aarch64-apple-ios{,-sim,-macabi}, x86_64-apple-ios-macabi,
                          {x86_64,aarch64}-unknown-linux-{gnu,musl}, {x86_64,aarch64}-pc-windows-msvc (static libs only), llvm-tools
 rustc     1.85.1 / 1.88.0  MSRV toolchains (RUST_MSRV_SERIES), --profile minimal
