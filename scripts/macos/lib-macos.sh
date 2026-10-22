@@ -50,8 +50,9 @@ brew_ensure() {
 #   libffi                        — ctypes / Fiddle
 #
 # No `binutils`: ruby-build's wiki warns a Homebrew binutils on PATH breaks
-# the Ruby build (its ar/ranlib shadow the system ones). No `llvm` unless
-# bindgen ever fails to find the CLT's libclang.
+# the Ruby build (its ar/ranlib shadow the system ones). No `llvm` here: the
+# tools module installs it for the release-guard checks, keg-only and off
+# PATH, so bindgen still finds the CLT's libclang.
 brew_build_deps() {
 	brew_ensure bash pkgconf autoconf automake libtool \
 		openssl@3 readline sqlite xz zlib zstd libb2 \

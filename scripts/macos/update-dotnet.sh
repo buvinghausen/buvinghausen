@@ -131,6 +131,16 @@ else
 	echo "No global tools installed — skipping"
 fi
 
+# The mobile workloads the Hyper repos' C# legs build with: ios and maccatalyst
+# (the iOS simulator app and the Mac Catalyst process in ci.yml's Apple job)
+# and android (the CoreCLR and NativeAOT APKs). Installed against the newest
+# SDK on the box, the 11.0 preview: this runs from scripts/macos, outside any
+# repo's global.json, the same band wasm-tools lands in (update-wasm.sh). The
+# android workload's build tasks want a JDK and an Android SDK at build time,
+# not install time; the jvm and android modules supply them.
+log "dotnet workload — ios / maccatalyst / android"
+dotnet workload install ios maccatalyst android
+
 log "dotnet workload — workload updates"
 if dotnet workload list | awk '/^-+$/{t=1;next} /^Use `dotnet workload search`/{t=0} t && NF{f=1} END{exit !f}'; then
 	dotnet workload update
@@ -142,3 +152,35 @@ dotnet --list-sdks
 dotnet --list-runtimes
 dotnet-trace --version
 dotnet-counters --version
+
+# The ios / maccatalyst workloads build only against the Xcode they were made
+# for (major.minor, RecommendedXcodeVersion in the newest Microsoft.iOS.Sdk
+# pack). With any other one selected the build stops ("requires Xcode 27.0.
+# The current version of Xcode is 27.1"). The fix is that Xcode installed beside the selected one and handed to the
+# C# Apple builds through DEVELOPER_DIR. Installing Xcode needs an Apple ID,
+# so like Xcode's own selection this fails loudly instead.
+log "Xcode for the ios / maccatalyst workloads"
+IOS_PACK=$(find "$DOTNET_ROOT/packs" -maxdepth 1 -name 'Microsoft.iOS.Sdk.net*' | sort -V | tail -1)
+IOS_PACK=$(find "$IOS_PACK" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+WANT_XCODE=$(grep -rhoE '<RecommendedXcodeVersion[^>]*>[^<]+' "$IOS_PACK/targets" | sed 's/.*>//' | sort -u | tail -1)
+[[ -n "$WANT_XCODE" ]] || { echo "No RecommendedXcodeVersion in $IOS_PACK" >&2; exit 1; }
+WANT_MM=$(grep -oE '^[0-9]+\.[0-9]+' <<<"$WANT_XCODE")
+MATCH=""
+for app in /Applications/Xcode*.app; do
+	[[ -d "$app" ]] || continue
+	v=$(defaults read "$app/Contents/version.plist" CFBundleShortVersionString 2>/dev/null || true)
+	echo "  $app: $v"
+	[[ "$(grep -oE '^[0-9]+\.[0-9]+' <<<"$v")" == "$WANT_MM" || "$v" == "$WANT_MM" ]] && MATCH="$app"
+done
+if [[ -z "$MATCH" ]]; then
+	cat >&2 <<MSG
+The ios / maccatalyst workloads ($(basename "$(dirname "$IOS_PACK")") $(basename "$IOS_PACK")) need Xcode $WANT_MM, and no /Applications/Xcode*.app is that version.
+One-time, by hand (Apple ID): download Xcode $WANT_MM from https://developer.apple.com/download/all/, then
+  xip --expand Xcode_$WANT_MM.xip && mv Xcode.app /Applications/Xcode-$WANT_MM.app
+  DEVELOPER_DIR=/Applications/Xcode-$WANT_MM.app/Contents/Developer xcodebuild -runFirstLaunch
+and keep the selected Xcode as it is. C# Apple builds then run with
+  DEVELOPER_DIR=/Applications/Xcode-$WANT_MM.app/Contents/Developer
+MSG
+	exit 1
+fi
+echo "Xcode $WANT_MM for the workloads: $MATCH (DEVELOPER_DIR=$MATCH/Contents/Developer for C# Apple builds)"

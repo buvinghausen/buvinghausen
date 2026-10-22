@@ -9,7 +9,7 @@ The macOS twin of [TOOLCHAIN.md](TOOLCHAIN.md). Same orchestrator (`./update-too
 > **Three rules that differ from the Fedora pass, box-wide:**
 >
 > 1. **Homebrew is the package manager** — the `dnf` analogue. Everything Fedora takes from dnf or from a Linux release tarball that Homebrew also carries at the same version (`gh`, `actionlint`, `shellcheck`, `mono`, `hyperfine`, `swiftlint`, `fnm`, `php`) comes from `brew`. Upstream installers (rustup, pyenv, SDKMAN, rbenv, dotnet-install.sh, emsdk, wasmtime) are unchanged — they support Darwin natively.
-> 2. **Nothing runs as root.** Where Fedora writes to `/usr/local/{bin,go}` and `/opt`, this pass uses the user-owned twins: `~/.local/bin` (already first on `PATH` — Claude Code's installer put it there), `~/.local/go`, `~/.local/opt/*`. Homebrew itself is user-owned under `/opt/homebrew`, so this is the platform's own convention, not a workaround. The only sudo anywhere is Xcode's one-time `xcode-select -s` / `-license accept`, which stays manual (see [Swift](#swift)).
+> 2. **Nothing runs as root.** Where Fedora writes to `/usr/local/{bin,go}` and `/opt`, this pass uses the user-owned twins: `~/.local/bin` (already first on `PATH` — Claude Code's installer put it there), `~/.local/go`, `~/.local/opt/*`. Homebrew itself is user-owned under `/opt/homebrew`, so this is the platform's own convention, not a workaround. The only sudo anywhere is two one-time steps that stay manual: Xcode's `xcode-select -s` / `-license accept` (see [Swift](#swift)) and the Rosetta 2 install (see [Base Dependencies](#base-dependencies)).
 > 3. **`~/.zshrc` is the rc file.** zsh is the login shell; every upstream installer in the pass that self-wires a profile (fnm, SDKMAN, wasmtime) already targets `.zshrc` on Darwin, and `scripts/macos/lib-macos.sh`'s `append_zshrc_once` is the `append_bashrc_once` twin for the rest. `~/.zprofile` holds only what was there before this pass (Homebrew's `shellenv`, Docker Desktop's `PATH` line).
 
 > **Prerequisites the pass assumes** (both present on this box before the first run): Homebrew, and the Xcode Command Line Tools (`xcode-select --install`) — the compiler, linker, `make`, `git`, `libclang` (for `bindgen`) and Apple Swift all come from the CLT. `scripts/macos/update-base.sh` hard-fails if `xcode-select -p` has nothing selected.
@@ -35,6 +35,14 @@ Who needs what:
 - **pyenv** ([suggested build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment), macOS): `openssl@3 readline sqlite xz zlib zstd libb2 pkgconf`. The wiki also lists `tcl-tk@8`; it is **deprecated** in Homebrew and nothing here needs tkinter, so it's left out — `pyenv install` builds without `_tkinter` and says so in its warnings.
 - **ruby-build** ([suggested build environment](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment), macOS): `openssl@3 readline libyaml gmp autoconf`. The same wiki warns that a Homebrew `binutils` on `PATH` breaks the Ruby build (its `ar`/`ranlib` shadow the system ones) — deliberately not installed.
 - **autotools** (`autoconf automake libtool pkgconf`) for both configure runs; `libffi` for ctypes/Fiddle.
+
+> **Rosetta 2** is a box-level prerequisite `update-base.sh` checks after the CLT: the Hyper repos' osx-x64 leg is cross-built on Apple silicon and its own `cargo test` runs under Rosetta, and an arm64 Mac without it fails every x86_64 binary with `Bad CPU type in executable`. Its installer needs sudo, so the module does what it does for an unselected Xcode — stops and prints the one command:
+>
+> ```zsh
+> sudo softwareupdate --install-rosetta --agree-to-license
+> ```
+>
+> The check is `arch -x86_64 /usr/bin/true`; it failed on this box before Rosetta was installed, which is what found the gap.
 
 > `brew update` is the index refresh (the `dnf makecache` analogue), not a package upgrade. The pass deliberately never runs a blanket `brew upgrade` — the same stance the Fedora module takes by skipping `dnf update -y`. Each module `brew install`s then `brew upgrade`s its own formulae (`brew_ensure`), both no-ops when current, which gives `dnf install -y`'s present-and-latest semantics.
 
@@ -123,6 +131,10 @@ eval "$(pyenv init - zsh)"
 EOF2
 ```
 
+Plus **Pyodide's Python series** beside the global: `PYTHON_PYODIDE_SERIES=3.14` in `scripts/macos/update-python.sh`. pyodide-build only builds for the Python minor its Pyodide release embeds, and the host interpreter has to be that minor — the Forge's `hyper-build-wheels.yml` pins `PYODIDE_VERSION` `314.0.7` on `python-version: "3.14"`. The module installs the newest 3.14.x, puts `pyodide-build` into that build's own site-packages (not the global's), and removes superseded 3.14 patches; edit the series when the pin's minor moves. The per-release cross-build environment and its Emscripten are not toolchain: `pyodide xbuildenv install <version>` / `install-emscripten` fetch them per run, as the Forge does.
+
+> **The other floors are containers, not host installs.** Python 3.11, Ruby 3.3, PHP 8.2 and Swift 6.2 — each binding's declared floor — run in the Forge's `musl-suite` / `swift-static-suite` scripts inside Docker (`python:<floor>-alpine`, `ruby:<floor>-alpine`, `php:<floor>-cli-alpine`, `swift:<version>`), so on this box they come from [Docker](#docker), and the host keeps one toolchain per language.
+
 > **Local test loop for a binding** (HyperUuid's `python/`): a venv, then `maturin develop --release` and `pytest` from that directory — the tests import from `src/`, so the extension has to be built in place; a `pip install ./python[test]` wheel build leaves `src/hyperuuid` without its `_native` and every collection fails on it. The pyenv global build's `maturin`/`pytest` are on the shims path only while no venv shadows them — install both into the venv.
 >
 > **py-spy on macOS needs sudo to attach** to a running process (SIP — py-spy's own README: "OSX always requires running as root"). `py-spy record -- python x.py`, where py-spy spawns the target, does not. The same applies to rbspy below. Nothing in the pass runs as root; this is a per-invocation `sudo` when you actually attach.
@@ -148,6 +160,12 @@ cargo install --locked samply cargo-semver-checks
 curl -LsSf https://get.nexte.st/latest/mac | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
 ```
 
+Two additions over Fedora's module, both for the Hyper repos' CI parity:
+
+- **Apple targets** — `x86_64-apple-darwin` (the osx-x64 cdylib, tested under Rosetta) and `aarch64-apple-ios`, `aarch64-apple-ios-sim`, `aarch64-apple-ios-macabi`, `x86_64-apple-ios-macabi` (the static libraries behind the Swift xcframework, Go's `go/staticlib/ios_*` and C#'s iOS / Mac Catalyst apps), the same list the Forge's `apple_mobile` build uses.
+- **Static-library targets** — `x86_64`/`aarch64` `-unknown-linux-gnu`, `-unknown-linux-musl` and `-pc-windows-msvc`, plus the `llvm-tools` component: the rest of the Forge's `build-static-libs.sh` set (a static library is compiled, never linked, so all of them cross-build here with no C toolchain; the archive trim uses `llvm-tools`' `llvm-ar`). The script adds them itself when missing — that is how they were found — and the module keeps them current with stable.
+- **MSRV toolchains** — `RUST_MSRV_SERIES=(1.85 1.88)` in `scripts/macos/update-rust.sh`, every `rust-version` the Hyper repos declare (HyperUuid 1.85; HyperCast and HyperTabular 1.88), installed `--profile minimal` so `cargo +1.85 check --lib` reproduces each `ci.yml`'s `check-msrv` job. Same role as the Ruby module's `RUBY_COMPAT_SERIES`: edit it when a `rust-version` moves. `rustup toolchain install 1.85` names the toolchain by its series and lands each point release in place; any pinned toolchain outside the list is uninstalled, stable and nightly are left alone.
+
 `samply` is the profiler on macOS too (it samples through the Mach task APIs there, no `perf` involved) — see [Formatting / Profiling / Performance](#formatting--profiling--performance). `scripts/macos/update-rust.sh` is the replay-safe form.
 
 ---
@@ -158,7 +176,7 @@ Unchanged in substance — `scripts/macos/update-wasm.sh`: the three Rust target
 
 ---
 
-## Android (NDK)
+## Android (NDK · SDK)
 
 The first box in the pass where Android works on arm64: Google ships a macOS host build (universal binaries), so the Fedora module's "no aarch64 Linux host" skip has no counterpart here. The archive is the darwin **zip** (`android-ndk-<release>-darwin.zip` — same contents as the `.dmg` Homebrew's cask uses, minus the disk-image mount). Inside, the NDK root sits in an app bundle, `AndroidNDK<build>.app/Contents/NDK`; `scripts/macos/update-android.sh` locates it by its `source.properties` (exactly one, or it fails with the real listing) and moves it to `~/.local/opt/android-ndk-<release>`, with the version-free `~/.local/opt/android-ndk` symlink as the stable `ANDROID_NDK_HOME`. Release resolution (stable tags, highest by `sort -V`), symlink swap, superseded-tree removal, the two Rust Android targets and `cargo-ndk` are all as on Fedora.
 
@@ -171,6 +189,25 @@ EOF2
 ```
 
 > The LLVM prebuilt directory is `toolchains/llvm/prebuilt/darwin-x86_64` even on Apple Silicon — the binaries are universal. The module resolves it by glob and prints it in its verify step rather than hardcoding either name. Nothing from the NDK goes on `PATH`, same reasoning as Fedora: its `clang`/`lld` would shadow the CLT's.
+
+**The Android SDK, macOS only.** The Hyper repos' `test-android` job builds the C# binding's APKs with the .NET `android` workload and runs them, plus the cross-built Go and Swift suites, on an emulator. That takes the SDK the Fedora module skips — it skips sdkmanager because it needs the command-line-tools package and a JDK, and on this box both are in hand. Under `~/.local/opt/android-sdk` (`ANDROID_HOME`):
+
+- **bootstrap only:** the newest `commandlinetools-mac_<arch>` zip, named in Google's `repository2-3.xml` under the `cmdline-tools;latest` package, unpacked to `cmdline-tools/latest` — the one layout sdkmanager accepts. After that `sdkmanager --update` keeps it, and everything else, current.
+- **`platform-tools`** (adb), **`emulator`**, and **`system-images;android-36;google_apis_ps16k;arm64-v8a`** — `ci.yml`'s emulator (`api-level: 36`, `target: google_apis_ps16k`), arm64 for this host where CI's runner is x86_64 — with one AVD on it, `hyper-api36`.
+- **the platform and build-tools the workload builds against**, read from the workload's own defaults (`AndroidSdkPlatformVersion`, `AndroidSdkBuildToolsVersion` in its newest `Microsoft.Android.Sdk.Darwin` pack: `platforms;android-37.0` and `build-tools;37.0.0` for workload 37.2.0-rc.2), so they follow `dotnet workload update`; any platform or build-tools the workload no longer names is uninstalled. That is why `android` needs the `dotnet` module to have run, as well as `jvm` for sdkmanager's JDK.
+
+```zsh
+cat >> ~/.zshrc << 'EOF2'
+
+# Android SDK
+export ANDROID_HOME=$HOME/.local/opt/android-sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+EOF2
+```
+
+> **JDK:** `ci.yml` pins `setup-java` 21 for the workload's build tasks, but the workload itself declares `MinimumSupportedJavaVersion` 21.0 and `LatestSupportedJavaVersion` 25.0.99, so the Temurin 25 default already qualifies and no second JDK is installed. (SDKMAN's darwinarm64 index also carries Temurin 21 only as the 2023 GA, `21.0.0.0+35-tem`; Adoptium itself is at 21.0.12.1.)
+>
+> **Licenses:** no `sdkmanager --licenses` step. Command-line-tools 23 says the option `is no longer needed`; with `licenses/` removed, `sdkmanager --install` still installed a platform and wrote `licenses/` itself. It also prints that sdkmanager is deprecated, with `android sdk` (the `android` binary in the same `cmdline-tools/latest/bin`) as its replacement. sdkmanager still works, so the module stays on it until it doesn't.
 
 ---
 
@@ -197,7 +234,13 @@ swiftlint version
 
 > **What the CLT alone cannot do, found by running it:** `swift build` and `swift format` work; **`swift test` does not** — the CLT ships `Testing.framework` (swift-testing) but no `XCTest.framework`, and HyperUuid's suite imports XCTest (`unable to resolve module dependency: 'XCTest'`). That is Xcode's. **SwiftLint crashes** on a CLT-only box (`Fatal error: Loading sourcekitdInProc.framework ... failed`, exit 133): it searches every Xcode toolchain path for sourcekitd and never the CLT's, although the CLT has it under `usr/lib`. `TOOLCHAIN_DIR` is the override it honors — with `TOOLCHAIN_DIR=/Library/Developer/CommandLineTools`, `swiftlint lint --strict Sources` over HyperUuid's six files ran clean. The module exports it for its own run and wires a guarded line into `~/.zshrc` that sets it only while the CLT is the selected developer directory, so it falls away by itself once Xcode is.
 
-> **Why not swiftly:** swiftly has a darwin pkg and would install swift.org toolchains into `~/Library/Developer/Toolchains` next to Apple's, but the CLT's Apple Swift is already *ahead* of what swiftly gives Fedora (6.4 here vs 6.3.3 there), it is what GitHub's macOS runners use for the Hyper repos' macOS legs, and it needs the CLT/Xcode SDK underneath regardless. Two Swifts on the box would be two things to keep straight for nothing.
+> **swiftly, for Swift SDKs only.** Apple's Swift stays the toolchain — it is what GitHub's macOS runners use for the Hyper repos' macOS legs. But it cannot use swift.org's Swift SDKs: the Hyper repos cross-build their Swift suite for Android with swift.org's Android SDK (`.github/scripts/android_build_suite.sh`), and under Xcode 27.1's Swift 6.4 that build stopped on every file with `compiled module was created by a different version of the compiler ''; rebuild 'Foundation'`. So `update-swift.sh` installs swiftly (the notarized `swiftly.pkg`, `installer -target CurrentUserHomeDirectory`, `swiftly init --no-modify-profile --skip-install`) and, through it, the swift.org release of the same minor as Xcode's Swift — `swiftly install 6.4` resolves the newest patch, 6.4.1, which is also what CI's `setup-swift: "6.4"` resolves — into `~/Library/Developer/Toolchains`, removing any other swift.org release. It is **not on `PATH`**: `swift` and `xcrun swift` stay Apple's. A job that needs it puts it first for that run:
+>
+> ```zsh
+> PATH="$HOME/Library/Developer/Toolchains/swift-latest.xctoolchain/usr/bin:$PATH" .github/scripts/android_build_suite.sh swift aarch64 /tmp/swift
+> ```
+>
+> The static-Linux and wasm SDKs need no host toolchain: the Forge runs them inside `swift:<version>` containers (see [Docker](#docker)).
 
 ---
 
@@ -217,6 +260,14 @@ EOF2
 ```
 
 rbspy: the `aarch64-apple-darwin` release binary into `~/.local/bin` (`uname -m` says `arm64`; the asset name wants `aarch64`, the module maps it). Attaching to a running process needs sudo on macOS (SIP), `rbspy record -- ruby x.rb` does not.
+
+**ruby.wasm (`rbwasm build`) needs pkg-config narrowed to `openssl@3`.** Nothing to install (the `ruby_wasm` gem, its wasi-sdk and its cross-built libyaml/zlib/OpenSSL are per-repo, under `ruby/wasm-smoke/build/`), but Homebrew's pkg-config leaks into it twice. rbwasm first builds a native baseruby, whose `ext/openssl` takes whatever `openssl.pc` pkg-config finds; Homebrew's `openssl` is now `openssl@4`, which Ruby 3.4 and 4.0 don't compile against (`incomplete definition of type 'ASN1_BIT_STRING'`). Then the wasm Ruby's `ext/psych` asks pkg-config for `yaml-0.1` before it honours rbwasm's `--with-libyaml-dir`, gets Homebrew's (a ruby-build dependency) and links its arm64 `libyaml.a` into a wasm module: wasi-sdk 22 (Ruby 3.4) shrugs it off, wasi-sdk 24 (Ruby 4.0) fails with `undefined symbol: yaml_emitter_emit`. Ubuntu runners don't hit the second one because pkg-config omits system `-L` dirs there. Run rbwasm with pkg-config seeing only `openssl@3`:
+
+```zsh
+PKG_CONFIG_LIBDIR="$(brew --prefix openssl@3)/lib/pkgconfig" bundle exec rbwasm build …
+```
+
+`PKG_CONFIG_PATH` is not enough: it is searched in front of the default path, not instead of it, so `yaml-0.1` is still found.
 
 ---
 
@@ -247,6 +298,10 @@ export DOTNET_ROOT=$HOME/.dotnet
 export PATH=$PATH:$HOME/.dotnet:$HOME/.dotnet/tools
 EOF2
 ```
+
+Plus the **mobile workloads** — `dotnet workload install ios maccatalyst android`, for the Hyper repos' C# legs: the iOS-simulator app and the Mac Catalyst process in `ci.yml`'s Apple job, and the CoreCLR and Native AOT APKs in its Android job. They install into the newest SDK's band, the 11.0 preview (the module runs outside any repo's `global.json`), the same band `wasm-tools` is in; `dotnet workload update` moves them from then on. The android workload's build tasks need an Android SDK and a JDK at build time, not at install — see [Android](#android-ndk--sdk).
+
+> **The ios / maccatalyst workloads need one exact Xcode.** Each build checks the selected Xcode's major.minor against the workload's `RecommendedXcodeVersion` (27.0 for 27.0.12212-net11-rc.2) and stops on anything else: `requires Xcode 27.0. The current version of Xcode is 27.1`. (The Mac Catalyst link failure on `_UIApplicationDidReceiveMemoryWarningNotification` is a separate workload problem that 27.0 does not fix; see the build-machine receipts below.) The fix is that Xcode installed *beside* the selected one and handed to the C# Apple builds only, through `DEVELOPER_DIR=/Applications/Xcode-27.0.app/Contents/Developer`. Installing Xcode needs an Apple ID, so `update-dotnet.sh` ends by reading `RecommendedXcodeVersion` from the newest `Microsoft.iOS.Sdk` pack, looking for a matching `/Applications/Xcode*.app`, and failing loudly with the download/`xip`/`-runFirstLaunch` steps when there is none.
 
 The `-f <tfm>` rule for `dotnet test` on multi-targeted repos and the net472-under-Mono path are the same as on Linux — the .NET Framework CLR doesn't run on macOS either.
 
@@ -288,12 +343,21 @@ leaks --atExit -- ./bin
 
 ---
 
-## GitHub CLI · actionlint · ShellCheck · pyflakes · PowerShell
+## GitHub CLI · actionlint · ShellCheck · pyflakes · PowerShell · LLVM
 
 ```zsh
 brew install gh actionlint shellcheck
 brew install pipx && pipx install pyflakes
+brew install llvm lld
 ```
+
+**LLVM / lld** are for the Hyper repos' release guard (`.github/scripts/release_guard.py` and its tests): it reads exports with `llvm-nm` / `llvm-readobj` and builds cross-format fixtures with `clang` and `lld-link`, where CI has `apt-get install llvm clang lld`. Homebrew's `llvm` is keg-only (`provided_by_macos`), so its `bin/` stays off `PATH` and the CLT's `clang` and libclang keep winning everywhere else — put it first only for that run:
+
+```zsh
+PATH="$(brew --prefix llvm)/bin:$PATH" python3 -I -m unittest discover -s .github/scripts/tests
+```
+
+`lld` is not keg-only: `ld.lld`, `lld-link`, `ld64.lld` and `wasm-ld` land in Homebrew's `bin`, none of which shadows the CLT's `ld`.
 
 `gh`, `actionlint` and `shellcheck` track the same versions as the GitHub/dnf installs on Fedora. There is no `pyflakes` formula; pipx gives it its own venv on Homebrew's python and a `~/.local/bin/pyflakes` shim — outside the pyenv build `update-python.sh` replaces on every upgrade, which is the same reason Fedora takes it from dnf rather than pip, so actionlint's `python`-step integration stays live across Python upgrades.
 
@@ -330,7 +394,7 @@ The browser is different. Homebrew's `chromium` cask is **disabled** (`fails_gat
 brew install --cask google-chrome      # notarized Developer ID (Google LLC), auto_updates: true
 ```
 
-Chrome updates itself; `brew upgrade` skips `auto_updates` casks unless told `--greedy`, so install-if-missing is the whole lifecycle and `scripts/macos/update-tools.sh` does exactly that. Not Brave: Brave works with `--executable-path` (verified — it loaded a page through the server), but it is the personal browser on this box, and automation gets its own. The server launches Chrome with an isolated profile either way.
+Chrome's own updater only runs while Chrome is open, which on a build box it rarely is: it sat at 155 after 156 shipped, and `wasm-pack test --chrome` — which always fetches the newest chromedriver — then failed with `This version of ChromeDriver only supports Chrome version 156`. `brew upgrade` skips `auto_updates` casks unless told `--greedy`, so `scripts/macos/update-tools.sh` runs `brew upgrade --cask --greedy google-chrome` after the install-if-missing. Not Brave: Brave works with `--executable-path` (verified — it loaded a page through the server), but it is the personal browser on this box, and automation gets its own. The server launches Chrome with an isolated profile either way.
 
 > **Chrome must be opened once from the GUI before anything can launch it from the command line.** Found the hard way: straight after the cask install, every launch — `Google Chrome --headless=new --dump-dom`, through the Playwright server, with an explicit `--user-data-dir`, a minimal environment, sandboxed or not — died with `FATAL:base/path_service.cc:264 Failed to get the path for 1001` (`DIR_USER_DATA`), exit 133, `SIGTRAP`; through Playwright that surfaces as `Target page, context or browser has been closed` at `initializeServer`. Gatekeeper assessed the bundle as accepted and notarized, and the quarantine attribute was *not* the difference (it is unchanged after the fix). One `open -a "Google Chrome"`, through its first-run screens, created `~/Library/Application Support/Google/Chrome` and its `First Run` sentinel, and from then on headless and Playwright launches work. Brave (also Chromium 155) had been opened long before and never showed it. The module tests for the sentinel and hard-fails with the instruction when it is missing — the fix is a manual GUI step, like Xcode's.
 
@@ -349,6 +413,8 @@ claude mcp list                        # plugin:playwright:playwright: npx @play
 ## Docker
 
 Docker Desktop for Mac — installed, CLI on `~/.docker/bin` (its installer wired `~/.zprofile`), updates itself. `scripts/macos/update-docker.sh` just runs the Fedora `scripts/update-docker.sh`, which only talks to the docker CLI and is OS-neutral; the clean-slate container policy documented there applies here unchanged.
+
+Docker is also where the binding floors run locally: the Forge's musl and Swift-static suites are `docker run` scripts (see [Python](#python)), and the images they pull are the ones this module refreshes afterwards.
 
 > Docker Desktop has to be **running** for the module: with it closed, `docker images` fails on the socket (`failed to connect to the docker API at unix:///Users/buvy/.docker/run/docker.sock`) and the module stops there with exit 1 — which is what it should do, there is no daemon to talk to. Start Docker Desktop and rerun `./update-toolchain.sh docker`.
 
@@ -431,12 +497,15 @@ graalvm   25.4.4.1+1     GraalVM CE, SDKMAN-managed alongside Temurin — never 
 async-profiler 4.5      ~/.local/opt/async-profiler (macOS universal zip), asprof + jfrconv in ~/.local/bin
 kotlin    2.4.21
 gradle    9.8.1
-python    3.15.0         GIL enabled (standard build; 3.15.0t alongside for free-threaded testing)
+python    3.15.1         GIL enabled (standard build; 3.15.1t alongside for free-threaded testing)
+python    3.14.9         Pyodide's series (PYTHON_PYODIDE_SERIES) — pyodide-build 0.39.1, pyodide-cli 0.5.0
 ruff      0.17.1
 mypy      2.4.0
 pyperf    2.10.0
 py-spy    0.4.2          sudo to attach on macOS
-rustc     1.99.1         aarch64-apple-darwin
+rustc     1.99.1         aarch64-apple-darwin; + x86_64-apple-darwin, aarch64-apple-ios{,-sim,-macabi}, x86_64-apple-ios-macabi,
+                         {x86_64,aarch64}-unknown-linux-{gnu,musl}, {x86_64,aarch64}-pc-windows-msvc (static libs only), llvm-tools
+rustc     1.85.1 / 1.88.0  MSRV toolchains (RUST_MSRV_SERIES), --profile minimal
 cargo     1.99.1
 nextest   0.9.148        prebuilt universal-apple-darwin binary
 samply    0.13.1
@@ -446,8 +515,11 @@ emcc      6.0.12         ~/emsdk (EMSDK_PYTHON = Homebrew python@3.15)
 wasmtime  49.0.3
 android-ndk r30          30.0.16248370, clang 21.0.0 — ~/.local/opt/android-ndk symlink, prebuilt darwin-x86_64 (universal)
 cargo-ndk 4.1.2
+android-sdk              ~/.local/opt/android-sdk — cmdline-tools 23.0 (sdkmanager 1.0.16625370), platform-tools 37.0.1 (adb 1.0.41), emulator 37.2.12.0,
+                         platforms;android-37.0 + build-tools;37.0.0 (the workload's defaults), system-images;android-36;google_apis_ps16k;arm64-v8a, AVD hyper-api36
 xcode     27.1           Build 27A9275, /Applications/Xcode.app selected, license accepted, first launch done; iOS SDK 27.1
-swift     6.4            Apple (swiftlang-6.4.0.34.1) from Xcode — the CLT 27.0 ships the same build; no swiftly
+swift     6.4            Apple (swiftlang-6.4.0.34.1) from Xcode — the CLT 27.0 ships the same build; on PATH
+swiftly   1.2.0          ~/.swiftly (not on PATH) — swift.org 6.4.1 in ~/Library/Developer/Toolchains, for Swift SDKs (Android)
 swiftlint 0.65.1         Homebrew (TOOLCHAIN_DIR only needed while CLT-only, see Swift)
 ruby      4.0.7          arm64-darwin27, rbenv/ruby-build, global — primary Magnus ABI + Fiddle suite host
 ruby      3.4.11         compat Magnus ABI, RBENV_VERSION-selected
@@ -460,6 +532,8 @@ dotnet-11 11.0.100-rc.2.26504.105   TEMPORARY preview channel (Norse DU work)
 dotnet-trace    10.0.750501
 dotnet-counters 10.0.750501
 wasm-tools workload      11.0.100-rc.2 band; bundled wasm-opt replaced by emsdk's
+ios / maccatalyst        27.0.12212-net11-rc.2, 11.0.100-rc.2 band
+android workload         37.2.0-rc.2.84, 11.0.100-rc.2 band
 mono      6.14.1         Homebrew (arm64 bottle) — legacy net472/net462 test execution
 gh        2.102.0        Homebrew
 actionlint 1.7.12       Homebrew
@@ -467,8 +541,9 @@ shellcheck 0.11.0       Homebrew
 pyflakes  4.0.3          pipx (Homebrew python@3.15)
 pwsh      7.6.7          ~/.local/opt/microsoft/powershell/7 (osx-arm64 tarball)
 hyperfine 2.0.0          Homebrew
+llvm / lld 23.1.4        Homebrew — llvm keg-only (off PATH), lld on PATH; release-guard checks
 sample/leaks/heap/malloc_history/vmmap   bundled with macOS 27.0.1
-google-chrome 155.0.8059.85  Homebrew cask, auto-updates; Playwright's default browser (opened once by hand, see Playwright)
+google-chrome 156.0.8078.48  Homebrew cask, `--greedy` upgrade each pass; Playwright's default browser (opened once by hand, see Playwright)
 playwright plugin ea10b213686c  claude-plugins-official, user scope — npx @playwright/mcp@latest, server 0.0.83
 docker    29.8.2         CLI from Docker Desktop (~/.docker/bin)
 tailscale 1.104.1        standalone Tailscale.app (io.tailscale.ipn.macsys), exec wrapper in ~/.local/bin — a symlink aborts
@@ -494,6 +569,32 @@ posh-git-sh              ~/Developer/** only, zsh precmd
 - *Replay (`./update-toolchain.sh base node go jvm dotnet rust wasm android swift ruby php python tools`, docker left out for the daemon reason above): every module took its no-op path — Homebrew `already installed and up-to-date` for all 23 formulae, `Go already at go1.27.2`, `TinyGo already at 0.43.0`, SDKMAN `All candidates are up-to-date`, `async-profiler already at 4.5`, every dotnet-install.sh SDK/runtime `already installed`, rustup `unchanged`, every `cargo install` `Ignored package … already installed` (cargo-php and cargo-ndk are `--force` rebuilds by design), emsdk `All SDK components already installed`, `NDK already at r30`, `rbspy already at 0.53.0`, `xdebug already loaded`, pip `Requirement already satisfied` for all seven tools, `pyflakes is already at latest version 4.0.3`, `pwsh already at 7.6.7`; clean overwrites where the upstream installer always downloads (wasmtime's install.sh, posh-git-sh). The first replay attempt stopped in `php` with exit 1 — the `php -m | grep -q` pipefail race described under [PHP](#php) — and completed after the in-process check replaced it; `php python tools` reran clean on the fix.*
 
 
+*Added 2026-10-21, curating the gaps a HyperUuid-wide survey found (what CI and the Forge run against what this box had). Each module rerun from `./update-toolchain.sh <module>`:*
+
+- *`base`: before Rosetta was installed it stopped at `==> Rosetta 2` with the one sudo command and exit 1; after `sudo softwareupdate --install-rosetta --agree-to-license` it prints `x86_64 binaries run` and passes. The Forge's osx-x64 test step, `cargo test --release --target x86_64-apple-darwin` in HyperUuid's `rust/`, then ran its x86_64 Mach-O test binaries under Rosetta: 65 passed, 0 failed, 1 ignored.*
+- *`docker`, and the floors through it: with Docker Desktop running, the module exits 0. The Forge's own scripts, run from its checkout against HyperUuid: `musl-native/build-musl.sh` built `libhyperuuid.so` in Alpine (the crate's suite passing there), then `musl-suite/suite-musl.sh … linux-musl-arm64` with `SUITE_IMAGE` set to each floor — PHP on `php:8.2-cli-alpine` 96 tests, 43,550 assertions, 1 skipped; Ruby on `ruby:3.3-alpine` 309 examples, 0 failures, 14 pending; Python on `python:3.11-alpine` 319 passed, 3 skipped. Not run: the Swift 6.2 floor (`swift-static-suite`, which needs the static-libs artifacts and the static-Linux/wasm Swift SDKs).*
+- *`rust`: the five Apple targets and `1.85-` / `1.88-aarch64-apple-darwin` installed; HyperUuid's `check-msrv` commands (`cargo +1.85 check --lib`, then `--lib --no-default-features --features cdylib`) pass; `cargo build --release --lib --target <t>` produced `libhyperuuid.rlib` for each of the five Apple targets. Negative control for the prune: a hand-installed `1.80` was uninstalled by the next replay (`not a declared rust-version`), 1.85/1.88 and stable kept.*
+- *`dotnet`: `Successfully updated workload(s): wasm-tools ios maccatalyst android.` The `wasm` module's `wasm-opt` patch in `Microsoft.NET.Runtime.Emscripten.6.0.2.Sdk.osx-arm64` was still in place afterwards.*
+- *`android`: SDK bootstrapped and replayed clean (`hyper-api36 already exists`). Prune control: a hand-installed `platforms;android-36` was removed by the next replay, `android-37.0` and `build-tools;37.0.0` kept. End to end, CI's `test-android` steps for one APK: `cargo ndk -t arm64-v8a cdylib -- -C link-arg=-Wl,-z,max-page-size=16384` (18,792-byte `.so`), staged into `runtimes/android-arm64/native/`, `dotnet pack`, `dotnet publish` of `HyperUuid.AndroidSmokeTest` `-r android-arm64 -p:PublishAot=false` on JDK 25 — the signed APK carries `lib/arm64-v8a/libhyperuuid.so`; `hyper-api36` booted headless (`-no-window -gpu swiftshader_indirect`; `API 36, page size 16384`) and HyperUuid's own `.github/scripts/android_smoke.sh` passed it: `native: available=True version=0.9.0`, `ALL NATIVE AOT CHECKS PASSED`, `exit code 0`. Not run: the Native AOT APK (needs the `android-arm64` static archive), and the Go and Swift suites on the device.*
+- *`python`: 3.14.9 built beside the global (the same pass moved the global 3.15.0 → 3.15.1). With the Forge's pin, `pyodide xbuildenv install 314.0.7` under 3.14.9 installed the cross-build environment (`pyodide config get python_version` → 3.14.2). Negative control: the same command under 3.15.1 fails with `Version 314.0.7 is not compatible with the current environment` — the reason the series exists. The control's pyodide-build install into the global and the xbuildenv cache were removed afterwards.*
+- *`tools`: HyperUuid's release-guard tests, `python3 -I -m unittest discover -s .github/scripts/tests` — 13 errors with LLVM off `PATH`, 4 with `$(brew --prefix llvm)/bin` first. The 4 are the tests' Linux-host assumptions rather than missing tools: they shell out to bare `ar` (Apple's here) and `cc -shared` (a Mach-O dylib named `.so`, which `llvm-nm --dynamic` rejects with `File format has no dynamic symbol table`). On ubuntu runners they pass.*
+
+*Added 2026-10-21, this box as HyperUuid's primary build machine: every CI and Forge job that can run on macOS, replayed against a `git clone --local` of HyperUuid `master` (the working tree itself untouched), with CI's own flags and pins:*
+
+- *Static libraries: the Forge's `build-static-libs.sh` with `APPLE_MOBILE=1 ANDROID=1` — every Linux glibc/musl, Windows MSVC, Apple, Android and wasm archive, the Swift artifact bundle (0.9.0, 11 variants) and the three-slice xcframework.*
+- *Swift static suites (the Forge's `suite-swift-static.sh`): Swift 6.4 — `smoke-glibc smoke-musl test-wasm smoke-wasm browser-wasm`, 61 tests; the Swift 6.2 floor — `test smoke-glibc smoke-musl smoke-wasm`, 61 tests.*
+- *Android, the whole `test-android` job: all four APKs (CoreCLR and Native AOT, `android-arm64` and `android-x64`), CI's inspection on each (the `.so` where CoreCLR carries it, the core linked into the AOT binary, `zipalign -P 16`); on `hyper-api36` both arm64 APKs (`ALL NATIVE AOT CHECKS PASSED`), the Go suite (`PASS`) and the Swift suite (61 tests, 0 failures, 2 skipped) on the swift.org 6.4.1 Android SDK. Not run: the two x64 APKs, which an arm64 emulator can't execute.*
+- *Apple job: Swift `swift test` on the iOS simulator and as Mac Catalyst, 61 tests each; the iOS device build (`BUILD SUCCEEDED`); Go `go test` in the iOS simulator (`ok`); the Go iOS device link carries `_uuid_new_v7`. **Failing:** the C# Mac Catalyst app. With Xcode 27.0 installed as `/Applications/Xcode-27.0.app` (27A266a) and passed through `DEVELOPER_DIR`, the version check passes and the `dotnet` module's Xcode check goes green, but the link still fails on `_UIApplicationDidReceiveMemoryWarningNotification`: the workload (27.0.12212-net11-rc.2) links only `Foundation GSS Security`, leaving out the UIKit its own `libxamarin-dotnet-coreclr.a` references. Not HyperUuid's doing: `dotnet new maccatalyst` builds, and the same template with its sources replaced by a UIKit-free `Program.cs` fails identically. CI has never run this leg on net11: its last `test-apple-mobile` (run 39468483559, `1345e03`) built net10 on Xcode 26.6, and `278705c` moved it to net11 after. The iOS simulator and device C# legs were not reached.*
+- *Lint, all 20 of CI's checks: `cargo fmt`, the five clippy configurations, `cargo +1.85 check`, `cargo semver-checks`, revive at CI's `v1.16.0` (`go run …@v1.16.0`), `check_go_archives.sh`, gofmt, ruff at CI's `0.16.5` (`pipx run ruff==0.16.5`), phpcs, `rake docs:check` + rubocop, swiftlint, `swift format lint --strict`, `dotnet format whitespace`, spotless, `check_exports.py` and the corpus oracle, all pass. Negative control, in a second clone with one violation per checker: all 20 fail. The swiftlint config enables only `missing_docs`, so an undocumented `public func` is what fails it; `as!` passes.*
+- *Release-guard tests, `python3 -I -m unittest discover -s .github/scripts/tests` in `python:3.14-slim` with `git llvm clang lld binutils`: 21 tests, OK; the four macOS-host errors in the `tools` receipt above are the control. A first container run without `git` errored 14 of them on `FileNotFoundError: 'git'`; the runners have it.*
+- *Native macOS suites: `cargo test --release`; `cargo cdylib` + the smoke (all 13 exports called); C# `dotnet test` (0 failed); Java `gradlew test javadoc` and `testWasm` (GraalWasm); `go test`; Swift `swift test` under both build systems (61); PHP phpunit (96 tests, 43,549 assertions, 2 skipped); Ruby Magnus under 4.0 and 3.4 (309 examples, 0 failures each) and Fiddle (309, 0 failures, 14 pending); Python `maturin develop` + pytest (321 passed, 1 skipped). The osx-x64 leg under Rosetta is the `base` receipt above.*
+- *Wasm: the emscripten staticlib; the Blazor app in headless Chrome (`ALL WASM CHECKS PASSED`); `wasm-pack test --headless --chrome` over `browser-test`, 6 passed — after the `--greedy` Chrome upgrade (before it, chromedriver 156 refused Chrome 155); the TinyGo module in the browser (`DONE`) on TinyGo 0.43.0 (CI pins 0.42.0).*
+- *Pyodide: the Forge's `suite-pyodide.mjs` under Node and `browser-pyodide.mjs` in Chrome, on Pyodide 314.0.7 from Python 3.14.9: 315 passed, 7 skipped, each.*
+- *ruby.wasm, 3.4 and 4.0 (`rbwasm build` from source, then from the prebuilt gem, run under Node and in Chrome): `RUBY.WASM 3.4 PASSED` and `RUBY.WASM 4.0 PASSED`, with no Homebrew path in either wasm psych's `mkmf.log`. Both needed the pkg-config narrowing under [Ruby](#ruby). Without it, both baserubies failed in `ext/openssl` against `openssl@4`; with only `PKG_CONFIG_PATH` set to `openssl@3`, 3.4 passed but 4.0 failed linking Homebrew's arm64 `libyaml.a`.*
+- *Swift on Android needs swift.org's compiler: Xcode's Apple Swift 6.4 rejects the swift.org Android SDK's modules (`compiled module was created by a different version of the compiler`), so the suite runs with swiftly's 6.4.1 toolchain first on `PATH` (`Apple Swift version 6.4.1 (swift-6.4.1-RELEASE)`, `SWIFT 6.4.1 ANDROID PASSED`). The first try at that run also stopped on `matched multiple SDKs` (6.4.0 and 6.4.1 Android SDKs both installed); the `swift` module now removes Swift SDKs that aren't for the kept release, and its rerun removed `swift-6.4.0-RELEASE_android`.*
+- *Found in HyperUuid, not fixed here: `.github/scripts/android_build_suite.sh` hardcodes the NDK's `prebuilt/linux-x86_64` (this box has `darwin-x86_64`; run here through a scratch NDK mirror that links one to the other), and the release-guard tests assume a Linux host's `ar` and `cc -shared`.*
+- *Not runnable here: the Windows legs.*
+
 ---
 
 ## Full Update Pass
@@ -503,6 +604,6 @@ posh-git-sh              ~/Developer/** only, zsh precmd
 ./update-toolchain.sh dotnet go    # or just the modules you want
 ```
 
-Same orchestrator as Fedora — on Darwin it runs `scripts/macos/update-<module>.sh` for each of `base node go jvm dotnet rust wasm android swift ruby php python tools docker`. Every module is a no-op or clean overwrite when current; `go`, `jvm`, `dotnet`, `ruby`, `python` and `docker` remove what they supersede. `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `ruby`, `python` bootstrap their own prerequisite when missing, so a fresh Mac with Homebrew and the CLT runs the pass end to end; `wasm`, `android`, `ruby` and `php` hard-fail with a pointer if `rust`/`dotnet` haven't run first (they're earlier in the order); `swift` hard-fails only for an installed-but-unselected Xcode, and `tools` for a Google Chrome that has never been opened from the GUI — both one-time manual steps, both printed by the module. Nothing in the pass asks for a password.
+Same orchestrator as Fedora — on Darwin it runs `scripts/macos/update-<module>.sh` for each of `base node go jvm dotnet rust wasm android swift ruby php python tools docker`. Every module is a no-op or clean overwrite when current; `go`, `jvm`, `dotnet`, `ruby`, `python` and `docker` remove what they supersede. `base`, `node`, `go`, `jvm`, `dotnet`, `rust`, `ruby`, `python` bootstrap their own prerequisite when missing, so a fresh Mac with Homebrew and the CLT runs the pass end to end; `wasm`, `android`, `ruby` and `php` hard-fail with a pointer if `rust`/`dotnet` haven't run first (they're earlier in the order); `android` also hard-fails without the `jvm` module's JDK or the `dotnet` module's android workload pack (it reads the SDK platform and build-tools from it); `dotnet` hard-fails at its end until the Xcode the ios/maccatalyst workloads were built for is installed beside the selected one, `base` until Rosetta 2 is installed, `swift` for an installed-but-unselected Xcode, and `tools` for a Google Chrome that has never been opened from the GUI — all one-time manual steps, each printed by the module. Nothing in the pass asks for a password.
 
 The command-by-command reference for each stack is its section above where macOS differs, and the same-named section of [TOOLCHAIN.md](TOOLCHAIN.md) where it doesn't; `scripts/macos/update-*.sh` is the reference for the exact, current invocation. If they drift, the scripts win.

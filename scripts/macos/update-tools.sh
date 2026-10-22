@@ -19,6 +19,17 @@ ensure_local_dirs
 log "GitHub CLI / actionlint / ShellCheck / hyperfine / Mono (Homebrew)"
 brew_ensure gh actionlint shellcheck hyperfine mono
 
+# The Hyper repos' release guard (.github/scripts/release_guard.py and its
+# tests) reads exports with llvm-nm / llvm-readobj and builds cross-format
+# fixtures with clang and lld-link: CI's `apt-get install llvm clang lld`.
+# Homebrew's llvm is keg-only (macOS provides clang), so its bin/ stays off
+# PATH and the CLT's clang and libclang keep winning everywhere else; put it
+# first only for the release-guard run (see TOOLCHAIN-macos.md). lld is not
+# keg-only: ld.lld / lld-link / ld64.lld / wasm-ld land in Homebrew's bin,
+# none of which shadows the CLT's ld.
+log "LLVM / lld (Homebrew — release-guard checks)"
+brew_ensure llvm lld
+
 # actionlint shells out to shellcheck (above) and pyflakes for `run:` bodies
 # and `python` steps, silently skipping those checks when either is missing.
 # No pyflakes formula exists; pipx gives it its own venv on Homebrew's python
@@ -97,10 +108,12 @@ fi
 # /Applications. The Fedora doc's system-Chromium reasoning (one copy, the
 # OS/vendor update cadence, no second ~300 MB Playwright-managed download)
 # lands on the google-chrome cask here: Homebrew's chromium cask is disabled
-# (`fails_gatekeeper_check`, unsigned snapshots), Chrome is notarized and
-# updates itself (`brew upgrade` skips auto_updates casks anyway, so install-
-# if-missing is the whole lifecycle). The plugin install is replay-safe
-# (exit 0, "already installed").
+# (`fails_gatekeeper_check`, unsigned snapshots), and Chrome is notarized.
+# Chrome's own updater only runs while it is open, which on a build box it
+# rarely is: it sat at 155 after 156 shipped, and wasm-pack's chromedriver
+# (always the newest) then refused it ("only supports Chrome version 156").
+# `brew upgrade` skips auto_updates casks unless told --greedy, so it is. The
+# plugin install is replay-safe (exit 0, "already installed").
 #
 # Chrome has to be opened ONCE from the GUI before it will run from the
 # command line. Until then every launch — headless or via Playwright, with or
@@ -112,6 +125,7 @@ fi
 # it). The sentinel is the check; the fix is manual, so this fails loudly.
 log "Google Chrome (Homebrew cask — Playwright's default browser)"
 brew list --cask google-chrome >/dev/null 2>&1 || brew install --cask google-chrome
+brew upgrade --cask --greedy google-chrome
 CHROME_FIRST_RUN="$HOME/Library/Application Support/Google/Chrome/First Run"
 if [[ ! -f "$CHROME_FIRST_RUN" ]]; then
 	cat >&2 <<'EOF'
@@ -133,6 +147,9 @@ pyflakes --version
 pwsh --version
 mono --version | head -1
 hyperfine --version
+"$(brew --prefix llvm)/bin/llvm-nm" --version | sed -n 2p
+"$(brew --prefix llvm)/bin/llvm-readobj" --version | sed -n 2p
+lld-link --version
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version
 claude plugin list | grep -A3 'playwright@' | grep -E 'playwright@|Status'
 # The macOS-bundled process tools that stand in for perf/valgrind/heaptrack.

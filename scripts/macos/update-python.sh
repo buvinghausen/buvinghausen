@@ -62,6 +62,25 @@ if [[ -n "$PYTHON_PREV" && "$PYTHON_PREV" != "$PYTHON_NEW_GLOBAL" ]]; then
 	pyenv uninstall -f "$PYTHON_PREV"
 fi
 
+# Pyodide's interpreter series, beside the global: pyodide-build only builds
+# for the Python minor its Pyodide release embeds, and the host interpreter
+# has to be that minor (the Forge's hyper-build-wheels.yml pins
+# PYODIDE_VERSION 314.0.7 on python-version "3.14"). Edit it when that pin's
+# minor moves. pyodide-build goes into this build's own site-packages, not the
+# global's; the per-release xbuildenv and its Emscripten are fetched per run
+# by `pyodide xbuildenv install`, as the Forge does. Superseded patches within
+# the series are removed once the newest is in.
+PYTHON_PYODIDE_SERIES=3.14
+PYTHON_PYODIDE=$(pyenv latest -k "$PYTHON_PYODIDE_SERIES")
+log "Python ${PYTHON_PYODIDE} (Pyodide's series) + pyodide-build"
+pyenv install -s "$PYTHON_PYODIDE"
+PYENV_VERSION="$PYTHON_PYODIDE" python -m pip install --upgrade pip pyodide-build
+while IFS= read -r v; do
+	[[ "$v" == "$PYTHON_PYODIDE" ]] && continue
+	echo "  removing superseded $v (kept $PYTHON_PYODIDE)"
+	pyenv uninstall -f "$v"
+done < <(pyenv versions --bare | grep -E "^${PYTHON_PYODIDE_SERIES//./\\.}\.[0-9]+\$" || true)
+
 log "maturin / pytest / ruff / mypy / pyperf / py-spy"
 pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy
 
@@ -71,3 +90,5 @@ ruff --version
 mypy --version
 python -c "import pyperf; print('pyperf', pyperf.__version__)"
 py-spy --version
+PYENV_VERSION="$PYTHON_PYODIDE" python --version
+PYENV_VERSION="$PYTHON_PYODIDE" pyodide --version

@@ -1,0 +1,1121 @@
+- generic [ref=f32e2]:
+  - navigation "Shortcuts menu" [ref=f32e3]:
+    - heading "Skip to" [level=2] [ref=f32e4]
+    - list "Skip to" [ref=f32e5]:
+      - listitem [ref=f32e6]:
+        - link "main content" [ref=f32e7] [cursor=pointer]:
+          - /url: "#skippedLink"
+          - text: Main content
+      - listitem [ref=f32e8]:
+        - link "Results" [ref=f32e9] [cursor=pointer]:
+          - /url: .s-asin a:has(h2)
+      - listitem [ref=f32e10]:
+        - link "Filters" [ref=f32e11] [cursor=pointer]:
+          - /url: "#s-refinements > div.a-section > div:first-child"
+    - separator [aria-hidden] [ref=f32e12]
+    - heading "Keyboard shortcuts" [level=2] [ref=f32e13]
+    - list "Keyboard shortcuts" [ref=f32e14]:
+      - listitem [ref=f32e15]:
+        - link "Search, option, forward slash" [ref=f32e16] [cursor=pointer]:
+          - /url: javascript:void(0)
+          - generic [aria-hidden] [ref=f32e17]:
+            - generic [ref=f32e18]: Search
+            - generic [ref=f32e19]:
+              - generic [ref=f32e20]: opt
+              - generic [ref=f32e21]: +
+              - generic [ref=f32e22]: /
+      - listitem [ref=f32e23]:
+        - link "Cart, shift, option, c" [ref=f32e24] [cursor=pointer]:
+          - /url: javascript:void(0)
+          - generic [aria-hidden] [ref=f32e25]:
+            - generic [ref=f32e26]: Cart
+            - generic [ref=f32e27]:
+              - generic [ref=f32e28]: shift
+              - generic [ref=f32e29]: +
+              - generic [ref=f32e30]: opt
+              - generic [ref=f32e31]: +
+              - generic [ref=f32e32]: C
+      - listitem [ref=f32e33]:
+        - link "Home, shift, option, h" [ref=f32e34] [cursor=pointer]:
+          - /url: javascript:void(0)
+          - generic [aria-hidden] [ref=f32e35]:
+            - generic [ref=f32e36]: Home
+            - generic [ref=f32e37]:
+              - generic [ref=f32e38]: shift
+              - generic [ref=f32e39]: +
+              - generic [ref=f32e40]: opt
+              - generic [ref=f32e41]: +
+              - generic [ref=f32e42]: H
+      - listitem [ref=f32e43]:
+        - link "Your orders, shift, option, o" [ref=f32e44] [cursor=pointer]:
+          - /url: javascript:void(0)
+          - generic [aria-hidden] [ref=f32e45]:
+            - generic [ref=f32e46]: Orders
+            - generic [ref=f32e47]:
+              - generic [ref=f32e48]: shift
+              - generic [ref=f32e49]: +
+              - generic [ref=f32e50]: opt
+              - generic [ref=f32e51]: +
+              - generic [ref=f32e52]: O
+      - listitem [ref=f32e53]:
+        - button "Show/hide shortcuts, shift, option, z" [ref=f32e54] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f32e55]:
+            - generic [ref=f32e56]: Show/Hide shortcuts
+            - generic [ref=f32e57]:
+              - generic [ref=f32e58]: shift
+              - generic [ref=f32e59]: +
+              - generic [ref=f32e60]: opt
+              - generic [ref=f32e61]: +
+              - generic [ref=f32e62]: Z
+    - generic [ref=f32e63]: To move between items, use your keyboard's up or down arrows.
+  - banner [ref=f32e69]:
+    - navigation "Primary" [ref=f32e70]:
+      - generic [ref=f32e71]:
+        - generic [ref=f32e72]:
+          - link "Amazon" [ref=f32e74] [cursor=pointer]:
+            - /url: /ref=nav_logo
+          - button "Delivering to Hernando 34442 Update location" [ref=f32e77] [cursor=pointer]:
+            - generic [ref=f32e79]:
+              - generic [ref=f32e80]: Delivering to Hernando 34442
+              - generic [ref=f32e81]: Update location
+        - search [ref=f32e84]:
+          - generic [ref=f32e87]:
+            - generic [ref=f32e88]: All
+            - combobox "Select the department you want to search in" [ref=f32e91] [cursor=pointer]:
+              - option "All Departments" [selected]
+              - option "Alexa Skills"
+              - option "Amazon Autos"
+              - option "Amazon Devices"
+              - option "Amazon Global Store"
+              - option "Amazon Haul"
+              - option "Amazon One Medical"
+              - option "Amazon Pharmacy"
+              - option "Amazon Resale"
+              - option "Appliances"
+              - option "Apps & Games"
+              - option "Arts, Crafts & Sewing"
+              - option "Audible Books & Originals"
+              - option "Automotive Parts & Accessories"
+              - option "Baby"
+              - option "Beauty & Personal Care"
+              - option "Books"
+              - option "CDs & Vinyl"
+              - option "Cell Phones & Accessories"
+              - option "Clothing, Shoes & Jewelry"
+              - option "Women's Clothing, Shoes & Jewelry"
+              - option "Men's Clothing, Shoes & Jewelry"
+              - option "Girl's Clothing, Shoes & Jewelry"
+              - option "Boy's Clothing, Shoes & Jewelry"
+              - option "Baby Clothing, Shoes & Jewelry"
+              - option "Collectibles & Fine Art"
+              - option "Computers"
+              - option "Credit and Payment Cards"
+              - option "Digital Music"
+              - option "Electronics"
+              - option "Garden & Outdoor"
+              - option "Gift Cards"
+              - option "Grocery & Gourmet Food"
+              - option "Handmade"
+              - option "Health, Household & Baby Care"
+              - option "Home & Business Services"
+              - option "Home & Kitchen"
+              - option "Industrial & Scientific"
+              - option "Just for Prime"
+              - option "Kindle Store"
+              - option "Luggage & Travel Gear"
+              - option "Luxury Stores"
+              - option "Magazine Subscriptions"
+              - option "Movies & TV"
+              - option "Musical Instruments"
+              - option "Office Products"
+              - option "Pet Supplies"
+              - option "Premium Beauty"
+              - option "Prime Video"
+              - option "Smart Home"
+              - option "Software"
+              - option "Sports & Outdoors"
+              - option "Subscribe & Save"
+              - option "Subscription Boxes"
+              - option "Tools & Home Improvement"
+              - option "Toys & Games"
+              - option "Under $10"
+              - option "Video Games"
+              - option "Whole Foods Market"
+          - searchbox "Search Amazon" [ref=f32e94]: Lexar NM790 8TB LNM790X008T
+          - generic "Go" [ref=f32e97] [cursor=pointer]:
+            - button "Go" [ref=f32e98]
+        - generic [ref=f32e100]:
+          - generic [ref=f32e101]:
+            - link "Choose a language for shopping in Amazon United States. The current selection is English (EN)." [ref=f32e102] [cursor=pointer]:
+              - /url: /customer-preferences/edit?ie=UTF8&preferencesReturnUrl=%2F&ref_=topnav_lang
+              - generic [ref=f32e105]:
+                - img "United States" [ref=f32e106]
+                - generic [ref=f32e107]: EN
+            - button "Expand to Change Language or Country" [ref=f32e108] [cursor=pointer]
+          - generic [ref=f32e109]:
+            - link "Hello, sign in Account & Lists" [ref=f32e110] [cursor=pointer]:
+              - /url: https://www.amazon.com/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fs%3Fk%3DLexar%2BNM790%2B8TB%2BLNM790X008T%26ref_%3Dnav_ya_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0
+              - generic [ref=f32e111]: Hello, sign in
+              - generic [ref=f32e113]: Account & Lists
+            - button "Expand Account and Lists" [ref=f32e114] [cursor=pointer]
+          - link "Returns & Orders" [ref=f32e115] [cursor=pointer]:
+            - /url: /gp/css/order-history?ref_=nav_orders_first
+            - generic [ref=f32e116]: Returns
+            - generic [ref=f32e117]: "& Orders"
+          - link "0 items in cart" [ref=f32e118] [cursor=pointer]:
+            - /url: /gp/cart/view.html?ref_=nav_cart
+            - generic [aria-hidden] [ref=f32e120]: "0"
+            - generic [aria-hidden] [ref=f32e123]: Cart
+      - generic [ref=f32e127]:
+        - link "Sign in" [ref=f32e128] [cursor=pointer]:
+          - /url: https://www.amazon.com/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fs%3Fk%3DLexar%2BNM790%2B8TB%2BLNM790X008T%26ref_%3Dnav_custrec_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0
+        - generic [ref=f32e130]:
+          - text: New customer?
+          - link "New to Amazon? Start here to create an account" [ref=f32e131] [cursor=pointer]:
+            - /url: https://www.amazon.com/ap/register?openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fs%2F%3F_encoding%3DUTF8%26k%3DLexar%2520NM790%25208TB%2520LNM790X008T%26ref_%3Dnav_custrec_newcust&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0
+            - text: Start here.
+      - generic [ref=f32e136]:
+        - button "Open All Categories Menu" [ref=f32e138] [cursor=pointer]:
+          - generic [ref=f32e140]: All
+        - list [ref=f32e144]:
+          - listitem [ref=f32e145]:
+            - generic [ref=f32e146]:
+              - link "Prime" [ref=f32e147] [cursor=pointer]:
+                - /url: /prime?ref_=nav_cs_primelink_nonmember
+              - button "Prime Details" [ref=f32e148] [cursor=pointer]
+          - listitem [ref=f32e149]:
+            - generic [ref=f32e150]:
+              - link "Groceries" [ref=f32e151] [cursor=pointer]:
+                - /url: /fmc/learn-more?ref_=nav_cs_groceries
+              - button "Groceries Details" [ref=f32e152] [cursor=pointer]
+          - listitem [ref=f32e153]:
+            - link "Today's Deals" [ref=f32e155] [cursor=pointer]:
+              - /url: /deals?ref_=nav_cs_gb
+          - listitem [ref=f32e156]:
+            - link "Coupons" [ref=f32e158] [cursor=pointer]:
+              - /url: /coupons?ref_=nav_cs_coupons
+          - listitem [ref=f32e159]:
+            - link "Pharmacy" [ref=f32e161] [cursor=pointer]:
+              - /url: https://pharmacy.amazon.com/?nodl=0&ref_=nav_cs_pharmacy
+          - listitem [ref=f32e162]:
+            - link "Audible" [ref=f32e164] [cursor=pointer]:
+              - /url: /Audible-Books-and-Originals/b/?ie=UTF8&node=18145289011&ref_=nav_cs_audible
+          - listitem [ref=f32e165]:
+            - link "Whole Foods" [ref=f32e167] [cursor=pointer]:
+              - /url: /alm/storefront?almBrandId=VUZHIFdob2xlIEZvb2Rz&ref_=nav_cs_whole_foods
+          - listitem [ref=f32e168]:
+            - link "Music" [ref=f32e170] [cursor=pointer]:
+              - /url: /music/player?ref_=nav_cs_music
+          - listitem [ref=f32e171]:
+            - link "Pet Supplies" [ref=f32e173] [cursor=pointer]:
+              - /url: /pet-shops-dogs-cats-hamsters-kittens/b/?ie=UTF8&node=2619533011&ref_=nav_cs_pets
+          - listitem [ref=f32e174]:
+            - generic [ref=f32e175]:
+              - link "Amazon Home" [ref=f32e176] [cursor=pointer]:
+                - /url: /home-garden-kitchen-furniture-bedding/b/?ie=UTF8&node=1055398&ref_=nav_cs_home
+              - button "Amazon Home Details" [ref=f32e177] [cursor=pointer]
+          - listitem [ref=f32e178]:
+            - link "Registry" [ref=f32e180] [cursor=pointer]:
+              - /url: /gp/browse.html?node=16115931011&ref_=nav_cs_registry
+          - listitem [ref=f32e181]:
+            - link "Automotive" [ref=f32e183] [cursor=pointer]:
+              - /url: /automotive-auto-truck-replacements-parts/b/?ie=UTF8&node=15684181&ref_=nav_cs_automotive
+          - listitem [ref=f32e184]:
+            - link "Beauty & Personal Care" [ref=f32e186] [cursor=pointer]:
+              - /url: /Beauty-Makeup-Skin-Hair-Products/b/?ie=UTF8&node=3760911&ref_=nav_cs_beauty
+          - listitem [ref=f32e187]:
+            - link "New Releases" [ref=f32e189] [cursor=pointer]:
+              - /url: /gp/new-releases/?ref_=nav_cs_newreleases
+          - listitem [ref=f32e190]:
+            - link "Video Games" [ref=f32e192] [cursor=pointer]:
+              - /url: /computer-video-games-hardware-accessories/b/?ie=UTF8&node=468642&ref_=nav_cs_video_games
+          - listitem [ref=f32e193]:
+            - link "Fashion" [ref=f32e195] [cursor=pointer]:
+              - /url: /amazon-fashion/b/?ie=UTF8&node=7141123011&ref_=nav_cs_fashion
+          - listitem [ref=f32e196]:
+            - link "Handmade" [ref=f32e198] [cursor=pointer]:
+              - /url: /gp/browse.html?node=120955898011&ref_=nav_cs_handmade
+          - listitem [ref=f32e199]:
+            - link "Baby" [ref=f32e201] [cursor=pointer]:
+              - /url: /baby-car-seats-strollers-bedding/b/?ie=UTF8&node=165796011&ref_=nav_cs_baby
+          - listitem [ref=f32e202]:
+            - generic [ref=f32e203]:
+              - link "Toys & Games" [ref=f32e204] [cursor=pointer]:
+                - /url: /toys/b/?ie=UTF8&node=165793011&ref_=nav_cs_toys
+              - button "Toys & Games Details" [ref=f32e205] [cursor=pointer]
+          - listitem [ref=f32e206]:
+            - link "Smart Home" [ref=f32e208] [cursor=pointer]:
+              - /url: /Smart-Home/b/?ie=UTF8&node=6563140011&ref_=nav_cs_smart_home
+          - listitem [ref=f32e209]:
+            - link "Subscribe & Save" [ref=f32e211] [cursor=pointer]:
+              - /url: /auto-deliveries/landing?ref_=nav_cs_sns
+          - listitem [ref=f32e212]:
+            - link "Sports & Outdoors" [ref=f32e214] [cursor=pointer]:
+              - /url: /gp/browse.html?node=220556511011&ref_=nav_cs_sports
+          - listitem [ref=f32e215]:
+            - link "Gift Shop" [ref=f32e217] [cursor=pointer]:
+              - /url: /gcx/Gifts-for-Everyone/gfhz/?ref_=nav_cs_giftfinder
+          - listitem [ref=f32e218]:
+            - link "Works with Alexa" [ref=f32e220] [cursor=pointer]:
+              - /url: /gp/browse.html?node=73846268011&ref_=nav_cs_wwa
+          - listitem [ref=f32e221]:
+            - generic [ref=f32e222]:
+              - link "Custom Products" [ref=f32e223] [cursor=pointer]:
+                - /url: /Amazon-Custom/b/?ie=UTF8&node=11032013011&ref_=nav_cs_custom
+              - button "Custom Products Details" [ref=f32e224] [cursor=pointer]
+          - listitem [ref=f32e225]:
+            - link "Amazon Haul" [ref=f32e227] [cursor=pointer]:
+              - /url: /haul/store?ref_=nav_cs_hul_disb
+          - listitem [ref=f32e228]:
+            - link "Best Sellers" [ref=f32e230] [cursor=pointer]:
+              - /url: /gp/bestsellers/?ref_=nav_cs_bestsellers
+          - listitem [ref=f32e231]:
+            - link "Luxury" [ref=f32e233] [cursor=pointer]:
+              - /url: /luxurystores?ref_=nav_cs_luxury_disc
+          - listitem [ref=f32e234]:
+            - link "Kindle Books" [ref=f32e236] [cursor=pointer]:
+              - /url: /Kindle-eBooks/b/?ie=UTF8&node=154606011&ref_=nav_cs_kindle_books
+          - listitem [ref=f32e237]:
+            - link "Books" [ref=f32e239] [cursor=pointer]:
+              - /url: /books-used-books-textbooks/b/?ie=UTF8&node=283155&ref_=nav_cs_books
+      - dialog [ref=f32e242]
+  - generic [ref=f32e244]:
+    - heading [level=1] [ref=f32e247]:
+      - generic [ref=f32e248]:
+        - heading "2 results for \"Lexar NM790 8TB LNM790X008T\"" [level=2] [ref=f32e251]
+        - generic [ref=f32e256]:
+          - generic [aria-hidden] [ref=f32e257]: "Sort by:"
+          - combobox "Sort by:" [ref=f32e258]:
+            - option "Featured" [selected]
+            - 'option "Price: Low to High"'
+            - 'option "Price: High to Low"'
+            - option "Avg. Customer Review"
+            - option "Newest Arrivals"
+            - option "Best Sellers"
+          - generic [aria-hidden] [ref=f32e261] [cursor=pointer]: Sort by:Featured
+    - generic [ref=f32e263]:
+      - generic [ref=f32e265]:
+        - generic [ref=f32e267]:
+          - generic [ref=f32e269]:
+            - generic [ref=f32e272]:
+              - heading "Results" [level=2] [ref=f32e273]
+              - generic [ref=f32e274]: Check each product page for other buying options.
+            - generic:
+              - list:
+                - listitem [ref=f32e275]:
+                  - generic [ref=f32e281]:
+                    - generic [ref=f32e283]:
+                      - generic "Amazon's Choice" [ref=f32e286]: Overall Pick
+                      - link [aria-hidden] [ref=f32e300] [cursor=pointer]:
+                        - /url: /Lexar-Internal-Compatible-Creators-LNM790X002T-RNNNU/dp/B0C91X5DZL/ref=sr_1_1?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-1
+                    - generic [ref=f32e305]:
+                      - generic [ref=f32e306]:
+                        - heading "Lexar" [level=2] [ref=f32e309]
+                        - link [ref=f32e310] [cursor=pointer]:
+                          - /url: /Lexar-Internal-Compatible-Creators-LNM790X002T-RNNNU/dp/B0C91X5DZL/ref=sr_1_1?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-1
+                          - heading "2TB NM790 Internal NVMe SSD, 7400/6500 MB/s, M.2 2280, PCIe Gen 4x4" [level=2] [ref=f32e311]
+                        - generic "Compatible w/ PS5, Gamers & Content Creators, PC & Laptops, SLC Cache, Single-Sided Design, LNM790X002T-RNNNU" [ref=f32e313]
+                      - generic [ref=f32e314]:
+                        - generic [ref=f32e315]:
+                          - text: "4.7"
+                          - button "4.7 out of 5 stars, rating details" [ref=f32e317] [cursor=pointer]:
+                            - generic [ref=f32e319]: 4.7 out of 5 stars
+                          - link "1,294 ratings" [ref=f32e323] [cursor=pointer]:
+                            - /url: /Lexar-Internal-Compatible-Creators-LNM790X002T-RNNNU/dp/B0C91X5DZL/ref=sr_1_1?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-1#customerReviews
+                            - text: (1.2K)
+                        - generic [ref=f32e324]: 300+ bought in past month
+                      - generic [ref=f32e327]:
+                        - generic [ref=f32e328]:
+                          - generic [ref=f32e330]:
+                            - generic [ref=f32e331]: Price, product page
+                            - 'link "$329.00 List: $449.99 List: $449.99" [ref=f32e332] [cursor=pointer]':
+                              - /url: /Lexar-Internal-Compatible-Creators-LNM790X002T-RNNNU/dp/B0C91X5DZL/ref=sr_1_1?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-1
+                              - generic [ref=f32e333]:
+                                - generic [ref=f32e334]: $329.00
+                                - generic [aria-hidden] [ref=f32e335]:
+                                  - text: $
+                                  - generic [ref=f32e336]:
+                                    - text: "329"
+                                    - generic [ref=f32e337]: .
+                                  - text: "00"
+                              - generic [ref=f32e338]: "List: $449.99"
+                              - generic [ref=f32e339]:
+                                - text: "List:"
+                                - generic [ref=f32e340]:
+                                  - generic [ref=f32e341]: $449.99
+                                  - text: $449.99
+                          - generic [ref=f32e342]: 90 days free of Amazon Music with purchase
+                        - generic [ref=f32e343]:
+                          - generic [ref=f32e345]:
+                            - generic [ref=f32e349]:
+                              - generic [ref=f32e350]: Join Prime
+                              - text: to get FREE delivery Thu, Oct 22
+                            - generic [ref=f32e351]: Or Non-members get FREE delivery Sat, Oct 24
+                          - generic "Only 20 left in stock - order soon." [ref=f32e354]
+                        - generic [ref=f32e368] [cursor=pointer]:
+                          - button "Add to cart" [ref=f32e369]
+                          - generic [aria-hidden] [ref=f32e370]: Add to cart
+                - listitem [ref=f32e373]:
+                  - generic [ref=f32e381]:
+                    - link [aria-hidden] [ref=f32e387] [cursor=pointer]:
+                      - /url: /sspa/click?ie=UTF8&spc=MTo1NTQyMTE4Njg1OTE1OjE3OTI0NjY4NDc6c3BfYXRmOjMwMDU1NTAzNDc4NTkwMjo6MDo6&url=%2FLexar-Heatsink-Internal-Compatible-LNM790X001T-RN9NU%2Fdp%2FB0CGKPPZY9%2Fref%3Dsr_1_2_sspa%3Fdib%3DeyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4%26dib_tag%3Dse%26keywords%3DLexar%2BNM790%2B8TB%2BLNM790X008T%26qid%3D1792466847%26sr%3D8-2-spons%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9hdGY%26psc%3D1
+                    - generic [ref=f32e392]:
+                      - generic [ref=f32e393]:
+                        - button "View Sponsored information or leave ad feedback" [ref=f32e396] [cursor=pointer]:
+                          - generic [ref=f32e397]: Sponsored
+                        - heading "Lexar" [level=2] [ref=f32e401]
+                        - link [ref=f32e402] [cursor=pointer]:
+                          - /url: /sspa/click?ie=UTF8&spc=MTo1NTQyMTE4Njg1OTE1OjE3OTI0NjY4NDc6c3BfYXRmOjMwMDU1NTAzNDc4NTkwMjo6MDo6&url=%2FLexar-Heatsink-Internal-Compatible-LNM790X001T-RN9NU%2Fdp%2FB0CGKPPZY9%2Fref%3Dsr_1_2_sspa%3Fdib%3DeyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4%26dib_tag%3Dse%26keywords%3DLexar%2BNM790%2B8TB%2BLNM790X008T%26qid%3D1792466847%26sr%3D8-2-spons%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9hdGY%26psc%3D1
+                          - heading "Sponsored Ad - 1TB NM790 NVMe SSD w/Heatsink, 7400/6500 MB/s, M.2 2280, PCIe Gen 4x4" [level=2] [ref=f32e403]: 1TB NM790 NVMe SSD w/Heatsink, 7400/6500 MB/s, M.2 2280, PCIe Gen 4x4
+                        - generic "Compatible w/ PS5, Gamers & Content Creators, PC & Laptops, SLC Cache, Single-Sided Design, LNM790X001T-RN9NU" [ref=f32e405]
+                      - generic [ref=f32e406]:
+                        - generic [ref=f32e407]:
+                          - text: "4.8"
+                          - button "4.8 out of 5 stars, rating details" [ref=f32e409] [cursor=pointer]:
+                            - generic [ref=f32e411]: 4.8 out of 5 stars
+                          - link "1,327 ratings" [ref=f32e415] [cursor=pointer]:
+                            - /url: /sspa/click?ie=UTF8&spc=MTo1NTQyMTE4Njg1OTE1OjE3OTI0NjY4NDc6c3BfYXRmOjMwMDU1NTAzNDc4NTkwMjo6MDo6&url=%2FLexar-Heatsink-Internal-Compatible-LNM790X001T-RN9NU%2Fdp%2FB0CGKPPZY9%2Fref%3Dsr_1_2_sspa%3Fdib%3DeyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4%26dib_tag%3Dse%26keywords%3DLexar%2BNM790%2B8TB%2BLNM790X008T%26qid%3D1792466847%26sr%3D8-2-spons%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9hdGY%26psc%3D1#customerReviews
+                            - text: (1.3K)
+                        - generic [ref=f32e416]: 1K+ bought in past month
+                      - generic [ref=f32e419]:
+                        - generic [ref=f32e420]:
+                          - generic [ref=f32e422]:
+                            - generic [ref=f32e423]: Price, product page
+                            - link "$204.99" [ref=f32e424] [cursor=pointer]:
+                              - /url: /sspa/click?ie=UTF8&spc=MTo1NTQyMTE4Njg1OTE1OjE3OTI0NjY4NDc6c3BfYXRmOjMwMDU1NTAzNDc4NTkwMjo6MDo6&url=%2FLexar-Heatsink-Internal-Compatible-LNM790X001T-RN9NU%2Fdp%2FB0CGKPPZY9%2Fref%3Dsr_1_2_sspa%3Fdib%3DeyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4%26dib_tag%3Dse%26keywords%3DLexar%2BNM790%2B8TB%2BLNM790X008T%26qid%3D1792466847%26sr%3D8-2-spons%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9hdGY%26psc%3D1
+                              - generic [ref=f32e425]:
+                                - generic [ref=f32e426]: $204.99
+                                - generic [aria-hidden] [ref=f32e427]:
+                                  - text: $
+                                  - generic [ref=f32e428]:
+                                    - text: "204"
+                                    - generic [ref=f32e429]: .
+                                  - text: "99"
+                          - generic [ref=f32e430]: 90 days free of Amazon Music with purchase
+                        - generic [ref=f32e433]:
+                          - generic [ref=f32e436]: FREE delivery Sat, Oct 24
+                          - generic [ref=f32e438]: Or fastest delivery Fri, Oct 23
+                        - generic [ref=f32e453] [cursor=pointer]:
+                          - button "Add to cart" [ref=f32e454]
+                          - generic [aria-hidden] [ref=f32e455]: Add to cart
+                - listitem [ref=f32e458]:
+                  - generic [ref=f32e464]:
+                    - link [aria-hidden] [ref=f32e470] [cursor=pointer]:
+                      - /url: /Lexar-7400-6500-NM790-NVME/dp/B0C4ZV5Y7X/ref=sr_1_3?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-3
+                    - generic [ref=f32e475]:
+                      - generic [ref=f32e476]:
+                        - heading "Lexar" [level=2] [ref=f32e479]
+                        - link [ref=f32e480] [cursor=pointer]:
+                          - /url: /Lexar-7400-6500-NM790-NVME/dp/B0C4ZV5Y7X/ref=sr_1_3?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-3
+                          - heading "SSD 1TB 7400/6500 NM790 M.2 Lex NVME" [level=2] [ref=f32e481]
+                      - generic [ref=f32e483]:
+                        - text: "4.6"
+                        - button "4.6 out of 5 stars, rating details" [ref=f32e485] [cursor=pointer]:
+                          - generic [ref=f32e487]: 4.6 out of 5 stars
+                        - link "785 ratings" [ref=f32e491] [cursor=pointer]:
+                          - /url: /Lexar-7400-6500-NM790-NVME/dp/B0C4ZV5Y7X/ref=sr_1_3?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-3#customerReviews
+                          - text: (785)
+                      - generic [ref=f32e494]:
+                        - generic [ref=f32e497]:
+                          - generic [ref=f32e498]: Price, product page
+                          - link "$233.00" [ref=f32e499] [cursor=pointer]:
+                            - /url: /Lexar-7400-6500-NM790-NVME/dp/B0C4ZV5Y7X/ref=sr_1_3?dib=eyJ2IjoiMSJ9.hi4JShlX5lY0_R7tm1GMi9pj7VMu92fv8oF0dZfLxzM.9lv6AjhmjK5b-wm-inNGN_7dqSqTG_fi2CpSVt9v7y4&dib_tag=se&keywords=Lexar+NM790+8TB+LNM790X008T&qid=1792466847&sr=8-3
+                            - generic [ref=f32e500]:
+                              - generic [ref=f32e501]: $233.00
+                              - generic [aria-hidden] [ref=f32e502]:
+                                - text: $
+                                - generic [ref=f32e503]:
+                                  - text: "233"
+                                  - generic [ref=f32e504]: .
+                                - text: "00"
+                        - generic [ref=f32e505]:
+                          - generic [ref=f32e507]:
+                            - generic [ref=f32e510]: FREE delivery Fri, Oct 23
+                            - generic [ref=f32e512]: Or fastest delivery Oct 21 - 22
+                          - generic "Only 1 left in stock - order soon." [ref=f32e515]
+                        - generic [ref=f32e529] [cursor=pointer]:
+                          - button "Add to cart" [ref=f32e530]
+                          - generic [aria-hidden] [ref=f32e531]: Add to cart
+          - generic [ref=f32e537]:
+            - separator [aria-hidden] [ref=f32e538]
+            - generic [ref=f32e539]:
+              - heading "Brands related to your search" [ref=f32e540]
+              - button "Leave feedback on Sponsored ad" [ref=f32e545] [cursor=pointer]: Sponsored
+              - generic [ref=f32e549]:
+                - generic [ref=f32e551]:
+                  - generic:
+                    - generic:
+                      - link [aria-hidden]:
+                        - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1q20AUhUlC22BSGrxIwatgqBehY48ky5JSRJmRlMTxT2xJMcEbMZbGsogtyTNjO_XCD9CXaKGvUMiyL9B1F-1b9AmKk5bSntUH9xzuvacQ7X_88uPb0-Jz5A96dqvZuoG245Z3pJOjMU2Tu4DG_rp3MUhrwlWuOnxyejRntj5P183EGtwqyAWLWJp6K_dAUauSolVlCVbhcNfDo33k-BeO2_SKLwvPIspvRZYXD667rmNdnXebQ8cuvd8p7G8nwUiMiwUyI-ssrYbZrPRqwglgNMxmM5pGRCRZCjhlyySkgFPCwgkYiXH5CU2Da-9Eni2mIgEjRtIIhIwSkSwp-L0ShIRFHOQkSQVlIMxSQVMhH3awFSg9rx3Yjtfyr3plvbADD39-_X7_6YNdOvyT3h6i5HxafqFACKGh1qGmGBA25L1rzz7ds3rWSav4xsbIys-aQEMbPH9UjDa4z4ftlYz-1QbHG9zfYPQAcenAip27c-TEuuZQ-X638Hl3IkTOT2u11WpV_VtLjYuMUV7LSUxrGpIhwroNLNXAoO5oCGCEDIAl3agjR1dVB799CASMjk0PBwhqKtR1TVZ0xXDkQbd-M3QBggaUGlJDP3Maut_x3Fa_W8mjgEVBPp1EzBSVCSdByIIkMmFlmgeEJyk3MbSH6oXUaeDXGNruef1St1qPqLh9dbh1zheUvTPb9I6w425HM-Cx7uPj9gPeQKj7WxOfZsL8v-4Kj_KAREHMskVubquXVU1uSFAxYL2SmCTnFbL9y1JhtBaXS3v5C1li4Bw&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F7A20AB8D-C59B-4E7A-BAA9-B1894AE855EB%3Fstore_ref%3DSB_A075088723839E2VN4XZR-A09016168FE68TMSRKQN%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0DZ5H1M6B%2CB0DRG4J8CK%2CB0DRG3RQ5Z%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300025726103904%26i%3Daps%26aref%3DC50dztJvDv&ref_=sbx_be_s_3psl_mbd_mb0_bkgd&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                      - link [ref=f32e552] [cursor=pointer]:
+                        - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1q20AUhUlC22BSGrxIwatgqBehY48ky5JSRJmRlMTxT2xJMcEbMZbGsogtyTNjO_XCD9CXaKGvUMiyL9B1F-1b9AmKk5bSntUH9xzuvacQ7X_88uPb0-Jz5A96dqvZuoG245Z3pJOjMU2Tu4DG_rp3MUhrwlWuOnxyejRntj5P183EGtwqyAWLWJp6K_dAUauSolVlCVbhcNfDo33k-BeO2_SKLwvPIspvRZYXD667rmNdnXebQ8cuvd8p7G8nwUiMiwUyI-ssrYbZrPRqwglgNMxmM5pGRCRZCjhlyySkgFPCwgkYiXH5CU2Da-9Eni2mIgEjRtIIhIwSkSwp-L0ShIRFHOQkSQVlIMxSQVMhH3awFSg9rx3Yjtfyr3plvbADD39-_X7_6YNdOvyT3h6i5HxafqFACKGh1qGmGBA25L1rzz7ds3rWSav4xsbIys-aQEMbPH9UjDa4z4ftlYz-1QbHG9zfYPQAcenAip27c-TEuuZQ-X638Hl3IkTOT2u11WpV_VtLjYuMUV7LSUxrGpIhwroNLNXAoO5oCGCEDIAl3agjR1dVB799CASMjk0PBwhqKtR1TVZ0xXDkQbd-M3QBggaUGlJDP3Maut_x3Fa_W8mjgEVBPp1EzBSVCSdByIIkMmFlmgeEJyk3MbSH6oXUaeDXGNruef1St1qPqLh9dbh1zheUvTPb9I6w425HM-Cx7uPj9gPeQKj7WxOfZsL8v-4Kj_KAREHMskVubquXVU1uSFAxYL2SmCTnFbL9y1JhtBaXS3v5C1li4Bw&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F7A20AB8D-C59B-4E7A-BAA9-B1894AE855EB%3Fstore_ref%3DSB_A075088723839E2VN4XZR-A09016168FE68TMSRKQN%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0DZ5H1M6B%2CB0DRG4J8CK%2CB0DRG3RQ5Z%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300025726103904%26i%3Daps%26aref%3DC50dztJvDv&ref_=sbx_be_s_3psl_mbd_mb0_ls&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                        - img "Lexar" [ref=f32e553]
+                      - generic [ref=f32e555]:
+                        - generic [ref=f32e556]:
+                          - link [aria-hidden] [ref=f32e557] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1q20AUhUlC22BSGrxIwatgqBehY48ky5JSRJmRlMTxT2xJMcEbMZbGsogtyTNjO_XCD9CXaKGvUMiyL9B1F-1b9AmKk5bSntUH9xzuvacQ7X_88uPb0-Jz5A96dqvZuoG245Z3pJOjMU2Tu4DG_rp3MUhrwlWuOnxyejRntj5P183EGtwqyAWLWJp6K_dAUauSolVlCVbhcNfDo33k-BeO2_SKLwvPIspvRZYXD667rmNdnXebQ8cuvd8p7G8nwUiMiwUyI-ssrYbZrPRqwglgNMxmM5pGRCRZCjhlyySkgFPCwgkYiXH5CU2Da-9Eni2mIgEjRtIIhIwSkSwp-L0ShIRFHOQkSQVlIMxSQVMhH3awFSg9rx3Yjtfyr3plvbADD39-_X7_6YNdOvyT3h6i5HxafqFACKGh1qGmGBA25L1rzz7ds3rWSav4xsbIys-aQEMbPH9UjDa4z4ftlYz-1QbHG9zfYPQAcenAip27c-TEuuZQ-X638Hl3IkTOT2u11WpV_VtLjYuMUV7LSUxrGpIhwroNLNXAoO5oCGCEDIAl3agjR1dVB799CASMjk0PBwhqKtR1TVZ0xXDkQbd-M3QBggaUGlJDP3Maut_x3Fa_W8mjgEVBPp1EzBSVCSdByIIkMmFlmgeEJyk3MbSH6oXUaeDXGNruef1St1qPqLh9dbh1zheUvTPb9I6w425HM-Cx7uPj9gPeQKj7WxOfZsL8v-4Kj_KAREHMskVubquXVU1uSFAxYL2SmCTnFbL9y1JhtBaXS3v5C1li4Bw&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F7A20AB8D-C59B-4E7A-BAA9-B1894AE855EB%3Fstore_ref%3DSB_A075088723839E2VN4XZR-A09016168FE68TMSRKQN%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0DZ5H1M6B%2CB0DRG4J8CK%2CB0DRG3RQ5Z%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300025726103904%26i%3Daps%26aref%3DC50dztJvDv&ref_=sbx_be_s_3psl_mbd_mb0_bkgd&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                          - link [ref=f32e558] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1q20AUhUlC22BSGrxIwatgqBehY48ky5JSRJmRlMTxT2xJMcEbMZbGsogtyTNjO_XCD9CXaKGvUMiyL9B1F-1b9AmKk5bSntUH9xzuvacQ7X_88uPb0-Jz5A96dqvZuoG245Z3pJOjMU2Tu4DG_rp3MUhrwlWuOnxyejRntj5P183EGtwqyAWLWJp6K_dAUauSolVlCVbhcNfDo33k-BeO2_SKLwvPIspvRZYXD667rmNdnXebQ8cuvd8p7G8nwUiMiwUyI-ssrYbZrPRqwglgNMxmM5pGRCRZCjhlyySkgFPCwgkYiXH5CU2Da-9Eni2mIgEjRtIIhIwSkSwp-L0ShIRFHOQkSQVlIMxSQVMhH3awFSg9rx3Yjtfyr3plvbADD39-_X7_6YNdOvyT3h6i5HxafqFACKGh1qGmGBA25L1rzz7ds3rWSav4xsbIys-aQEMbPH9UjDa4z4ftlYz-1QbHG9zfYPQAcenAip27c-TEuuZQ-X638Hl3IkTOT2u11WpV_VtLjYuMUV7LSUxrGpIhwroNLNXAoO5oCGCEDIAl3agjR1dVB799CASMjk0PBwhqKtR1TVZ0xXDkQbd-M3QBggaUGlJDP3Maut_x3Fa_W8mjgEVBPp1EzBSVCSdByIIkMmFlmgeEJyk3MbSH6oXUaeDXGNruef1St1qPqLh9dbh1zheUvTPb9I6w425HM-Cx7uPj9gPeQKj7WxOfZsL8v-4Kj_KAREHMskVubquXVU1uSFAxYL2SmCTnFbL9y1JhtBaXS3v5C1li4Bw&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F7A20AB8D-C59B-4E7A-BAA9-B1894AE855EB%3Fstore_ref%3DSB_A075088723839E2VN4XZR-A09016168FE68TMSRKQN%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0DZ5H1M6B%2CB0DRG4J8CK%2CB0DRG3RQ5Z%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300025726103904%26i%3Daps%26aref%3DC50dztJvDv&ref_=sbx_be_s_3psl_mbd_mb0_logo&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                            - img "Lexar" [ref=f32e560]
+                        - generic [ref=f32e561]:
+                          - link [aria-hidden] [ref=f32e562] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1q20AUhUlC22BSGrxIwatgqBehY48ky5JSRJmRlMTxT2xJMcEbMZbGsogtyTNjO_XCD9CXaKGvUMiyL9B1F-1b9AmKk5bSntUH9xzuvacQ7X_88uPb0-Jz5A96dqvZuoG245Z3pJOjMU2Tu4DG_rp3MUhrwlWuOnxyejRntj5P183EGtwqyAWLWJp6K_dAUauSolVlCVbhcNfDo33k-BeO2_SKLwvPIspvRZYXD667rmNdnXebQ8cuvd8p7G8nwUiMiwUyI-ssrYbZrPRqwglgNMxmM5pGRCRZCjhlyySkgFPCwgkYiXH5CU2Da-9Eni2mIgEjRtIIhIwSkSwp-L0ShIRFHOQkSQVlIMxSQVMhH3awFSg9rx3Yjtfyr3plvbADD39-_X7_6YNdOvyT3h6i5HxafqFACKGh1qGmGBA25L1rzz7ds3rWSav4xsbIys-aQEMbPH9UjDa4z4ftlYz-1QbHG9zfYPQAcenAip27c-TEuuZQ-X638Hl3IkTOT2u11WpV_VtLjYuMUV7LSUxrGpIhwroNLNXAoO5oCGCEDIAl3agjR1dVB799CASMjk0PBwhqKtR1TVZ0xXDkQbd-M3QBggaUGlJDP3Maut_x3Fa_W8mjgEVBPp1EzBSVCSdByIIkMmFlmgeEJyk3MbSH6oXUaeDXGNruef1St1qPqLh9dbh1zheUvTPb9I6w425HM-Cx7uPj9gPeQKj7WxOfZsL8v-4Kj_KAREHMskVubquXVU1uSFAxYL2SmCTnFbL9y1JhtBaXS3v5C1li4Bw&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F7A20AB8D-C59B-4E7A-BAA9-B1894AE855EB%3Fstore_ref%3DSB_A075088723839E2VN4XZR-A09016168FE68TMSRKQN%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0DZ5H1M6B%2CB0DRG4J8CK%2CB0DRG3RQ5Z%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300025726103904%26i%3Daps%26aref%3DC50dztJvDv&ref_=sbx_be_s_3psl_mbd_mb0_bkgd&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                          - link "Lexar Micro SD Card For Different Devices" [ref=f32e563] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1q20AUhUlC22BSGrxIwatgqBehY48ky5JSRJmRlMTxT2xJMcEbMZbGsogtyTNjO_XCD9CXaKGvUMiyL9B1F-1b9AmKk5bSntUH9xzuvacQ7X_88uPb0-Jz5A96dqvZuoG245Z3pJOjMU2Tu4DG_rp3MUhrwlWuOnxyejRntj5P183EGtwqyAWLWJp6K_dAUauSolVlCVbhcNfDo33k-BeO2_SKLwvPIspvRZYXD667rmNdnXebQ8cuvd8p7G8nwUiMiwUyI-ssrYbZrPRqwglgNMxmM5pGRCRZCjhlyySkgFPCwgkYiXH5CU2Da-9Eni2mIgEjRtIIhIwSkSwp-L0ShIRFHOQkSQVlIMxSQVMhH3awFSg9rx3Yjtfyr3plvbADD39-_X7_6YNdOvyT3h6i5HxafqFACKGh1qGmGBA25L1rzz7ds3rWSav4xsbIys-aQEMbPH9UjDa4z4ftlYz-1QbHG9zfYPQAcenAip27c-TEuuZQ-X638Hl3IkTOT2u11WpV_VtLjYuMUV7LSUxrGpIhwroNLNXAoO5oCGCEDIAl3agjR1dVB799CASMjk0PBwhqKtR1TVZ0xXDkQbd-M3QBggaUGlJDP3Maut_x3Fa_W8mjgEVBPp1EzBSVCSdByIIkMmFlmgeEJyk3MbSH6oXUaeDXGNruef1St1qPqLh9dbh1zheUvTPb9I6w425HM-Cx7uPj9gPeQKj7WxOfZsL8v-4Kj_KAREHMskVubquXVU1uSFAxYL2SmCTnFbL9y1JhtBaXS3v5C1li4Bw&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F7A20AB8D-C59B-4E7A-BAA9-B1894AE855EB%3Fstore_ref%3DSB_A075088723839E2VN4XZR-A09016168FE68TMSRKQN%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0DZ5H1M6B%2CB0DRG4J8CK%2CB0DRG3RQ5Z%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300025726103904%26i%3Daps%26aref%3DC50dztJvDv&ref_=sbx_be_s_3psl_mbd_mb0_hl&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                            - generic [ref=f32e565]:
+                              - generic [ref=f32e566]: Lexar Micro SD Card For Different Devices
+                              - generic [aria-hidden] [ref=f32e567]: Lexar Micro SD Card For Different Devices
+                - generic [ref=f32e569]:
+                  - generic:
+                    - generic:
+                      - link [aria-hidden]:
+                        - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1u00AUhdVWQBUVUWVRpKyqSGRRMcn43ymykH-TKH-u7UQhG2tiTxxDYrszk6Z0kQeoeAjW7JHYIN4Admx4GZQAQnBWn3TP0b33lOLj919-fH9YfqwHY9fqdroTaNle9YC7OJvjLL0NcRLcue1x1mCeMOzTxeXZa6fl5JnaDtY6mQzreD7mVyPdOxGkOicodZ6DdTg99I3ZsW4Hbdvr-OWnpUcxpm9YXpRPRgPPNoetQWdqW5X7g9LxbhLO2LxcQit0l2f1KF9Vni0oAgRH-WqFsxixNM8AxeQmjTCgGJFoAWZsXn2As3DkX_Cr9ZKlYEZQFoOIYMTSGwx-rwQRIjEFBUozhgmI8ozhjPGnfcMMBdfvhZbtd4OhW1VLB9zp_bd3H75-tiqnf9K7Q4SCLqtPeAihLIoSJzUFXuH4o5FvXR6ZrnnRLb-wDN0snA5Q9K1x_UuJvjWu6LS34fV_tTWSrXG1NfQ9JJUTM7FvW7qdqIqN-U-HpY-HC8YKetlobDab-t9aGpTlBNNGgRLcaMqK0TQtHZiKwAPRtiBQm6oEHNVuOrwpC1DlX-4DIcFzzTdCHSqyrMgy53WGQ8WyO1em6AMdqrIoSQLnQndsi5Oxqfh6rYhDEofFchETjdUWFIURCdNYg7VlESKaZlQzoNMWB-3xK__5Hl1Z7k936Lou73nGznm9xuSt1sO3iJwP-koTnquBcd7b4wRCNdiZ6DJn2v9912hchCgOE5KvC02AkJO4piRAqMhQrKUaKmgN7R5bZX3PnLvOq9ZPjTHfvA&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F967B9CDA-C732-4ED0-8985-F8E9F2C63082%3Fstore_ref%3DSB_A07667661RIOO7DEIQC4S-A08645531P0PVE4XVC7SA%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0FH4NHVYS%2CB0FH4P66MZ%2CB0FPPP2RRB%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300151953007604%26i%3Daps%26aref%3DmnMRCfPFYG&ref_=sbx_be_s_3psl_mbd_mb1_bkgd&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                      - link [ref=f32e570] [cursor=pointer]:
+                        - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1u00AUhdVWQBUVUWVRpKyqSGRRMcn43ymykH-TKH-u7UQhG2tiTxxDYrszk6Z0kQeoeAjW7JHYIN4Admx4GZQAQnBWn3TP0b33lOLj919-fH9YfqwHY9fqdroTaNle9YC7OJvjLL0NcRLcue1x1mCeMOzTxeXZa6fl5JnaDtY6mQzreD7mVyPdOxGkOicodZ6DdTg99I3ZsW4Hbdvr-OWnpUcxpm9YXpRPRgPPNoetQWdqW5X7g9LxbhLO2LxcQit0l2f1KF9Vni0oAgRH-WqFsxixNM8AxeQmjTCgGJFoAWZsXn2As3DkX_Cr9ZKlYEZQFoOIYMTSGwx-rwQRIjEFBUozhgmI8ozhjPGnfcMMBdfvhZbtd4OhW1VLB9zp_bd3H75-tiqnf9K7Q4SCLqtPeAihLIoSJzUFXuH4o5FvXR6ZrnnRLb-wDN0snA5Q9K1x_UuJvjWu6LS34fV_tTWSrXG1NfQ9JJUTM7FvW7qdqIqN-U-HpY-HC8YKetlobDab-t9aGpTlBNNGgRLcaMqK0TQtHZiKwAPRtiBQm6oEHNVuOrwpC1DlX-4DIcFzzTdCHSqyrMgy53WGQ8WyO1em6AMdqrIoSQLnQndsi5Oxqfh6rYhDEofFchETjdUWFIURCdNYg7VlESKaZlQzoNMWB-3xK__5Hl1Z7k936Lou73nGznm9xuSt1sO3iJwP-koTnquBcd7b4wRCNdiZ6DJn2v9912hchCgOE5KvC02AkJO4piRAqMhQrKUaKmgN7R5bZX3PnLvOq9ZPjTHfvA&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F967B9CDA-C732-4ED0-8985-F8E9F2C63082%3Fstore_ref%3DSB_A07667661RIOO7DEIQC4S-A08645531P0PVE4XVC7SA%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0FH4NHVYS%2CB0FH4P66MZ%2CB0FPPP2RRB%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300151953007604%26i%3Daps%26aref%3DmnMRCfPFYG&ref_=sbx_be_s_3psl_mbd_mb1_ls&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                        - img "OSCOO" [ref=f32e571]
+                      - generic [ref=f32e573]:
+                        - generic [ref=f32e574]:
+                          - link [aria-hidden] [ref=f32e575] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1u00AUhdVWQBUVUWVRpKyqSGRRMcn43ymykH-TKH-u7UQhG2tiTxxDYrszk6Z0kQeoeAjW7JHYIN4Admx4GZQAQnBWn3TP0b33lOLj919-fH9YfqwHY9fqdroTaNle9YC7OJvjLL0NcRLcue1x1mCeMOzTxeXZa6fl5JnaDtY6mQzreD7mVyPdOxGkOicodZ6DdTg99I3ZsW4Hbdvr-OWnpUcxpm9YXpRPRgPPNoetQWdqW5X7g9LxbhLO2LxcQit0l2f1KF9Vni0oAgRH-WqFsxixNM8AxeQmjTCgGJFoAWZsXn2As3DkX_Cr9ZKlYEZQFoOIYMTSGwx-rwQRIjEFBUozhgmI8ozhjPGnfcMMBdfvhZbtd4OhW1VLB9zp_bd3H75-tiqnf9K7Q4SCLqtPeAihLIoSJzUFXuH4o5FvXR6ZrnnRLb-wDN0snA5Q9K1x_UuJvjWu6LS34fV_tTWSrXG1NfQ9JJUTM7FvW7qdqIqN-U-HpY-HC8YKetlobDab-t9aGpTlBNNGgRLcaMqK0TQtHZiKwAPRtiBQm6oEHNVuOrwpC1DlX-4DIcFzzTdCHSqyrMgy53WGQ8WyO1em6AMdqrIoSQLnQndsi5Oxqfh6rYhDEofFchETjdUWFIURCdNYg7VlESKaZlQzoNMWB-3xK__5Hl1Z7k936Lou73nGznm9xuSt1sO3iJwP-koTnquBcd7b4wRCNdiZ6DJn2v9912hchCgOE5KvC02AkJO4piRAqMhQrKUaKmgN7R5bZX3PnLvOq9ZPjTHfvA&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F967B9CDA-C732-4ED0-8985-F8E9F2C63082%3Fstore_ref%3DSB_A07667661RIOO7DEIQC4S-A08645531P0PVE4XVC7SA%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0FH4NHVYS%2CB0FH4P66MZ%2CB0FPPP2RRB%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300151953007604%26i%3Daps%26aref%3DmnMRCfPFYG&ref_=sbx_be_s_3psl_mbd_mb1_bkgd&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                          - link [ref=f32e576] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1u00AUhdVWQBUVUWVRpKyqSGRRMcn43ymykH-TKH-u7UQhG2tiTxxDYrszk6Z0kQeoeAjW7JHYIN4Admx4GZQAQnBWn3TP0b33lOLj919-fH9YfqwHY9fqdroTaNle9YC7OJvjLL0NcRLcue1x1mCeMOzTxeXZa6fl5JnaDtY6mQzreD7mVyPdOxGkOicodZ6DdTg99I3ZsW4Hbdvr-OWnpUcxpm9YXpRPRgPPNoetQWdqW5X7g9LxbhLO2LxcQit0l2f1KF9Vni0oAgRH-WqFsxixNM8AxeQmjTCgGJFoAWZsXn2As3DkX_Cr9ZKlYEZQFoOIYMTSGwx-rwQRIjEFBUozhgmI8ozhjPGnfcMMBdfvhZbtd4OhW1VLB9zp_bd3H75-tiqnf9K7Q4SCLqtPeAihLIoSJzUFXuH4o5FvXR6ZrnnRLb-wDN0snA5Q9K1x_UuJvjWu6LS34fV_tTWSrXG1NfQ9JJUTM7FvW7qdqIqN-U-HpY-HC8YKetlobDab-t9aGpTlBNNGgRLcaMqK0TQtHZiKwAPRtiBQm6oEHNVuOrwpC1DlX-4DIcFzzTdCHSqyrMgy53WGQ8WyO1em6AMdqrIoSQLnQndsi5Oxqfh6rYhDEofFchETjdUWFIURCdNYg7VlESKaZlQzoNMWB-3xK__5Hl1Z7k936Lou73nGznm9xuSt1sO3iJwP-koTnquBcd7b4wRCNdiZ6DJn2v9912hchCgOE5KvC02AkJO4piRAqMhQrKUaKmgN7R5bZX3PnLvOq9ZPjTHfvA&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F967B9CDA-C732-4ED0-8985-F8E9F2C63082%3Fstore_ref%3DSB_A07667661RIOO7DEIQC4S-A08645531P0PVE4XVC7SA%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0FH4NHVYS%2CB0FH4P66MZ%2CB0FPPP2RRB%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300151953007604%26i%3Daps%26aref%3DmnMRCfPFYG&ref_=sbx_be_s_3psl_mbd_mb1_logo&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                            - img "OSCOO" [ref=f32e578]
+                        - generic [ref=f32e579]:
+                          - link [aria-hidden] [ref=f32e580] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1u00AUhdVWQBUVUWVRpKyqSGRRMcn43ymykH-TKH-u7UQhG2tiTxxDYrszk6Z0kQeoeAjW7JHYIN4Admx4GZQAQnBWn3TP0b33lOLj919-fH9YfqwHY9fqdroTaNle9YC7OJvjLL0NcRLcue1x1mCeMOzTxeXZa6fl5JnaDtY6mQzreD7mVyPdOxGkOicodZ6DdTg99I3ZsW4Hbdvr-OWnpUcxpm9YXpRPRgPPNoetQWdqW5X7g9LxbhLO2LxcQit0l2f1KF9Vni0oAgRH-WqFsxixNM8AxeQmjTCgGJFoAWZsXn2As3DkX_Cr9ZKlYEZQFoOIYMTSGwx-rwQRIjEFBUozhgmI8ozhjPGnfcMMBdfvhZbtd4OhW1VLB9zp_bd3H75-tiqnf9K7Q4SCLqtPeAihLIoSJzUFXuH4o5FvXR6ZrnnRLb-wDN0snA5Q9K1x_UuJvjWu6LS34fV_tTWSrXG1NfQ9JJUTM7FvW7qdqIqN-U-HpY-HC8YKetlobDab-t9aGpTlBNNGgRLcaMqK0TQtHZiKwAPRtiBQm6oEHNVuOrwpC1DlX-4DIcFzzTdCHSqyrMgy53WGQ8WyO1em6AMdqrIoSQLnQndsi5Oxqfh6rYhDEofFchETjdUWFIURCdNYg7VlESKaZlQzoNMWB-3xK__5Hl1Z7k936Lou73nGznm9xuSt1sO3iJwP-koTnquBcd7b4wRCNdiZ6DJn2v9912hchCgOE5KvC02AkJO4piRAqMhQrKUaKmgN7R5bZX3PnLvOq9ZPjTHfvA&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F967B9CDA-C732-4ED0-8985-F8E9F2C63082%3Fstore_ref%3DSB_A07667661RIOO7DEIQC4S-A08645531P0PVE4XVC7SA%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0FH4NHVYS%2CB0FH4P66MZ%2CB0FPPP2RRB%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300151953007604%26i%3Daps%26aref%3DmnMRCfPFYG&ref_=sbx_be_s_3psl_mbd_mb1_bkgd&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                          - link "2230 2242 2230 NVMe Gen4 SSD" [ref=f32e581] [cursor=pointer]:
+                            - /url: https://sponsored-ads.amazon.com/clk/?_encoding=UTF8&p=eAFdkM1u00AUhdVWQBUVUWVRpKyqSGRRMcn43ymykH-TKH-u7UQhG2tiTxxDYrszk6Z0kQeoeAjW7JHYIN4Admx4GZQAQnBWn3TP0b33lOLj919-fH9YfqwHY9fqdroTaNle9YC7OJvjLL0NcRLcue1x1mCeMOzTxeXZa6fl5JnaDtY6mQzreD7mVyPdOxGkOicodZ6DdTg99I3ZsW4Hbdvr-OWnpUcxpm9YXpRPRgPPNoetQWdqW5X7g9LxbhLO2LxcQit0l2f1KF9Vni0oAgRH-WqFsxixNM8AxeQmjTCgGJFoAWZsXn2As3DkX_Cr9ZKlYEZQFoOIYMTSGwx-rwQRIjEFBUozhgmI8ozhjPGnfcMMBdfvhZbtd4OhW1VLB9zp_bd3H75-tiqnf9K7Q4SCLqtPeAihLIoSJzUFXuH4o5FvXR6ZrnnRLb-wDN0snA5Q9K1x_UuJvjWu6LS34fV_tTWSrXG1NfQ9JJUTM7FvW7qdqIqN-U-HpY-HC8YKetlobDab-t9aGpTlBNNGgRLcaMqK0TQtHZiKwAPRtiBQm6oEHNVuOrwpC1DlX-4DIcFzzTdCHSqyrMgy53WGQ8WyO1em6AMdqrIoSQLnQndsi5Oxqfh6rYhDEofFchETjdUWFIURCdNYg7VlESKaZlQzoNMWB-3xK__5Hl1Z7k936Lou73nGznm9xuSt1sO3iJwP-koTnquBcd7b4wRCNdiZ6DJn2v9912hchCgOE5KvC02AkJO4piRAqMhQrKUaKmgN7R5bZX3PnLvOq9ZPjTHfvA&v=c1&r=https%3A%2F%2Fwww.amazon.com%2Fstores%2Fpage%2F967B9CDA-C732-4ED0-8985-F8E9F2C63082%3Fstore_ref%3DSB_A07667661RIOO7DEIQC4S-A08645531P0PVE4XVC7SA%26pd_rd_plhdr%3Dt%26hsa_cr_id%3D0%26lp_asins%3DB0FH4NHVYS%2CB0FH4P66MZ%2CB0FPPP2RRB%26lp_query%3DLexar%20NM790%208TB%20LNM790X008T%26lp_slot%3Ddesktop-hsa-3psl%26sdp_ad_group%3D300151953007604%26i%3Daps%26aref%3DmnMRCfPFYG&ref_=sbx_be_s_3psl_mbd_mb1_hl&pd_rd_w=oFerx&content-id=amzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463%3Aamzn1.sym.dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_p=dc82d3ee-4909-44d1-b96c-93b0e5479463&pf_rd_r=1E5DPXD4S9THTC9MX8B8&pd_rd_wg=5GGq4&pd_rd_r=99a07281-964a-4206-8f7d-d642505aebd0
+                            - generic [ref=f32e583]:
+                              - generic [ref=f32e584]: 2230 2242 2230 NVMe Gen4 SSD
+                              - generic [aria-hidden] [ref=f32e585]: 2230 2242 2230 NVMe Gen4 SSD
+          - generic [ref=f32e591]:
+            - heading "Need help?" [level=2] [ref=f32e594]
+            - generic [ref=f32e595]:
+              - link "Visit the help section" [ref=f32e596] [cursor=pointer]:
+                - /url: /gp/help/customer/display.html?nodeId=468556
+              - text: or
+              - link "contact us" [ref=f32e597] [cursor=pointer]:
+                - /url: /gp/help/customer/contact-us
+          - generic [ref=f32e600]:
+            - iframe [ref=f32e601]:
+              - generic [ref=f33e4]:
+                - link "【5-Yrs Free Data Recovery】 GIGASTONE 512GB Micro SD Card, 4K Camera Pro, A2 V30 for Smartphone, Gopro, Action Cams, 4K UHD Video Recording, R/W up to 150/120 MB/s, UHS-I U3 C10 Class 10 with Adapter" [ref=f33e7] [cursor=pointer]:
+                  - /url: https://aax-events-cell01-cf.us-east.ono.axp.amazon-adsystem.com/x/c/RC2KWtgMmCzjZRV-sebwPcYAAAGhV1mJqAEAAAH0AUFvbm9fdHhuX2JpZDIgICBvbm9fdHhuX2ltcDEgICCdnEyX/clv1c_ek8OM3GX57OOBXc78KNgTdkjPgpJ1DTPTxKH8056g2l2wg7eYjfAIjHEXeAK7tXKxo4PPUW8pu7ZpYIwsObOc5nPI2vybC-HUAoY8tRr_xEFXqLfyXo1IJbpLE-6Y9vnWhsMDgZ4Kl-AitV8-YVitU35tW9Ne3FDcqfzUkbeca5WbUm7SufgtFHkUoOMVLDMp275lZnA7fW730mRxUMN_t82aVLSiBXdeGKS3ZXLdjX8qh7zB61YfVEy4-ekp7rePmHO1uH1x_pNyCnnA7ECJP4dnOUn56YnpcpQws4MbhXCBWPekbgOEjxn5mMjgrH9HtJd9pqSN8n-iF7BEeWR1p1o8IRSQeUHAgC1c7QBPdZpBI-y70XWlI4pBKF86HBmV00/https://www.amazon.com/sspa/click?ie=UTF8&spc=MTo3MzMyNTcxMTk0MDUxOTc2OjE3OTI0NjY4NDc6c3Bfc2VhcmNoX2Zvb3Rlcl9zaGFyZWQ6MzAwNzk2Nzg5NTM3OTAyOjo6Og&url=%2Fdp%2FB07Q74GXK7%2Fref%3Dsspa_dk_bot_sx_aax_0%3Fpsc%3D1%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9zZWFyY2hfZm9vdGVyX3NoYXJlZA
+                - generic [ref=f33e8]:
+                  - img "【5-Yrs Free Data Recovery】 GIGASTONE 512GB Micro SD Card, 4K Camera Pro, A2 V30 for Smartphone, Gopro, Action Cams, 4K UHD Video Recording, R/W up to 150/120 MB/s, UHS-I U3 C10 Class 10 with Adapter" [ref=f33e10]
+                  - generic [ref=f33e11]:
+                    - generic [ref=f33e12]: 【5-Yrs Free Data Recovery】 GIGASTONE 512GB Micro SD Card, 4K Camera Pro, A2 V30 for...
+                    - generic [ref=f33e13]:
+                      - text: $159.99
+                      - link "3,590" [ref=f33e14] [cursor=pointer]:
+                        - /url: https://aax-events-cell01-cf.us-east.ono.axp.amazon-adsystem.com/x/c/RC2KWtgMmCzjZRV-sebwPcYAAAGhV1mJqAEAAAH0AUFvbm9fdHhuX2JpZDIgICBvbm9fdHhuX2ltcDEgICCdnEyX/clv1c_ek8OM3GX57OOBXc78KNgTdkjPgpJ1DTPTxKH8056g2l2wg7eYjfAIjHEXeAK7tXKxo4PPUW8pu7ZpYIwsObOc5nPI2vybC-HUAoY8tRr_xEFXqLfyXo1IJbpLE-6Y9vnWhsMDgZ4Kl-AitV8-YVitU35tW9Ne3FDcqfzUkbeca5WbUm7SufgtFHkUoOMVLDMp275lZnA7fW730mRxUMN_t82aVLSiBXdeGKS3ZXLdjX8qh7zB61YfVEy4-ekp7rePmHO1uH1x_pNyCnnA7ECJP4dnOUn56YnpcpQws4MbhXCBWPekbgOEjxn5mMjgrH9HtJd9pqSN8n-iF7BEeWR1p1o8IRSQeUHAgC1c7QBPdZpBI-y70XWlI4pBKF86HBmV00/https://www.amazon.com/sspa/click?ie=UTF8&spc=MTo3MzMyNTcxMTk0MDUxOTc2OjE3OTI0NjY4NDc6c3Bfc2VhcmNoX2Zvb3Rlcl9zaGFyZWQ6MzAwNzk2Nzg5NTM3OTAyOjo6Og&url=%2Fdp%2FB07Q74GXK7%2Fref%3Dsspa_dk_bot_sx_aax_0%3Fpsc%3D1%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9zZWFyY2hfZm9vdGVyX3NoYXJlZA#customerReviews
+                  - link "Shop now" [ref=f33e18] [cursor=pointer]:
+                    - /url: https://aax-events-cell01-cf.us-east.ono.axp.amazon-adsystem.com/x/c/RC2KWtgMmCzjZRV-sebwPcYAAAGhV1mJqAEAAAH0AUFvbm9fdHhuX2JpZDIgICBvbm9fdHhuX2ltcDEgICCdnEyX/clv1c_ek8OM3GX57OOBXc78KNgTdkjPgpJ1DTPTxKH8056g2l2wg7eYjfAIjHEXeAK7tXKxo4PPUW8pu7ZpYIwsObOc5nPI2vybC-HUAoY8tRr_xEFXqLfyXo1IJbpLE-6Y9vnWhsMDgZ4Kl-AitV8-YVitU35tW9Ne3FDcqfzUkbeca5WbUm7SufgtFHkUoOMVLDMp275lZnA7fW730mRxUMN_t82aVLSiBXdeGKS3ZXLdjX8qh7zB61YfVEy4-ekp7rePmHO1uH1x_pNyCnnA7ECJP4dnOUn56YnpcpQws4MbhXCBWPekbgOEjxn5mMjgrH9HtJd9pqSN8n-iF7BEeWR1p1o8IRSQeUHAgC1c7QBPdZpBI-y70XWlI4pBKF86HBmV00/https://www.amazon.com/sspa/click?ie=UTF8&spc=MTo3MzMyNTcxMTk0MDUxOTc2OjE3OTI0NjY4NDc6c3Bfc2VhcmNoX2Zvb3Rlcl9zaGFyZWQ6MzAwNzk2Nzg5NTM3OTAyOjo6Og&url=%2Fdp%2FB07Q74GXK7%2Fref%3Dsspa_dk_bot_sx_aax_0%3Fpsc%3D1%26sp_csd%3Dd2lkZ2V0TmFtZT1zcF9zZWFyY2hfZm9vdGVyX3NoYXJlZA
+            - button "Leave feedback on Sponsored ad" [ref=f32e603] [cursor=pointer]:
+              - generic [aria-hidden] [ref=f32e604]: Sponsored
+        - link "Go back to filtering menu" [ref=f32e606] [cursor=pointer]:
+          - /url: "#s-skipLinkTargetForFilterOptions"
+      - generic [ref=f32e608]:
+        - link "Skip to main search results" [ref=f32e609] [cursor=pointer]:
+          - /url: "#s-skipLinkTargetForMainSearchResults"
+        - generic [ref=f32e611]:
+          - generic [ref=f32e615]:
+            - group [ref=f32e616]:
+              - heading "Eligible for Free Shipping" [level=2] [ref=f32e617]
+              - list "Eligible for Free Shipping" [ref=f32e618]:
+                - listitem [ref=f32e619]:
+                  - link "Apply Free Shipping by Amazon filter to narrow results" [ref=f32e621] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_76%3A1249137011&dc&qid=1792466847&rnid=1249135011&ref=sr_nr_p_76_1&ds=v1%3AQGZ%2FoDGN8MSr8SYCmEHtouYs32K537VE6f%2FKU%2F1KGF4
+                    - checkbox [aria-hidden] [ref=f32e624]
+                    - text: Free Shipping by Amazon
+                    - generic [ref=f32e626]: Get FREE Shipping on eligible orders shipped by Amazon
+            - group [ref=f32e627]:
+              - heading "Storage Capacity" [level=2] [ref=f32e628]
+              - list "Storage Capacity" [ref=f32e629]:
+                - listitem [ref=f32e630]:
+                  - link "Apply 2 TB & Up filter to narrow results" [ref=f32e632] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1001661934111%3A6797522011&dc&qid=1792466847&rnid=6797515011&ref=sr_nr_p_n_g-1001661934111_1&ds=v1%3AMdkuxsI8KgHZliOjBO4SLTVlTIv9OHBn8d5TW7UVatc
+                    - checkbox [aria-hidden] [ref=f32e635]
+                    - text: 2 TB & Up
+                - listitem [ref=f32e637]:
+                  - link "Apply 1 to 1.9 TB filter to narrow results" [ref=f32e639] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1001661934111%3A6797521011&dc&qid=1792466847&rnid=6797515011&ref=sr_nr_p_n_g-1001661934111_2&ds=v1%3Aw8rD6tkeZWvhhBoHVnsfGoNbr%2BbqPJ%2FQHKw2TkS8lG8
+                    - checkbox [aria-hidden] [ref=f32e642]
+                    - text: 1 to 1.9 TB
+                - listitem [ref=f32e644]:
+                  - generic [ref=f32e645]:
+                    - checkbox [disabled] [aria-hidden] [ref=f32e648]
+                    - text: 960 to 999 GB
+                - listitem [ref=f32e650]:
+                  - generic [ref=f32e651]:
+                    - checkbox [disabled] [aria-hidden] [ref=f32e654]
+                    - text: 480 to 959 GB
+                - listitem [ref=f32e656]:
+                  - generic [ref=f32e657]:
+                    - checkbox [disabled] [aria-hidden] [ref=f32e660]
+                    - text: 240 to 479 GB
+                - listitem [ref=f32e662]:
+                  - generic [ref=f32e663]:
+                    - checkbox [disabled] [aria-hidden] [ref=f32e666]
+                    - text: 120 to 239 GB
+                - listitem [ref=f32e668]:
+                  - generic [ref=f32e669]:
+                    - checkbox [disabled] [aria-hidden] [ref=f32e672]
+                    - text: 119 GB & Under
+            - group [ref=f32e674]:
+              - heading "Hard Drive Size" [level=2] [ref=f32e675]
+              - list "Hard Drive Size" [ref=f32e676]:
+                - listitem [ref=f32e677]:
+                  - link "Apply 2 TB filter to narrow results" [ref=f32e679] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1004209391091%3A7817230011&dc&qid=1792466847&rnid=562234011&ref=sr_nr_p_n_g-1004209391091_1&ds=v1%3A7L98OV%2B6AlkT3j1TCB8PAO9LSIinFBADVIguR8BT2Wk
+                    - checkbox [aria-hidden] [ref=f32e682]
+                    - text: 2 TB
+                - listitem [ref=f32e684]:
+                  - link "Apply 1 TB filter to narrow results" [ref=f32e686] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1004209391091%3A5446812011&dc&qid=1792466847&rnid=562234011&ref=sr_nr_p_n_g-1004209391091_2&ds=v1%3AQZ0nDz80%2FFlKxUSTPUZErSZODzHgBBQYrJGYE%2FwGfX8
+                    - checkbox [aria-hidden] [ref=f32e689]
+                    - text: 1 TB
+            - group [ref=f32e691]:
+              - heading "Brands" [level=2] [ref=f32e692]
+              - list "Brands" [ref=f32e693]:
+                - listitem [ref=f32e694]:
+                  - link "Apply Lexar filter to narrow results" [ref=f32e696] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_123%3A324661&dc&qid=1792466847&rnid=85457740011&ref=sr_nr_p_123_1&ds=v1%3AUqTzUwsaMK1R9e6qeNGsvj0ocFyrODPfMX2TGrDwuH0
+                    - checkbox [aria-hidden] [ref=f32e699]
+                    - text: Lexar
+            - group [ref=f32e701]:
+              - heading "Condition" [level=2] [ref=f32e702]
+              - list "Condition" [ref=f32e703]:
+                - listitem [ref=f32e704]:
+                  - link "Apply New filter to narrow results" [ref=f32e706] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_condition-type%3A2224371011&dc&qid=1792466847&rnid=2224369011&ref=sr_nr_p_n_condition-type_1&ds=v1%3AdDUWsvNjjeof2jLiCpFkQMhFHgRrm%2B51i5j4BdgUpwI
+                    - checkbox [aria-hidden] [ref=f32e709]
+                    - text: New
+            - group [ref=f32e711]:
+              - heading "Customer Reviews" [level=2] [ref=f32e712]
+              - list "Customer Reviews" [ref=f32e713]:
+                - listitem [ref=f32e714]:
+                  - link "Apply 4 Stars & Up filter to narrow results" [ref=f32e717] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_72%3A1248879011&dc&qid=1792466847&rnid=1248877011&ref=sr_nr_p_72_1&ds=v1%3Aul3fM%2FTpeuiaqxAPnXuaztDqug1OmCmMaoBLpES4vrA
+                    - generic [ref=f32e718]: 4 Stars
+                    - text: "& Up"
+            - group [ref=f32e720]:
+              - heading "Data Transfer Rate" [level=2] [ref=f32e721]
+              - list "Data Transfer Rate" [ref=f32e722]:
+                - listitem [ref=f32e723]:
+                  - link "Apply 7,500 Mbit/s & above filter to narrow results" [ref=f32e725] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1003526536111%3A41942655011&dc&qid=1792466847&rnid=41941857011&ref=sr_nr_p_n_g-1003526536111_1&ds=v1%3Adca2Dp43evrqGqCoASD20cetn3bmdeMoKibuJmwgfhw
+                    - checkbox [aria-hidden] [ref=f32e728]
+                    - text: 7,500 Mbit/s & above
+            - group [ref=f32e730]:
+              - heading "Seller" [level=2] [ref=f32e731]
+              - list "Seller" [ref=f32e732]:
+                - listitem [ref=f32e733]:
+                  - link "Apply RockyStone Electronics filter to narrow results" [ref=f32e735] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_6%3AA1LZN806TROZ37&dc&qid=1792466847&rnid=303116011&ref=sr_nr_p_6_1&ds=v1%3AX32jTMK2Tug4%2BOYGEx2b3X3sJYCSiv5vE01OExBpHxI
+                    - checkbox [aria-hidden] [ref=f32e738]
+                    - text: RockyStone Electronics
+                - listitem [ref=f32e740]:
+                  - link "Apply Amazon Export Sales LLC filter to narrow results" [ref=f32e742] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_6%3AA2XZ7JICGUQ1CX&dc&qid=1792466847&rnid=303116011&ref=sr_nr_p_6_2&ds=v1%3AdziNa1re05sh7HVDZwbA%2F9iZCaH%2BZemL1SOwqsjeGds
+                    - checkbox [aria-hidden] [ref=f32e745]
+                    - text: Amazon Export Sales LLC
+                - listitem [ref=f32e747]:
+                  - button "See more, Seller" [ref=f32e750] [cursor=pointer]: See more
+            - group [ref=f32e752]:
+              - generic [ref=f32e753]:
+                - generic [ref=f32e754]: Price
+                - generic [ref=f32e757]:
+                  - generic [ref=f32e758]:
+                    - generic [ref=f32e759]: $230
+                    - generic [aria-hidden] [ref=f32e760]: –
+                    - generic [ref=f32e761]: $310+
+                  - generic [ref=f32e764]:
+                    - generic:
+                      - slider "Minimum price": "0"
+                    - generic [ref=f32e765]:
+                      - slider "Maximum price": "15"
+              - heading "Deals & Discounts" [level=2] [ref=f32e766]
+              - list "Deals & Discounts" [ref=f32e767]:
+                - listitem [ref=f32e768]:
+                  - link "All Discounts" [ref=f32e770] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_deal_type%3A23566065011&dc&qid=1792466847&rnid=23566063011&ref=sr_nr_p_n_deal_type_1&ds=v1%3AReN49xl1Ry0F2mXuQ2QsjH%2FwGY73hHzpLzbw7PqvD6s
+            - group [ref=f32e771]:
+              - heading "Top Brands" [level=2] [ref=f32e772]
+              - list "Top Brands" [ref=f32e773]:
+                - listitem [ref=f32e774]:
+                  - link "Apply Top Brands filter to narrow results" [ref=f32e776] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101014971069111%3A119653281011&dc&qid=1792466847&rnid=119653280011&ref=sr_nr_p_n_g-101014971069111_1&ds=v1%3Al528bgu2qvBydHN3L4xop0zhrtb23D3bXyIe%2Bn1vNUo
+                    - checkbox [aria-hidden] [ref=f32e779]
+                    - text: Top Brands
+            - group [ref=f32e781]:
+              - heading "Color" [level=2] [ref=f32e782]
+              - list "Color" [ref=f32e783]:
+                - listitem [ref=f32e784]:
+                  - generic:
+                    - link "Apply Black filter to narrow results":
+                      - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1001308730111%3A2569815011&dc&qid=1792466847&rnid=2569813011&ref=sr_nr_p_n_g-1001308730111_1&ds=v1%3AmQl%2FONm5vSTD%2F309IDD6OgHKGi65z4b6NYK3dFYB5Sc
+                      - generic [ref=f32e785] [cursor=pointer]
+            - group [ref=f32e786]:
+              - heading "Read Speed" [level=2] [ref=f32e787]
+              - list "Read Speed" [ref=f32e788]:
+                - listitem [ref=f32e789]:
+                  - link "Apply 560 MB/s & above filter to narrow results" [ref=f32e791] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1003525910111%3A41942660011&dc&qid=1792466847&rnid=41941858011&ref=sr_nr_p_n_g-1003525910111_1&ds=v1%3ACsFGvFb4h9yLducYl4836ZIUk4k4HLzYq2ks5tYdvN8
+                    - checkbox [aria-hidden] [ref=f32e794]
+                    - text: 560 MB/s & above
+            - group [ref=f32e796]:
+              - heading "Compatibility" [level=2] [ref=f32e797]
+              - list "Compatibility" [ref=f32e798]:
+                - listitem [ref=f32e799]:
+                  - link "Apply Desktop filter to narrow results" [ref=f32e801] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101015350016111%3A121507164011&dc&qid=1792466847&rnid=121507131011&ref=sr_nr_p_n_g-101015350016111_1&ds=v1%3A%2By4DlFHBtqtk%2BOBal3l6KR2P3oZOfokR7YiPKeFxI1A
+                    - checkbox [aria-hidden] [ref=f32e804]
+                    - text: Desktop
+                - listitem [ref=f32e806]:
+                  - link "Apply Laptop filter to narrow results" [ref=f32e808] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101015350016111%3A121507162011&dc&qid=1792466847&rnid=121507131011&ref=sr_nr_p_n_g-101015350016111_2&ds=v1%3As5CBSo6yMP93REigNNTSLD%2BBqk4mvGPkp%2FdpvFOZyVI
+                    - checkbox [aria-hidden] [ref=f32e811]
+                    - text: Laptop
+            - group [ref=f32e813]:
+              - heading "Hard Drive Type" [level=2] [ref=f32e814]
+              - list "Hard Drive Type" [ref=f32e815]:
+                - listitem [ref=f32e816]:
+                  - link "Apply Solid State Drive filter to narrow results" [ref=f32e818] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1003339935111%3A23981217011&dc&qid=1792466847&rnid=23981214011&ref=sr_nr_p_n_g-1003339935111_1&ds=v1%3AAdrls5GRQ9XsYIykDLHwPzO7WGFyobvpUuf4lhKkR7A
+                    - checkbox [aria-hidden] [ref=f32e821]
+                    - text: Solid State Drive
+            - group [ref=f32e823]:
+              - heading "Specific Uses" [level=2] [ref=f32e824]
+              - list "Specific Uses" [ref=f32e825]:
+                - listitem [ref=f32e826]:
+                  - link "Apply Gaming filter to narrow results" [ref=f32e828] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101015536027111%3A122339338011&dc&qid=1792466847&rnid=122338232011&ref=sr_nr_p_n_g-101015536027111_1&ds=v1%3AkQpTejhR2RSxTncbwU6f%2FwvZoZ6kRIX9P18hVcbkrAM
+                    - checkbox [aria-hidden] [ref=f32e831]
+                    - text: Gaming
+            - group [ref=f32e833]:
+              - heading "Weight" [level=2] [ref=f32e834]
+              - list "Weight" [ref=f32e835]:
+                - listitem [ref=f32e836]:
+                  - link "Apply Up to 1 lb filter to narrow results" [ref=f32e838] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101015535749111%3A122339363011&dc&qid=1792466847&rnid=122338238011&ref=sr_nr_p_n_g-101015535749111_1&ds=v1%3AUzK%2FaI7MsyiBj%2B6qEao0IvRjcYIGp4RXxqArilvofQM
+                    - checkbox [aria-hidden] [ref=f32e841]
+                    - text: Up to 1 lb
+            - group [ref=f32e843]:
+              - heading "Count" [level=2] [ref=f32e844]
+              - list "Count" [ref=f32e845]:
+                - listitem [ref=f32e846]:
+                  - link "Apply 1 filter to narrow results" [ref=f32e848] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101015535903111%3A122339396011&dc&qid=1792466847&rnid=122338241011&ref=sr_nr_p_n_g-101015535903111_1&ds=v1%3AmXphy%2F43KmS%2FABMmfQCjpx9wU%2FEdI2vvwFy%2BLl4TIGw
+                    - checkbox [aria-hidden] [ref=f32e851]
+                    - text: "1"
+            - group [ref=f32e853]:
+              - heading "Installation" [level=2] [ref=f32e854]
+              - list "Installation" [ref=f32e855]:
+                - listitem [ref=f32e856]:
+                  - link "Apply Internal Hard Drive filter to narrow results" [ref=f32e858] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-1003417077111%3A24056401011&dc&qid=1792466847&rnid=24056389011&ref=sr_nr_p_n_g-1003417077111_1&ds=v1%3AldGO1BBJULADckOACAi83kAKoBMPdnLb1Iw6DIEH0rU
+                    - checkbox [aria-hidden] [ref=f32e861]
+                    - text: Internal Hard Drive
+            - group [ref=f32e863]:
+              - heading "Form Factor" [level=2] [ref=f32e864]
+              - list "Form Factor" [ref=f32e865]:
+                - listitem [ref=f32e866]:
+                  - link "Apply M2 filter to narrow results" [ref=f32e868] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101017314178111%3A213955529011&dc&qid=1792466847&rnid=213955518011&ref=sr_nr_p_n_g-101017314178111_1&ds=v1%3AV8t6QpvqpFdiQoRc4VpvRwos3YL7yfcJj9zX9F%2Bw3mg
+                    - checkbox [aria-hidden] [ref=f32e871]
+                    - text: M2
+            - group [ref=f32e873]:
+              - heading "Hard Disk Interface" [level=2] [ref=f32e874]
+              - list "Hard Disk Interface" [ref=f32e875]:
+                - listitem [ref=f32e876]:
+                  - link "Apply Solid State filter to narrow results" [ref=f32e878] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101017292802111%3A214322560011&dc&qid=1792466847&rnid=214322502011&ref=sr_nr_p_n_g-101017292802111_1&ds=v1%3AsIh9vwKWMncUToCB3CRv2ibbBMM0rlDh59XDrOabUhQ
+                    - checkbox [aria-hidden] [ref=f32e881]
+                    - text: Solid State
+            - group [ref=f32e883]:
+              - heading "Hard Disk Form Factor" [level=2] [ref=f32e884]
+              - list "Hard Disk Form Factor" [ref=f32e885]:
+                - listitem [ref=f32e886]:
+                  - link "Apply 2.5 filter to narrow results" [ref=f32e888] [cursor=pointer]:
+                    - /url: /s?k=Lexar+NM790+8TB+LNM790X008T&rh=p_n_g-101015364513111%3A121475507011&dc&qid=1792466847&rnid=121475500011&ref=sr_nr_p_n_g-101015364513111_1&ds=v1%3AhQfd6uFZYG0t4UwBZlwxmjigMC4cXw6WFBxRFTGdJFQ
+                    - checkbox [aria-hidden] [ref=f32e891]
+                    - text: "2.5"
+          - generic [ref=f32e896]:
+            - iframe [ref=f32e897]:
+              - region "Sponsored ad from TEAMGROUP" [ref=f34e3]:
+                - link "TEAMGROUP Buy now TEAMGROUP QX 2TB 3D NAND QLC 2.5 Inch SATA III Internal Solid State Drive SSD R/W Speed up to 560/500 MB/s 400TBW Laptop & PC Desktop T253X7002T0C101 QX 2TB 3D NAND QLC 2.5 Inch SATA III Internal Solid State Drive SSD R/W Speed up to 560/500 MB/s 400TBW Laptop & PC Desktop T253X7002T0C101 3.8 out of 5 stars., 794 customer reviews. $219.89 Eligible for Amazon Prime." [ref=f34e4] [cursor=pointer]:
+                  - generic [ref=f34e5]:
+                    - generic [ref=f34e6]:
+                      - generic [ref=f34e7]: TEAMGROUP
+                      - generic [ref=f34e8]: Buy now
+                    - img "TEAMGROUP QX 2TB 3D NAND QLC 2.5 Inch SATA III Internal Solid State Drive SSD R/W Speed up to 560/500 MB/s 400TBW Laptop & PC Desktop T253X7002T0C101" [ref=f34e16]
+                    - generic [ref=f34e17]:
+                      - generic [ref=f34e18]: QX 2TB 3D NAND QLC 2.5 Inch SATA III Internal Solid State Drive SSD R/W Speed up to 560/500 MB/s 400TBW Laptop & PC Desktop T253X7002T0C101
+                      - generic [ref=f34e20]:
+                        - img "3.8 out of 5 stars., 794 customer reviews." [ref=f34e23]:
+                          - generic [ref=f34e24]: "3.8"
+                          - generic [ref=f34e51]: "794"
+                        - generic [ref=f34e55]:
+                          - generic [ref=f34e56]: $219.89
+                          - generic [aria-hidden] [ref=f34e57]:
+                            - generic [ref=f34e58]: $
+                            - generic [ref=f34e59]: "219"
+                            - generic [ref=f34e60]: "89"
+                          - img "Eligible for Amazon Prime." [ref=f34e63]
+            - button "Leave feedback on Sponsored ad" [ref=f32e899] [cursor=pointer]:
+              - generic [aria-hidden] [ref=f32e900]: Sponsored
+  - complementary "Your recently viewed items and featured recommendations"
+  - generic [ref=f32e902]:
+    - button "Back to top" [ref=f32e903] [cursor=pointer]
+    - generic [ref=f32e905]:
+      - generic [ref=f32e906]:
+        - heading "Get to Know Us" [level=6] [ref=f32e907]
+        - list [ref=f32e908]:
+          - listitem [ref=f32e909]:
+            - link "Careers" [ref=f32e910] [cursor=pointer]:
+              - /url: https://www.amazon.jobs
+          - listitem [ref=f32e911]:
+            - link "Amazon Newsletter" [ref=f32e912] [cursor=pointer]:
+              - /url: https://www.aboutamazon.com/subscribe?utm_source=amazon_com&utm_medium=amazonfooter&utm_campaign=newslettersubscribers&utm_term=amazonnewssignup
+          - listitem [ref=f32e913]:
+            - link "About Amazon" [ref=f32e914] [cursor=pointer]:
+              - /url: https://www.aboutamazon.com/?utm_source=gateway&utm_medium=footer&token=about
+          - listitem [ref=f32e915]:
+            - link "Accessibility" [ref=f32e916] [cursor=pointer]:
+              - /url: https://www.amazon.com/b?node=15701038011&ie=UTF8
+          - listitem [ref=f32e917]:
+            - link "Sustainability" [ref=f32e918] [cursor=pointer]:
+              - /url: https://sustainability.aboutamazon.com/?utm_source=gateway&utm_medium=footer&ref_=susty_footer
+          - listitem [ref=f32e919]:
+            - link "Press Center" [ref=f32e920] [cursor=pointer]:
+              - /url: https://www.amazon.com/pr
+          - listitem [ref=f32e921]:
+            - link "Investor Relations" [ref=f32e922] [cursor=pointer]:
+              - /url: https://www.amazon.com/ir
+          - listitem [ref=f32e923]:
+            - link "Amazon Devices" [ref=f32e924] [cursor=pointer]:
+              - /url: /gp/browse.html?node=2102313011&ref_=footer_devices
+          - listitem [ref=f32e925]:
+            - link "Amazon Science" [ref=f32e926] [cursor=pointer]:
+              - /url: https://www.amazon.science
+      - generic [ref=f32e928]:
+        - heading "Make Money with Us" [level=6] [ref=f32e929]
+        - list [ref=f32e930]:
+          - listitem [ref=f32e931]:
+            - link "Sell on Amazon" [ref=f32e932] [cursor=pointer]:
+              - /url: https://sell.amazon.com/?ld=AZFSSOA_FTSELL-C&ref_=footer_soa
+          - listitem [ref=f32e933]:
+            - link "Sell apps on Amazon" [ref=f32e934] [cursor=pointer]:
+              - /url: https://developer.amazon.com
+          - listitem [ref=f32e935]:
+            - link "Supply to Amazon" [ref=f32e936] [cursor=pointer]:
+              - /url: https://supply.amazon.com
+          - listitem [ref=f32e937]:
+            - link "Protect & Build Your Brand" [ref=f32e938] [cursor=pointer]:
+              - /url: https://sell.amazon.com/brand-registry?ld=AZUSSOA_ABR-FT
+          - listitem [ref=f32e939]:
+            - link "Become an Affiliate" [ref=f32e940] [cursor=pointer]:
+              - /url: https://affiliate-program.amazon.com/
+          - listitem [ref=f32e941]:
+            - link "Become a Delivery Driver" [ref=f32e942] [cursor=pointer]:
+              - /url: https://dspjobhub.com/
+          - listitem [ref=f32e943]:
+            - link "Start a Package Delivery Business" [ref=f32e944] [cursor=pointer]:
+              - /url: https://logistics.amazon.com/marketing?utm_source=amzn&utm_medium=footer&utm_campaign=home
+          - listitem [ref=f32e945]:
+            - link "Advertise Your Products" [ref=f32e946] [cursor=pointer]:
+              - /url: https://advertising.amazon.com/?ref=ext_amzn_ftr
+          - listitem [ref=f32e947]:
+            - link "Self-Publish with Us" [ref=f32e948] [cursor=pointer]:
+              - /url: /gp/seller-account/mm-summary-page.html?ld=AZFooterSelfPublish&topic=200260520&ref_=footer_publishing
+          - listitem [ref=f32e949]:
+            - link "Become an Amazon Hub Partner" [ref=f32e950] [cursor=pointer]:
+              - /url: https://www.amazon.com/b?node=216188543011
+          - listitem [ref=f32e951]:
+            - text: ›
+            - link "See More Ways to Make Money" [ref=f32e952] [cursor=pointer]:
+              - /url: /b/?node=18190131011&ld=AZUSSOA-seemore&ref_=footer_seemore
+      - generic [ref=f32e954]:
+        - heading "Amazon Payment Products" [level=6] [ref=f32e955]
+        - list [ref=f32e956]:
+          - listitem [ref=f32e957]:
+            - link "Amazon Visa" [ref=f32e958] [cursor=pointer]:
+              - /url: /iss/credit/rewardscardmember?plattr=CBFOOT&ref_=footer_cbcc
+          - listitem [ref=f32e959]:
+            - link "Amazon Store Card" [ref=f32e960] [cursor=pointer]:
+              - /url: /credit/storecard/member?plattr=PLCCFOOT&ref_=footer_plcc
+          - listitem [ref=f32e961]:
+            - link "Amazon Secured Card" [ref=f32e962] [cursor=pointer]:
+              - /url: /dp/product/B084KP3NG6?plattr=SCFOOT&ref_=footer_ACB
+          - listitem [ref=f32e963]:
+            - link "Amazon Business Card" [ref=f32e964] [cursor=pointer]:
+              - /url: /dp/B0DVBL912R?plattr=ACOMFO&ie=UTF-8
+          - listitem [ref=f32e965]:
+            - link "Shop with Points" [ref=f32e966] [cursor=pointer]:
+              - /url: https://www.amazon.com/hp/shopwithpoints/servicing
+          - listitem [ref=f32e967]:
+            - link "Credit Card Marketplace" [ref=f32e968] [cursor=pointer]:
+              - /url: /gp/browse.html?node=3561432011&ref_=footer_ccmp
+          - listitem [ref=f32e969]:
+            - link "Reload Your Balance" [ref=f32e970] [cursor=pointer]:
+              - /url: /gp/browse.html?node=10232440011&ref_=footer_reload_us
+          - listitem [ref=f32e971]:
+            - link "Gift Cards" [ref=f32e972] [cursor=pointer]:
+              - /url: https://www.amazon.com/b/?node=2238192011&ref=shop_footer_payments_gc_desktop
+          - listitem [ref=f32e973]:
+            - link "Amazon Currency Converter" [ref=f32e974] [cursor=pointer]:
+              - /url: /gp/browse.html?node=388305011&ref_=footer_tfx
+      - generic [ref=f32e976]:
+        - heading "Let Us Help You" [level=6] [ref=f32e977]
+        - list [ref=f32e978]:
+          - listitem [ref=f32e979]:
+            - link "Your Account" [ref=f32e980] [cursor=pointer]:
+              - /url: https://www.amazon.com/gp/css/homepage.html?ref_=footer_ya
+          - listitem [ref=f32e981]:
+            - link "Your Orders" [ref=f32e982] [cursor=pointer]:
+              - /url: https://www.amazon.com/gp/css/order-history?ref_=footer_yo
+          - listitem [ref=f32e983]:
+            - link "Shipping Rates & Policies" [ref=f32e984] [cursor=pointer]:
+              - /url: /gp/help/customer/display.html?nodeId=468520&ref_=footer_shiprates
+          - listitem [ref=f32e985]:
+            - link "Amazon Prime" [ref=f32e986] [cursor=pointer]:
+              - /url: /gp/prime?ref_=footer_prime
+          - listitem [ref=f32e987]:
+            - link "Returns & Replacements" [ref=f32e988] [cursor=pointer]:
+              - /url: /gp/css/returns/homepage.html?ref_=footer_hy_f_4
+          - listitem [ref=f32e989]:
+            - link "Manage Your Content and Devices" [ref=f32e990] [cursor=pointer]:
+              - /url: /hz/mycd/myx?ref_=footer_myk
+          - listitem [ref=f32e991]:
+            - link "Recalls and Product Safety Alerts" [ref=f32e992] [cursor=pointer]:
+              - /url: https://www.amazon.com/product-safety-alerts?ref_=footer_bsx_ypsa
+          - listitem [ref=f32e993]:
+            - link "Registry & Gift List" [ref=f32e994] [cursor=pointer]:
+              - /url: /registries?ref_=nav_footer_registry_giftlist_desktop
+          - listitem [ref=f32e995]:
+            - link "Help" [ref=f32e996] [cursor=pointer]:
+              - /url: /gp/help/customer/display.html?nodeId=508510&ref_=footer_gw_m_b_he
+    - generic [ref=f32e998]:
+      - link "Amazon US Home" [ref=f32e1001] [cursor=pointer]:
+        - /url: /?ref_=footer_logo
+      - generic [ref=f32e1004]:
+        - generic [ref=f32e1005]:
+          - link "Choose a language for shopping. Current selection is English." [ref=f32e1006] [cursor=pointer]:
+            - /url: /customer-preferences/edit?ie=UTF8&preferencesReturnUrl=%2F&ref_=footer_lang
+            - generic [ref=f32e1008]: English
+          - button "Expand to Change Language or Country" [ref=f32e1009] [cursor=pointer]
+        - button "Choose a country/region for shopping. The current selection is United States." [ref=f32e1010] [cursor=pointer]:
+          - generic [ref=f32e1012]: United States
+    - navigation "More on Amazon" [ref=f32e1013]:
+      - generic "More on Amazon" [ref=f32e1014]:
+        - list [ref=f32e1015]:
+          - listitem [ref=f32e1016]:
+            - link [ref=f32e1017] [cursor=pointer]:
+              - /url: https://music.amazon.com?ref=dm_aff_amz_com
+              - heading "Amazon Music" [level=5] [ref=f32e1018]
+              - generic [ref=f32e1019]: Stream millionsof songs
+          - listitem [aria-hidden] [ref=f32e1020]
+          - listitem [ref=f32e1021]:
+            - link [ref=f32e1022] [cursor=pointer]:
+              - /url: https://advertising.amazon.com/?ref=footer_advtsing_amzn_com
+              - heading "Amazon Ads" [level=5] [ref=f32e1023]
+              - generic [ref=f32e1024]: Reach customerswherever theyspend their time
+          - listitem [aria-hidden] [ref=f32e1025]
+          - listitem [ref=f32e1026]:
+            - link [ref=f32e1027] [cursor=pointer]:
+              - /url: https://www.6pm.com
+              - heading "6pm" [level=5] [ref=f32e1028]
+              - generic [ref=f32e1029]: Score dealson fashion brands
+          - listitem [aria-hidden] [ref=f32e1030]
+          - listitem [ref=f32e1031]:
+            - link [ref=f32e1032] [cursor=pointer]:
+              - /url: https://www.abebooks.com
+              - heading "AbeBooks" [level=5] [ref=f32e1033]
+              - generic [ref=f32e1034]: Books, art& collectibles
+          - listitem [aria-hidden] [ref=f32e1035]
+          - listitem [ref=f32e1036]:
+            - link [ref=f32e1037] [cursor=pointer]:
+              - /url: https://www.acx.com/
+              - heading "ACX" [level=5] [ref=f32e1038]
+              - generic [ref=f32e1039]: Audiobook PublishingMade Easy
+          - listitem [aria-hidden] [ref=f32e1040]
+          - listitem [ref=f32e1041]:
+            - link "Sell on Amazon Start a Selling Account" [ref=f32e1042] [cursor=pointer]:
+              - /url: https://sell.amazon.com/?ld=AZUSSOA-footer-aff&ref_=footer_sell
+              - heading "Sell on Amazon" [level=5] [ref=f32e1043]
+              - generic [ref=f32e1044]: Start a Selling Account
+          - listitem [aria-hidden] [ref=f32e1045]
+          - listitem [ref=f32e1046]:
+            - link [ref=f32e1047] [cursor=pointer]:
+              - /url: https://www.veeqo.com/?utm_source=amazon&utm_medium=website&utm_campaign=footer
+              - heading "Veeqo" [level=5] [ref=f32e1048]
+              - generic [ref=f32e1049]: Shipping SoftwareInventory Management
+        - list [ref=f32e1050]:
+          - listitem [ref=f32e1051]:
+            - link [ref=f32e1052] [cursor=pointer]:
+              - /url: /business?ref_=footer_retail_b2b
+              - heading "Amazon Business" [level=5] [ref=f32e1053]
+              - generic [ref=f32e1054]: Everything ForYour Business
+          - listitem [aria-hidden] [ref=f32e1055]
+          - listitem [ref=f32e1056]:
+            - link [ref=f32e1057] [cursor=pointer]:
+              - /url: /alm/storefront?almBrandId=QW1hem9uIEZyZXNo&ref_=footer_aff_fresh
+              - heading "Amazon Fresh" [level=5] [ref=f32e1058]
+              - generic [ref=f32e1059]: Groceries & MoreRight To Your Door
+          - listitem [aria-hidden] [ref=f32e1060]
+          - listitem [ref=f32e1061]:
+            - link [ref=f32e1062] [cursor=pointer]:
+              - /url: /gp/browse.html?node=20338496011&ref_=footer_amazonglobal
+              - heading "AmazonGlobal" [level=5] [ref=f32e1063]
+              - generic [ref=f32e1064]: Ship OrdersInternationally
+          - listitem [aria-hidden] [ref=f32e1065]
+          - listitem [ref=f32e1066]:
+            - link [ref=f32e1067] [cursor=pointer]:
+              - /url: /services?ref_=footer_services
+              - heading "Home Services" [level=5] [ref=f32e1068]
+              - generic [ref=f32e1069]: Experienced ProsHappiness Guarantee
+          - listitem [aria-hidden] [ref=f32e1070]
+          - listitem [ref=f32e1071]:
+            - link [ref=f32e1072] [cursor=pointer]:
+              - /url: https://aws.amazon.com/what-is-cloud-computing/?sc_channel=EL&sc_campaign=amazonfooter
+              - heading "Amazon Web Services" [level=5] [ref=f32e1073]
+              - generic [ref=f32e1074]: Scalable CloudComputing Services
+          - listitem [aria-hidden] [ref=f32e1075]
+          - listitem [ref=f32e1076]:
+            - link [ref=f32e1077] [cursor=pointer]:
+              - /url: https://www.audible.com
+              - heading "Audible" [level=5] [ref=f32e1078]
+              - generic [ref=f32e1079]: Listen to Books & OriginalAudio Performances
+          - listitem [aria-hidden] [ref=f32e1080]
+          - listitem [ref=f32e1081]:
+            - link [ref=f32e1082] [cursor=pointer]:
+              - /url: https://www.boxofficemojo.com/?ref_=amzn_nav_ftr
+              - heading "Box Office Mojo" [level=5] [ref=f32e1083]
+              - generic [ref=f32e1084]: Find MovieBox Office Data
+        - list [ref=f32e1085]:
+          - listitem [ref=f32e1086]:
+            - link [ref=f32e1087] [cursor=pointer]:
+              - /url: https://www.goodreads.com
+              - heading "Goodreads" [level=5] [ref=f32e1088]
+              - generic [ref=f32e1089]: Book reviews& recommendations
+          - listitem [aria-hidden] [ref=f32e1090]
+          - listitem [ref=f32e1091]:
+            - link [ref=f32e1092] [cursor=pointer]:
+              - /url: https://www.imdb.com
+              - heading "IMDb" [level=5] [ref=f32e1093]
+              - generic [ref=f32e1094]: Movies, TV& Celebrities
+          - listitem [aria-hidden] [ref=f32e1095]
+          - listitem [ref=f32e1096]:
+            - link [ref=f32e1097] [cursor=pointer]:
+              - /url: https://pro.imdb.com?ref_=amzn_nav_ftr
+              - heading "IMDbPro" [level=5] [ref=f32e1098]
+              - generic [ref=f32e1099]: Get Info EntertainmentProfessionals Need
+          - listitem [aria-hidden] [ref=f32e1100]
+          - listitem [ref=f32e1101]:
+            - link [ref=f32e1102] [cursor=pointer]:
+              - /url: https://kdp.amazon.com
+              - heading "Kindle Direct Publishing" [level=5] [ref=f32e1103]
+              - generic [ref=f32e1104]: Indie Digital & Print PublishingMade Easy
+          - listitem [aria-hidden] [ref=f32e1105]
+          - listitem [ref=f32e1106]:
+            - link [ref=f32e1107] [cursor=pointer]:
+              - /url: /gp/browse.html?node=13234696011&ref_=_gno_p_foot
+              - heading "Amazon Photos" [level=5] [ref=f32e1108]
+              - generic [ref=f32e1109]: Unlimited Photo StorageFree With Prime
+          - listitem [aria-hidden] [ref=f32e1110]
+          - listitem [ref=f32e1111]:
+            - link [ref=f32e1112] [cursor=pointer]:
+              - /url: https://videodirect.amazon.com/home/landing
+              - heading "Prime Video Direct" [level=5] [ref=f32e1113]
+              - generic [ref=f32e1114]: Video DistributionMade Easy
+          - listitem [aria-hidden] [ref=f32e1115]
+          - listitem [ref=f32e1116]:
+            - link [ref=f32e1117] [cursor=pointer]:
+              - /url: https://www.shopbop.com
+              - heading "Shopbop" [level=5] [ref=f32e1118]
+              - generic [ref=f32e1119]: DesignerFashion Brands
+        - list [ref=f32e1120]:
+          - listitem [ref=f32e1121]:
+            - link [ref=f32e1122] [cursor=pointer]:
+              - /url: /gp/browse.html?node=10158976011&ref_=footer_wrhsdls
+              - heading "Amazon Resale" [level=5] [ref=f32e1123]
+              - generic [ref=f32e1124]: Great Deals onQuality Used Products
+          - listitem [aria-hidden] [ref=f32e1125]
+          - listitem [ref=f32e1126]:
+            - link [ref=f32e1127] [cursor=pointer]:
+              - /url: https://www.wholefoodsmarket.com
+              - heading "Whole Foods Market" [level=5] [ref=f32e1128]
+              - generic [ref=f32e1129]: America’s HealthiestGrocery Store
+          - listitem [aria-hidden] [ref=f32e1130]
+          - listitem [ref=f32e1131]:
+            - link [ref=f32e1132] [cursor=pointer]:
+              - /url: https://www.woot.com/
+              - heading "Woot!" [level=5] [ref=f32e1133]
+              - generic [ref=f32e1134]: Deals and Shenanigans
+          - listitem [aria-hidden] [ref=f32e1135]
+          - listitem [ref=f32e1136]:
+            - link [ref=f32e1137] [cursor=pointer]:
+              - /url: https://www.zappos.com
+              - heading "Zappos" [level=5] [ref=f32e1138]
+              - generic [ref=f32e1139]: Shoes &Clothing
+          - listitem [aria-hidden] [ref=f32e1140]
+          - listitem [ref=f32e1141]:
+            - link [ref=f32e1142] [cursor=pointer]:
+              - /url: https://ring.com
+              - heading "Ring" [level=5] [ref=f32e1143]
+              - generic [ref=f32e1144]: Smart HomeSecurity Systems
+          - listitem [aria-hidden] [ref=f32e1145]
+          - listitem [ref=f32e1146]:
+            - link [ref=f32e1147] [cursor=pointer]:
+              - /url: https://eero.com/
+              - heading "eero WiFi" [level=5] [ref=f32e1148]
+              - generic [ref=f32e1149]: Stream 4K Videoin Every Room
+          - listitem [aria-hidden] [ref=f32e1150]
+          - listitem [ref=f32e1151]:
+            - link [ref=f32e1152] [cursor=pointer]:
+              - /url: https://blinkforhome.com/?ref=nav_footer
+              - heading "Blink" [level=5] [ref=f32e1153]
+              - generic [ref=f32e1154]: Smart Securityfor Every Home
+        - list [ref=f32e1155]:
+          - listitem [aria-hidden] [ref=f32e1156]
+          - listitem [aria-hidden] [ref=f32e1157]
+          - listitem [aria-hidden] [ref=f32e1158]
+          - listitem [aria-hidden] [ref=f32e1159]
+          - listitem [ref=f32e1160]:
+            - link [ref=f32e1161] [cursor=pointer]:
+              - /url: https://shop.ring.com/pages/neighbors-app
+              - heading "Neighbors App" [level=5] [ref=f32e1162]
+              - generic [ref=f32e1163]: Real-Time Crime& Safety Alerts
+          - listitem [aria-hidden] [ref=f32e1164]
+          - listitem [ref=f32e1165]:
+            - link "PillPack Pharmacy Simplified" [ref=f32e1166] [cursor=pointer]:
+              - /url: https://www.pillpack.com
+              - heading "PillPack" [level=5] [ref=f32e1167]
+              - generic [ref=f32e1168]: Pharmacy Simplified
+          - listitem [aria-hidden] [ref=f32e1169]
+          - listitem [ref=f32e1170]:
+            - link [ref=f32e1171] [cursor=pointer]:
+              - /url: /gp/browse.html?node=12653393011&ref_=footer_usrenew
+              - heading "Amazon Renewed" [level=5] [ref=f32e1172]
+              - generic [ref=f32e1173]: Refurbished techyou can trust
+          - listitem [aria-hidden] [ref=f32e1174]
+          - listitem [aria-hidden] [ref=f32e1175]
+          - listitem [aria-hidden] [ref=f32e1176]
+          - listitem [aria-hidden] [ref=f32e1177]
+    - generic [ref=f32e1178]:
+      - list [ref=f32e1179]:
+        - listitem [ref=f32e1180]:
+          - link "Conditions of Use" [ref=f32e1181] [cursor=pointer]:
+            - /url: /gp/help/customer/display.html?nodeId=508088&ref_=footer_cou
+        - listitem [ref=f32e1182]:
+          - link "Privacy Notice" [ref=f32e1183] [cursor=pointer]:
+            - /url: /gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ&ref_=footer_privacy
+        - listitem [ref=f32e1184]:
+          - link "Consumer Health Data Privacy Disclosure" [ref=f32e1185] [cursor=pointer]:
+            - /url: /gp/help/customer/display.html?ie=UTF8&nodeId=TnACMrGVghHocjL8KB&ref_=footer_consumer_health_data_privacy
+        - listitem [ref=f32e1186]:
+          - link "Your Ads Privacy Choices" [ref=f32e1187] [cursor=pointer]:
+            - /url: /privacyprefs?ref_=footer_iba
+        - listitem [ref=f32e1188]
+      - generic [ref=f32e1190]: © 1996-2026, Amazon.com, Inc. or its affiliates
