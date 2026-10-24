@@ -55,20 +55,20 @@ Every performance claim is a measured receipt, and the losses print next to the 
 ### [HyperUuid](https://github.com/SkunkWerkx/HyperUuid)
 [![crates.io](https://img.shields.io/crates/v/hyperuuid.svg)](https://crates.io/crates/hyperuuid) [![NuGet](https://img.shields.io/nuget/v/HyperUuid.svg)](https://www.nuget.org/packages/HyperUuid) [![Maven Central](https://img.shields.io/maven-central/v/io.github.skunkwerkx/hyperuuid.svg)](https://central.sonatype.com/artifact/io.github.skunkwerkx/hyperuuid) [![PyPI](https://img.shields.io/pypi/v/hyperuuid.svg)](https://pypi.org/project/hyperuuid/) [![Go Reference](https://pkg.go.dev/badge/github.com/SkunkWerkx/HyperUuid/go.svg)](https://pkg.go.dev/github.com/SkunkWerkx/HyperUuid/go) [![Swift Package](https://img.shields.io/github/v/tag/SkunkWerkx/HyperUuid?label=swift%20package&sort=semver)](https://github.com/SkunkWerkx/HyperUuid/tags) [![RubyGems](https://img.shields.io/gem/v/hyperuuid.svg)](https://rubygems.org/gems/hyperuuid) [![Packagist](https://img.shields.io/packagist/v/skunkwerkx/hyperuuid.svg)](https://packagist.org/packages/skunkwerkx/hyperuuid)
 
-The identity round. One allocation-free RFC 9562 UUID engine — v4/v5/v6/v7, batch generation, SQL Server `uniqueidentifier` byte ordering — reached from inside every host language's own process. As fast as the platform's own UUID call or faster in every roster language except Go:
+The identity round. One allocation-free RFC 9562 UUID engine — v4, v5 and v7 generation, the SQL Server `uniqueidentifier` byte order as a v8, batch generation — reached from inside every host language's own process. As fast as the platform's own UUID call or faster in every roster language except Go:
 
 | Language | Generation vs. the platform's own call | The platform's own call |
 | --- | --- | --- |
-| Swift | **9.5-13x faster** | `Foundation.UUID()` |
-| C# | **5.7-8.1x faster** | `Guid.NewGuid()` |
-| Ruby | **2.1-4.9x faster** | `SecureRandom.uuid` |
-| Python | **3.0-4.2x faster** | `uuid.uuid4()`-`uuid7()` |
-| Java | **2.4-4.5x faster** | `UUID.randomUUID()` |
-| Rust | **2x faster** (v5/v7), level on v4/v6 | the `uuid` crate |
-| PHP | level to **1.2x faster** | a naive inline v4 (PHP core has no UUID call at all) |
+| Swift | **11-16x faster** | `Foundation.UUID()` |
+| C# | **7.5-7.9x faster** | `Guid.NewGuid()` |
+| Ruby | **2.1-5.5x faster** | `SecureRandom.uuid` |
+| Python | **3.4-4.2x faster** | `uuid.uuid4()`-`uuid7()` |
+| Java | **2.8-5.1x faster** | `UUID.randomUUID()` |
+| Rust | **1.7-2.4x faster** | the `uuid` crate |
+| PHP | **1.2-1.4x faster** | a naive inline v4 (PHP core has no UUID call at all) |
 | Go | slower per call — the control group | `google/uuid` |
 
-The batch API collapses thousands of FFI crossings into one for a measured 19.6x.
+The batch API collapses a thousand FFI crossings into one: 1,000 v7s cost 5.7x less in Rust, 6.2x less in C# and 10x less in Go than the same thousand calls.
 
 ### [HyperCast](https://github.com/SkunkWerkx/HyperCast)
 [![crates.io](https://img.shields.io/crates/v/hypercast.svg)](https://crates.io/crates/hypercast) [![NuGet](https://img.shields.io/nuget/v/HyperCast.svg)](https://www.nuget.org/packages/HyperCast) [![Maven Central](https://img.shields.io/maven-central/v/io.github.skunkwerkx/hypercast.svg)](https://central.sonatype.com/artifact/io.github.skunkwerkx/hypercast) [![PyPI](https://img.shields.io/pypi/v/hypercast.svg)](https://pypi.org/project/hypercast/) [![Go Reference](https://pkg.go.dev/badge/github.com/SkunkWerkx/HyperCast/go.svg)](https://pkg.go.dev/github.com/SkunkWerkx/HyperCast/go) [![Swift Package](https://img.shields.io/github/v/tag/SkunkWerkx/HyperCast?label=swift%20package&sort=semver)](https://github.com/SkunkWerkx/HyperCast/tags) [![Gem](https://img.shields.io/gem/v/hypercast.svg)](https://rubygems.org/gems/hypercast) [![Packagist](https://img.shields.io/packagist/v/skunkwerkx/hypercast.svg)](https://packagist.org/packages/skunkwerkx/hypercast)
@@ -77,20 +77,15 @@ The trust round. Allocation-free parsers that turn untrusted text into strongly 
 
 It beats the platform's culture-machinery parsers and says so where it only draws with or loses to their single-shape C builtins: RFC 3339 timestamps 2.4x faster than `DateTimeOffset.TryParse`, 12.1x `Instant.parse`, 12.6x Swift's `ISO8601FormatStyle`, 6.6x `Time.iso8601`, and a messy `1/7/2026 3:04 PM` 20x faster than Python's `strptime`.
 
-### The ingestion round — [HyperTabular](https://github.com/SkunkWerkx/HyperTabular) · [HyperDelimited](https://github.com/SkunkWerkx/HyperDelimited) · [HyperWorkbook](https://github.com/SkunkWerkx/HyperWorkbook)
+### [HyperTabular](https://github.com/SkunkWerkx/HyperTabular)
+[![crates.io](https://img.shields.io/crates/v/hypertabular.svg)](https://crates.io/crates/hypertabular) [![NuGet](https://img.shields.io/nuget/v/HyperTabular.svg)](https://www.nuget.org/packages/HyperTabular) [![Maven Central](https://img.shields.io/maven-central/v/io.github.skunkwerkx/hypertabular.svg)](https://central.sonatype.com/artifact/io.github.skunkwerkx/hypertabular) [![PyPI](https://img.shields.io/pypi/v/hypertabular.svg)](https://pypi.org/project/hypertabular/) [![Go Reference](https://pkg.go.dev/badge/github.com/SkunkWerkx/HyperTabular/go.svg)](https://pkg.go.dev/github.com/SkunkWerkx/HyperTabular/go) [![Swift Package](https://img.shields.io/github/v/tag/SkunkWerkx/HyperTabular?label=swift%20package&sort=semver)](https://github.com/SkunkWerkx/HyperTabular/tags) [![RubyGems](https://img.shields.io/gem/v/hypertabular.svg)](https://rubygems.org/gems/hypertabular) [![Packagist](https://img.shields.io/packagist/v/skunkwerkx/hypertabular.svg)](https://packagist.org/packages/skunkwerkx/hypertabular)
 
-The payoff, in progress. A million-row, 20-column file is 20 million scalar casts — so the FFI boundary gets crossed once per chunk instead of once per cell, and every cell is cast through a HyperCast door in a tight native loop.
+The ingestion round, shipped. Delimited text — CSV, TSV, any single-byte separator — and XLSX/ODS workbooks read a batch at a time into typed columns, every cell cast through a HyperCast door and carrying its own verdict, the FFI boundary crossed once per few thousand rows instead of once per cell. The thesis is amortization: a million-row, 20-column file is 20 million scalar casts, which driven cell by cell is real crossing overhead on the cheapest FFI and catastrophic from Python or Ruby, and driven a batch at a time rounds to zero. It began as three repositories — a contract crate, a delimited provider and a workbook provider — and was folded into one crate and one native library when that shape met the linker.
 
-| Project | Provides |
-|---|---|
-| [HyperTabular](https://github.com/SkunkWerkx/HyperTabular) | The contract every format provider speaks — a format-neutral cell, a caller-declared plan of doors, the cast engine, and the column-major batch. Nothing sniffed, no type inference, no separator detection |
-| [HyperDelimited](https://github.com/SkunkWerkx/HyperDelimited) | CSV, TSV, and any single-byte separator, with a SIMD structural scanner on both aarch64 and x86-64, delivering cells zero-copy |
-| [HyperWorkbook](https://github.com/SkunkWerkx/HyperWorkbook) | XLSX and ODS — a hand-rolled zip reader, streaming inflate, one pull tokenizer for every XML part, and Excel's serial dates under the caller-declared epoch |
-
-The Rust crates exist and their suites are green; the real-writer conformance corpus, the seven bindings, and the numbers are what remain.
+The receipts: every cell of a delimited file located at 1.05 GiB/s against 978 MiB/s for Rust's `csv` crate, the structural scan alone at 2.18 GiB/s; a 300,000-row Excel workbook read whole in 0.59–0.63 s from Rust, C#, Java, Go, Swift and Python alike — the language barely shows.
 
 ### [HyperForge](https://github.com/SkunkWerkx/.github)
 
-The shared foundry behind all of them: reusable CI pipelines that prove one Rust core against every language binding's real test suite, pack/publish/attest workflows that put a build-provenance attestation on every artifact, scaffolding conventions a new `Hyper*` repo adopts wholesale, and the build archaeology — learned once, banked, never re-learned.
+The shared foundry behind all of them: reusable CI pipelines that prove one Rust core against every language binding's real test suite, pack/publish/attest workflows that put a build-provenance attestation on every artifact, scaffolding conventions a new `Hyper*` repo adopts wholesale, and the build archaeology — learned once, banked, never re-learned. Each release also carries one attestation, signed at the tag, that names every shipped file, so `gh attestation verify <file> --repo SkunkWerkx/<Repo> --source-ref refs/tags/vX.Y.Z --predicate-type …/release/v1` answers for a wheel, a Go archive and a gem alike, and the pipelines publish tokenless wherever a registry offers Trusted Publishing.
 
 The lineage runs straight through this page: [SequentialGuid](https://github.com/buvinghausen/SequentialGuid)'s SQL Server byte-order permutation seeded HyperUuid's ordering transforms, and [Svartálfheim](https://github.com/NorseArchitecture/Svartalfheim)'s `Norse.Primitives` conformance suites seeded HyperCast's corpus.
