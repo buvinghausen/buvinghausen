@@ -13,12 +13,47 @@ arch_x64_arm64() { uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/'; }
 
 # Latest release of a GitHub repo ("owner/name"), tag printed without its
 # leading "v" — the version-diff key for every release-archive install
-# (gh, actionlint, pwsh, async-profiler, rbspy, SwiftLint) so that pattern
-# lives once. The "v" is optional: SwiftLint tags its releases bare ("0.65.1").
-# Anchored on the key, not on line shape: the API usually pretty-prints one
-# field per line but has been seen returning the whole object on one line.
+# (gh, actionlint, pwsh, async-profiler, rbspy, SwiftLint, TinyGo) so that
+# pattern lives once. The "v" is optional: SwiftLint tags its releases bare
+# ("0.65.1"). Anchored on the key, not on line shape: the API usually
+# pretty-prints one field per line but has been seen returning the whole
+# object on one line.
+#
+# Fails LOUDLY. The original `curl -s | grep | sed` pipeline died silently
+# under `set -euo pipefail` whenever the API answered without a tag_name
+# (2026-10-24: a full pass stopped dead after "==> TinyGo" with nothing on
+# the console — grep's no-match exit 1 failed the assignment and errexit
+# took the module and the orchestrator down with it). The usual reason is
+# GitHub's unauthenticated limit of 60 requests/hour per public IP: every
+# pass spends seven of those, and WSL2 shares the Windows host's IP, so a
+# few debugging reruns can lock out `wsl --update` on the Windows side too.
+# Authenticated requests get 5000/hour, so a token is sent when one is at
+# hand: $GH_TOKEN, then $GITHUB_TOKEN, then `gh auth token` (the gh CLI's
+# stored login; silently skipped on a fresh box where update-tools.sh has
+# not installed gh yet). Any response without a tag_name — rate limit, 404,
+# outage, no network — prints the API's own "message" line and returns 1.
 github_latest_release() {
-	curl -s "https://api.github.com/repos/$1/releases/latest" | grep '"tag_name"' | sed 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/'
+	local repo="$1" token body tag
+	local -a auth=()
+	token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+	if [[ -z "$token" ]] && command -v gh >/dev/null 2>&1; then
+		token=$(gh auth token 2>/dev/null || true)
+	fi
+	[[ -n "$token" ]] && auth=(-H "Authorization: Bearer $token")
+	# No -f: a 403/404 body carries the "message" we want to show. ${auth[@]+...}
+	# keeps an empty array safe under `set -u` on macOS's stock bash 3.2.
+	body=$(curl -sS -H 'Accept: application/vnd.github+json' ${auth[@]+"${auth[@]}"} \
+		"https://api.github.com/repos/$repo/releases/latest") || {
+		echo "github_latest_release $repo: request to api.github.com failed" >&2
+		return 1
+	}
+	tag=$(printf '%s\n' "$body" | sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p')
+	if [[ -z "$tag" ]]; then
+		echo "github_latest_release $repo: no tag_name in the API response" >&2
+		printf '%s\n' "$body" | grep -m1 '"message"' >&2 || printf '%s\n' "$body" | head -c 300 >&2
+		return 1
+	fi
+	printf '%s\n' "$tag"
 }
 
 # Downloads a release tarball, extracts it into a scratch dir, and
