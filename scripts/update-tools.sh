@@ -95,7 +95,7 @@ if ! grep -qF "$POSH_MARKER" "$HOME/.bashrc" 2>/dev/null; then
 # posh-git-sh — only active inside ~/code/**
 source ~/.posh-git-sh
 
-_update_prompt() {
+posh_update_prompt() {
     case "$PWD" in
         $HOME/code/*)
             PROMPT_COMMAND='__posh_git_ps1 "\u@\h:\w " "\\\$ ";'
@@ -109,10 +109,10 @@ _update_prompt() {
 
 cd() {
     builtin cd "$@" || return
-    _update_prompt
+    posh_update_prompt
 }
 
-_update_prompt
+posh_update_prompt
 EOF
 	)
 	SDKMAN_LINE=$(grep -nF "MUST BE AT THE END OF THE FILE FOR SDKMAN" "$HOME/.bashrc" 2>/dev/null | head -1 | cut -d: -f1 || true)
