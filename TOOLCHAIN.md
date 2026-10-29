@@ -1225,7 +1225,7 @@ Add to `~/.bashrc` (before SDKMAN block):
 # posh-git-sh — only active inside ~/code/**
 source ~/.posh-git-sh
 
-_update_prompt() {
+posh_update_prompt() {
     case "$PWD" in
         $HOME/code/*)
             PROMPT_COMMAND='__posh_git_ps1 "\u@\h:\w " "\\\$ ";'
@@ -1239,11 +1239,13 @@ _update_prompt() {
 
 cd() {
     builtin cd "$@" || return
-    _update_prompt
+    posh_update_prompt
 }
 
-_update_prompt
+posh_update_prompt
 ```
+
+> **Note:** Don't prefix the helper with `_` (e.g. `_update_prompt`). Claude Code's shell snapshot skips underscore-prefixed functions but keeps the `cd()` override, so every `cd` in its shell fails with `command not found` (exit 127).
 
 > **Note:** The prompt only activates when inside `~/code/**` AND inside a git repo — navigating to `~/code` itself without a repo won't trigger it. That's correct behavior.
 
