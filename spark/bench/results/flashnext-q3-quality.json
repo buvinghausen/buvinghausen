@@ -1,0 +1,193 @@
+{
+  "name": "flashnext-q3-quality",
+  "model": "Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf",
+  "draft": false,
+  "ctx": 98304,
+  "extra": "--load-mode none",
+  "started": "2026-11-09T01:13:52",
+  "load_s": 50.2,
+  "quality": [
+    {
+      "task": "calc",
+      "sample": 1,
+      "pass": false,
+      "why": "^ SyntaxError: invalid syntax",
+      "out_n": 16384,
+      "gen_tps": 33.8,
+      "secs": 493.4,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 2,
+      "pass": false,
+      "why": "^ SyntaxError: unterminated string literal (detected at line 4)",
+      "out_n": 16384,
+      "gen_tps": 34.0,
+      "secs": 489.1,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1443,
+      "gen_tps": 35.6,
+      "secs": 45.3,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 5105,
+      "gen_tps": 35.4,
+      "secs": 151.1,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 1,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError",
+      "out_n": 15962,
+      "gen_tps": 35.5,
+      "secs": 456.1,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 9094,
+      "gen_tps": 35.8,
+      "secs": 260.7,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 12476,
+      "gen_tps": 35.6,
+      "secs": 357.9,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 10658,
+      "gen_tps": 35.7,
+      "secs": 305.4,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 3020,
+      "gen_tps": 35.7,
+      "secs": 91.7,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 1259,
+      "gen_tps": 36.3,
+      "secs": 39.0,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 5873,
+      "gen_tps": 35.8,
+      "secs": 171.0,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 6352,
+      "gen_tps": 35.8,
+      "secs": 183.9,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 1,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^ NameError: name 'compare_semver' is not defined",
+      "out_n": 16384,
+      "gen_tps": 35.5,
+      "secs": 469.3,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 15427,
+      "gen_tps": 35.8,
+      "secs": 437.7,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1052,
+      "gen_tps": 36.0,
+      "secs": 34.2,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 1216,
+      "gen_tps": 35.9,
+      "secs": 38.5,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1019,
+      "gen_tps": 36.3,
+      "secs": 32.3,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 4772,
+      "gen_tps": 35.5,
+      "secs": 140.9,
+      "prod_busy": null
+    }
+  ],
+  "quality_pass": "14/18",
+  "finished": "2026-11-09T02:24:40"
+}

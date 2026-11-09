@@ -1,0 +1,64 @@
+{
+  "name": "q4-nodraft",
+  "model": "Qwen3.8-27B-UD-Q4_K_M.gguf",
+  "draft": false,
+  "ctx": 98304,
+  "extra": "",
+  "started": "2026-11-08T20:26:44",
+  "load_s": 10.0,
+  "prefill": [
+    {
+      "target": 4096,
+      "prompt_n": 4116,
+      "prompt_tps": 889.5,
+      "prod_busy": null
+    },
+    {
+      "target": 16384,
+      "prompt_n": 16404,
+      "prompt_tps": 823.0,
+      "prod_busy": null
+    },
+    {
+      "target": 65536,
+      "prompt_n": 65556,
+      "prompt_tps": 692.7,
+      "prod_busy": null
+    }
+  ],
+  "generation": [
+    {
+      "kind": "code",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 15.5,
+      "draft_accept": null,
+      "prod_busy": null
+    },
+    {
+      "kind": "code",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 15.6,
+      "draft_accept": null,
+      "prod_busy": null
+    },
+    {
+      "kind": "prose",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 15.5,
+      "draft_accept": null,
+      "prod_busy": null
+    },
+    {
+      "kind": "prose",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 15.5,
+      "draft_accept": null,
+      "prod_busy": null
+    }
+  ],
+  "finished": "2026-11-08T20:35:43"
+}

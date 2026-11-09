@@ -1,0 +1,2 @@
+*.log
+!bench/progress.log

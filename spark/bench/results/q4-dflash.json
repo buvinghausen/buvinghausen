@@ -1,0 +1,306 @@
+{
+  "name": "q4-dflash",
+  "model": "Qwen3.8-27B-UD-Q4_K_M.gguf",
+  "draft": true,
+  "ctx": 98304,
+  "started": "2026-11-08T18:22:40",
+  "load_s": 10.0,
+  "prefill": [
+    {
+      "target": 4096,
+      "prompt_n": 4116,
+      "prompt_tps": 885.8,
+      "prod_busy": false
+    },
+    {
+      "target": 16384,
+      "prompt_n": 16404,
+      "prompt_tps": 836.4,
+      "prod_busy": false
+    },
+    {
+      "target": 65536,
+      "prompt_n": 65556,
+      "prompt_tps": 652.8,
+      "prod_busy": false
+    }
+  ],
+  "generation": [
+    {
+      "kind": "code",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 43.2,
+      "draft_accept": 0.558,
+      "prod_busy": false
+    },
+    {
+      "kind": "code",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 42.9,
+      "draft_accept": 0.594,
+      "prod_busy": false
+    },
+    {
+      "kind": "prose",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 23.2,
+      "draft_accept": 0.254,
+      "prod_busy": false
+    },
+    {
+      "kind": "prose",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 23.1,
+      "draft_accept": 0.251,
+      "prod_busy": false
+    }
+  ],
+  "quality": [
+    {
+      "task": "iso_duration",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 16384,
+      "gen_tps": 26.7,
+      "secs": 619.2,
+      "prod_busy": false
+    },
+    {
+      "task": "iso_duration",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 15804,
+      "gen_tps": 29.3,
+      "secs": 544.2,
+      "prod_busy": false
+    },
+    {
+      "task": "lru_cache",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 4158,
+      "gen_tps": 29.5,
+      "secs": 145.9,
+      "prod_busy": false
+    },
+    {
+      "task": "lru_cache",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 1325,
+      "gen_tps": 34.3,
+      "secs": 40.6,
+      "prod_busy": false
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 821,
+      "gen_tps": 30.6,
+      "secs": 29.4,
+      "prod_busy": false
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 637,
+      "gen_tps": 32.1,
+      "secs": 26.2,
+      "prod_busy": false
+    },
+    {
+      "task": "calc",
+      "sample": 1,
+      "pass": false,
+      "why": "^^^^^^ NameError: name 'pytest' is not defined. Did you mean: 'bytes'?",
+      "out_n": 16384,
+      "gen_tps": 25.7,
+      "secs": 642.4,
+      "prod_busy": false
+    },
+    {
+      "task": "calc",
+      "sample": 2,
+      "pass": false,
+      "why": "no code block",
+      "out_n": 16384,
+      "gen_tps": 26.5,
+      "secs": 617.7,
+      "prod_busy": false
+    },
+    {
+      "task": "toposort",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1654,
+      "gen_tps": 30.2,
+      "secs": 59.3,
+      "prod_busy": false
+    },
+    {
+      "task": "toposort",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 1944,
+      "gen_tps": 27.8,
+      "secs": 72.0,
+      "prod_busy": false
+    },
+    {
+      "task": "csv_line",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 12620,
+      "gen_tps": 24.9,
+      "secs": 511.6,
+      "prod_busy": false
+    },
+    {
+      "task": "csv_line",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 16384,
+      "gen_tps": 24.0,
+      "secs": 688.2,
+      "prod_busy": false
+    },
+    {
+      "task": "roman",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 6065,
+      "gen_tps": 29.2,
+      "secs": 213.3,
+      "prod_busy": false
+    },
+    {
+      "task": "roman",
+      "sample": 2,
+      "pass": false,
+      "why": "^ NameError: name 'n' is not defined",
+      "out_n": 16384,
+      "gen_tps": 27.4,
+      "secs": 606.9,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 2051,
+      "gen_tps": 33.1,
+      "secs": 66.5,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 1233,
+      "gen_tps": 33.0,
+      "secs": 41.6,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 7497,
+      "gen_tps": 28.0,
+      "secs": 274.1,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 10214,
+      "gen_tps": 27.1,
+      "secs": 382.9,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 16384,
+      "gen_tps": 38.6,
+      "secs": 430.3,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 12267,
+      "gen_tps": 32.0,
+      "secs": 389.9,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 4061,
+      "gen_tps": 31.5,
+      "secs": 135.4,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 9156,
+      "gen_tps": 29.6,
+      "secs": 316.4,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 2992,
+      "gen_tps": 29.7,
+      "secs": 106.9,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 2391,
+      "gen_tps": 31.8,
+      "secs": 79.4,
+      "prod_busy": null
+    }
+  ],
+  "quality_pass": "21/24",
+  "finished": "2026-11-08T20:26:44"
+}

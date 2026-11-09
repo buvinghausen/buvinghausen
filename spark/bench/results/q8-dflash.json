@@ -1,0 +1,307 @@
+{
+  "name": "q8-dflash",
+  "model": "Qwen3.8-27B-Q8_0.gguf",
+  "draft": true,
+  "ctx": 98304,
+  "extra": "",
+  "started": "2026-11-08T20:35:43",
+  "load_s": 15.0,
+  "prefill": [
+    {
+      "target": 4096,
+      "prompt_n": 4116,
+      "prompt_tps": 867.3,
+      "prod_busy": null
+    },
+    {
+      "target": 16384,
+      "prompt_n": 16404,
+      "prompt_tps": 837.3,
+      "prod_busy": null
+    },
+    {
+      "target": 65536,
+      "prompt_n": 65556,
+      "prompt_tps": 637.2,
+      "prod_busy": null
+    }
+  ],
+  "generation": [
+    {
+      "kind": "code",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 33.3,
+      "draft_accept": 0.585,
+      "prod_busy": null
+    },
+    {
+      "kind": "code",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 31.4,
+      "draft_accept": 0.558,
+      "prod_busy": null
+    },
+    {
+      "kind": "prose",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 17.9,
+      "draft_accept": 0.267,
+      "prod_busy": null
+    },
+    {
+      "kind": "prose",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 16.0,
+      "draft_accept": 0.225,
+      "prod_busy": null
+    }
+  ],
+  "quality": [
+    {
+      "task": "iso_duration",
+      "sample": 1,
+      "pass": false,
+      "why": "~~~~~^^^^^^^ ValueError: could not convert string to float: '1H'",
+      "out_n": 11692,
+      "gen_tps": 19.2,
+      "secs": 615.3,
+      "prod_busy": null
+    },
+    {
+      "task": "iso_duration",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^ NameError: name 'parse_duration' is not defined",
+      "out_n": 16384,
+      "gen_tps": 18.8,
+      "secs": 875.8,
+      "prod_busy": null
+    },
+    {
+      "task": "lru_cache",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 3494,
+      "gen_tps": 25.4,
+      "secs": 144.5,
+      "prod_busy": null
+    },
+    {
+      "task": "lru_cache",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 554,
+      "gen_tps": 32.7,
+      "secs": 26.5,
+      "prod_busy": null
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 676,
+      "gen_tps": 27.4,
+      "secs": 29.2,
+      "prod_busy": null
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 812,
+      "gen_tps": 26.4,
+      "secs": 34.7,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 1,
+      "pass": false,
+      "why": "no code block",
+      "out_n": 16384,
+      "gen_tps": 17.9,
+      "secs": 916.5,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 2,
+      "pass": false,
+      "why": "no code block",
+      "out_n": 13731,
+      "gen_tps": 38.8,
+      "secs": 356.6,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 2390,
+      "gen_tps": 19.5,
+      "secs": 129.2,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 2521,
+      "gen_tps": 21.9,
+      "secs": 121.6,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 1,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError",
+      "out_n": 16384,
+      "gen_tps": 18.0,
+      "secs": 918.1,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 2,
+      "pass": false,
+      "why": "no code block",
+      "out_n": 16384,
+      "gen_tps": 17.2,
+      "secs": 954.8,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 1,
+      "pass": false,
+      "why": "^ SyntaxError: ':' expected after dictionary key",
+      "out_n": 16384,
+      "gen_tps": 19.4,
+      "secs": 852.1,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 8780,
+      "gen_tps": 21.7,
+      "secs": 411.6,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 3777,
+      "gen_tps": 20.3,
+      "secs": 193.3,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 705,
+      "gen_tps": 24.3,
+      "secs": 33.3,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 8527,
+      "gen_tps": 19.2,
+      "secs": 451.5,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 5534,
+      "gen_tps": 19.1,
+      "secs": 296.9,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 15721,
+      "gen_tps": 21.5,
+      "secs": 739.5,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 12434,
+      "gen_tps": 20.5,
+      "secs": 614.0,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 3893,
+      "gen_tps": 17.6,
+      "secs": 227.9,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 15794,
+      "gen_tps": 20.6,
+      "secs": 773.4,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 3069,
+      "gen_tps": 23.6,
+      "secs": 136.4,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 7654,
+      "gen_tps": 18.2,
+      "secs": 427.7,
+      "prod_busy": null
+    }
+  ],
+  "quality_pass": "17/24",
+  "finished": "2026-11-08T23:35:08"
+}

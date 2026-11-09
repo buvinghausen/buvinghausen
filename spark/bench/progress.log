@@ -1,0 +1,145 @@
+18:22:40 PHASE 1 START
+18:22:40 [q4-dflash] starting server: Qwen3.8-27B-UD-Q4_K_M.gguf draft=True ctx=98304
+18:22:50 [q4-dflash] ready in 10s
+18:23:00 [q4-dflash] prefill 4096 -> 885.8 tok/s (prod_busy=False)
+18:23:41 [q4-dflash] prefill 16384 -> 836.4 tok/s (prod_busy=False)
+18:27:05 [q4-dflash] prefill 65536 -> 652.8 tok/s (prod_busy=False)
+18:27:30 [q4-dflash] gen code#1 -> 43.2 tok/s, n=1024, accept=0.558 (prod_busy=False)
+18:27:55 [q4-dflash] gen code#2 -> 42.9 tok/s, n=1024, accept=0.594 (prod_busy=False)
+18:28:39 [q4-dflash] gen prose#1 -> 23.2 tok/s, n=1024, accept=0.254 (prod_busy=False)
+18:29:24 [q4-dflash] gen prose#2 -> 23.1 tok/s, n=1024, accept=0.251 (prod_busy=False)
+18:39:43 [q4-dflash] quality iso_duration#1 -> PASS (16384 tok, 619s)
+18:48:47 [q4-dflash] quality iso_duration#2 -> PASS (15804 tok, 544s)
+18:51:13 [q4-dflash] quality lru_cache#1 -> PASS (4158 tok, 146s)
+18:51:54 [q4-dflash] quality lru_cache#2 -> PASS (1325 tok, 41s)
+18:52:23 [q4-dflash] quality merge_intervals#1 -> PASS (821 tok, 29s)
+18:52:49 [q4-dflash] quality merge_intervals#2 -> PASS (637 tok, 26s)
+19:03:32 [q4-dflash] quality calc#1 -> FAIL: ^^^^^^ NameError: name 'pytest' is not defined. Did you mean: 'bytes'? (16384 tok, 642s)
+19:13:49 [q4-dflash] quality calc#2 -> FAIL: no code block (16384 tok, 618s)
+19:14:49 [q4-dflash] quality toposort#1 -> PASS (1654 tok, 59s)
+19:16:01 [q4-dflash] quality toposort#2 -> PASS (1944 tok, 72s)
+19:24:32 [q4-dflash] quality csv_line#1 -> PASS (12620 tok, 512s)
+19:36:00 [q4-dflash] quality csv_line#2 -> PASS (16384 tok, 688s)
+19:37:27 PHASE 2 WAITING (phase 1 done + port 9931 down)
+19:38:48 PHASE 2 START
+19:38:48 [flashnext-q3] starting server: Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf draft=False ctx=98304
+19:39:34 [q4-dflash] quality roman#1 -> PASS (6065 tok, 213s)
+19:40:14 [flashnext-q3] ready in 85.7s
+19:46:24 PHASE 2 WAITING (waits for phase-1 completion + port 9931 down)
+19:49:40 [q4-dflash] quality roman#2 -> FAIL: ^ NameError: name 'n' is not defined (16384 tok, 607s)
+19:50:47 [q4-dflash] quality dijkstra#1 -> PASS (2051 tok, 67s)
+19:51:29 [q4-dflash] quality dijkstra#2 -> PASS (1233 tok, 42s)
+19:56:03 [q4-dflash] quality rle#1 -> PASS (7497 tok, 274s)
+20:02:26 [q4-dflash] quality rle#2 -> PASS (10214 tok, 383s)
+20:09:36 [q4-dflash] quality semver#1 -> PASS (16384 tok, 430s)
+20:16:06 [q4-dflash] quality semver#2 -> PASS (12267 tok, 390s)
+20:18:21 [q4-dflash] quality palindrome#1 -> PASS (4061 tok, 135s)
+20:23:38 [q4-dflash] quality palindrome#2 -> PASS (9156 tok, 316s)
+20:25:25 [q4-dflash] quality justify#1 -> PASS (2992 tok, 107s)
+20:26:44 [q4-dflash] quality justify#2 -> PASS (2391 tok, 79s)
+20:26:44 [q4-dflash] QUALITY 21/24
+20:26:44 [q4-dflash] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\q4-dflash.json
+20:26:44 [q4-nodraft] starting server: Qwen3.8-27B-UD-Q4_K_M.gguf draft=False ctx=98304
+20:26:54 [q4-nodraft] ready in 10s
+20:27:08 [q4-nodraft] prefill 4096 -> 889.5 tok/s (prod_busy=)
+20:27:53 [q4-nodraft] prefill 16384 -> 823 tok/s (prod_busy=)
+20:31:09 [q4-nodraft] prefill 65536 -> 692.7 tok/s (prod_busy=)
+20:32:19 [q4-nodraft] gen code#1 -> 15.5 tok/s, n=1024, accept= (prod_busy=)
+20:33:27 [q4-nodraft] gen code#2 -> 15.6 tok/s, n=1024, accept= (prod_busy=)
+20:34:35 [q4-nodraft] gen prose#1 -> 15.5 tok/s, n=1024, accept= (prod_busy=)
+20:35:43 [q4-nodraft] gen prose#2 -> 15.5 tok/s, n=1024, accept= (prod_busy=)
+20:35:43 [q4-nodraft] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\q4-nodraft.json
+20:35:43 [q8-dflash] starting server: Qwen3.8-27B-Q8_0.gguf draft=True ctx=98304
+20:35:58 [q8-dflash] ready in 15s
+20:36:12 [q8-dflash] prefill 4096 -> 867.3 tok/s (prod_busy=)
+20:36:59 [q8-dflash] prefill 16384 -> 837.3 tok/s (prod_busy=)
+20:40:33 [q8-dflash] prefill 65536 -> 637.2 tok/s (prod_busy=)
+20:41:07 [q8-dflash] gen code#1 -> 33.3 tok/s, n=1024, accept=0.585 (prod_busy=)
+20:41:42 [q8-dflash] gen code#2 -> 31.4 tok/s, n=1024, accept=0.558 (prod_busy=)
+20:42:42 [q8-dflash] gen prose#1 -> 17.9 tok/s, n=1024, accept=0.267 (prod_busy=)
+20:43:48 [q8-dflash] gen prose#2 -> 16 tok/s, n=1024, accept=0.225 (prod_busy=)
+20:54:03 [q8-dflash] quality iso_duration#1 -> FAIL: ~~~~~^^^^^^^ ValueError: could not convert string to float: '1H' (11692 tok, 615s)
+21:08:39 [q8-dflash] quality iso_duration#2 -> FAIL: ^^^^^^^^^^^^^^ NameError: name 'parse_duration' is not defined (16384 tok, 876s)
+21:11:04 [q8-dflash] quality lru_cache#1 -> PASS (3494 tok, 145s)
+21:11:30 [q8-dflash] quality lru_cache#2 -> PASS (554 tok, 27s)
+21:11:59 [q8-dflash] quality merge_intervals#1 -> PASS (676 tok, 29s)
+21:12:34 [q8-dflash] quality merge_intervals#2 -> PASS (812 tok, 35s)
+21:27:51 [q8-dflash] quality calc#1 -> FAIL: no code block (16384 tok, 916s)
+21:33:47 [q8-dflash] quality calc#2 -> FAIL: no code block (13731 tok, 357s)
+21:35:56 [q8-dflash] quality toposort#1 -> PASS (2390 tok, 129s)
+21:37:58 [q8-dflash] quality toposort#2 -> PASS (2521 tok, 122s)
+21:53:16 [q8-dflash] quality csv_line#1 -> FAIL: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError (16384 tok, 918s)
+22:09:11 [q8-dflash] quality csv_line#2 -> FAIL: no code block (16384 tok, 955s)
+22:23:23 [q8-dflash] quality roman#1 -> FAIL: ^ SyntaxError: ':' expected after dictionary key (16384 tok, 852s)
+22:30:15 [q8-dflash] quality roman#2 -> PASS (8780 tok, 412s)
+22:33:28 [q8-dflash] quality dijkstra#1 -> PASS (3777 tok, 193s)
+22:34:01 [q8-dflash] quality dijkstra#2 -> PASS (705 tok, 33s)
+22:41:33 [q8-dflash] quality rle#1 -> PASS (8527 tok, 451s)
+22:46:29 [q8-dflash] quality rle#2 -> PASS (5534 tok, 297s)
+22:58:49 [q8-dflash] quality semver#1 -> PASS (15721 tok, 740s)
+23:09:03 [q8-dflash] quality semver#2 -> PASS (12434 tok, 614s)
+23:12:51 [q8-dflash] quality palindrome#1 -> PASS (3893 tok, 228s)
+23:25:44 [q8-dflash] quality palindrome#2 -> PASS (15794 tok, 773s)
+23:28:01 [q8-dflash] quality justify#1 -> PASS (3069 tok, 136s)
+23:35:08 [q8-dflash] quality justify#2 -> PASS (7654 tok, 428s)
+23:35:08 [q8-dflash] QUALITY 17/24
+23:35:08 [q8-dflash] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\q8-dflash.json
+23:35:08 [q8-nodraft] starting server: Qwen3.8-27B-Q8_0.gguf draft=False ctx=98304
+23:35:23 [q8-nodraft] ready in 15s
+23:35:37 [q8-nodraft] prefill 4096 -> 890.4 tok/s (prod_busy=)
+23:36:20 [q8-nodraft] prefill 16384 -> 863.4 tok/s (prod_busy=)
+23:39:46 [q8-nodraft] prefill 65536 -> 660.2 tok/s (prod_busy=)
+23:41:40 [q8-nodraft] gen code#1 -> 9.2 tok/s, n=1024, accept= (prod_busy=)
+23:43:29 [q8-nodraft] gen code#2 -> 9.6 tok/s, n=1024, accept= (prod_busy=)
+23:45:17 [q8-nodraft] gen prose#1 -> 9.7 tok/s, n=1024, accept= (prod_busy=)
+23:47:06 [q8-nodraft] gen prose#2 -> 9.6 tok/s, n=1024, accept= (prod_busy=)
+23:47:06 [q8-nodraft] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\q8-nodraft.json
+23:47:06 PHASE 1 DONE
+23:48:09 PHASE 2 START
+23:48:09 [flashnext-q3] starting server: Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf draft=False ctx=98304
+23:48:59 [flashnext-q3] ready in 50.3s
+23:49:22 [flashnext-q3] prefill 4096 -> 890.8 tok/s (prod_busy=)
+23:50:05 [flashnext-q3] prefill 16384 -> 887.9 tok/s (prod_busy=)
+23:52:55 [flashnext-q3] prefill 65536 -> 805 tok/s (prod_busy=)
+23:53:26 [flashnext-q3] gen code#1 -> 36.3 tok/s, n=1024, accept= (prod_busy=)
+23:53:56 [flashnext-q3] gen code#2 -> 36.8 tok/s, n=1024, accept= (prod_busy=)
+23:54:27 [flashnext-q3] gen prose#1 -> 36 tok/s, n=1024, accept= (prod_busy=)
+23:54:58 [flashnext-q3] gen prose#2 -> 36.2 tok/s, n=1024, accept= (prod_busy=)
+00:00:00 [flashnext-q3] quality iso_duration#1 -> PASS (10561 tok, 302s)
+00:07:45 [flashnext-q3] quality iso_duration#2 -> FAIL: ^^^^^^^^^^^^^^^^^^^ NameError: name 'date_groups_present' is not defined (16384 tok, 465s)
+00:07:56 [flashnext-q3] quality lru_cache#1 -> PASS (305 tok, 11s)
+00:08:07 [flashnext-q3] quality lru_cache#2 -> PASS (323 tok, 11s)
+00:08:33 [flashnext-q3] quality merge_intervals#1 -> PASS (490 tok, 26s)
+00:08:59 [flashnext-q3] quality merge_intervals#2 -> PASS (726 tok, 26s)
+01:12:15 PHASE 2b START (quality resume, --no-mmap)
+01:12:15 [flashnext-q3-quality] starting server: Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf draft=False ctx=98304
+01:12:20 [flashnext-q3-quality] ERROR: server exited during load (code 1); see C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\logs\flashnext-q3-quality.log
+01:12:20 [flashnext-q3-quality] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\flashnext-q3-quality.json
+01:12:25 [flashnext-cap] parallel=2 ctx=262144 (128K/slot) -> FAILED (exit 1); GPU 2231 MiB, 98304 MiB; host RAM free 20.5 GB
+01:12:41 [flashnext-cap] parallel=2 ctx=131072 (64K/slot) -> FAILED (exit 1); GPU 2231 MiB, 98304 MiB; host RAM free 20.5 GB
+01:12:51 PHASE 2b DONE
+01:13:51 PHASE 2b START (quality resume, --load-mode none)
+01:13:52 [flashnext-q3-quality] starting server: Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf draft=False ctx=98304
+01:14:42 [flashnext-q3-quality] ready in 50.2s
+01:22:55 [flashnext-q3-quality] quality calc#1 -> FAIL: ^ SyntaxError: invalid syntax (16384 tok, 493s)
+01:31:04 [flashnext-q3-quality] quality calc#2 -> FAIL: ^ SyntaxError: unterminated string literal (detected at line 4) (16384 tok, 489s)
+01:31:50 [flashnext-q3-quality] quality toposort#1 -> PASS (1443 tok, 45s)
+01:34:21 [flashnext-q3-quality] quality toposort#2 -> PASS (5105 tok, 151s)
+01:41:57 [flashnext-q3-quality] quality csv_line#1 -> FAIL: ^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError (15962 tok, 456s)
+01:46:18 [flashnext-q3-quality] quality csv_line#2 -> PASS (9094 tok, 261s)
+01:52:16 [flashnext-q3-quality] quality roman#1 -> PASS (12476 tok, 358s)
+01:57:21 [flashnext-q3-quality] quality roman#2 -> PASS (10658 tok, 305s)
+01:58:53 [flashnext-q3-quality] quality dijkstra#1 -> PASS (3020 tok, 92s)
+01:59:32 [flashnext-q3-quality] quality dijkstra#2 -> PASS (1259 tok, 39s)
+02:02:23 [flashnext-q3-quality] quality rle#1 -> PASS (5873 tok, 171s)
+02:05:27 [flashnext-q3-quality] quality rle#2 -> PASS (6352 tok, 184s)
+02:13:16 [flashnext-q3-quality] quality semver#1 -> FAIL: ^^^^^^^^^^^^^^ NameError: name 'compare_semver' is not defined (16384 tok, 469s)
+02:20:34 [flashnext-q3-quality] quality semver#2 -> PASS (15427 tok, 438s)
+02:21:08 [flashnext-q3-quality] quality palindrome#1 -> PASS (1052 tok, 34s)
+02:21:47 [flashnext-q3-quality] quality palindrome#2 -> PASS (1216 tok, 39s)
+02:22:19 [flashnext-q3-quality] quality justify#1 -> PASS (1019 tok, 32s)
+02:24:40 [flashnext-q3-quality] quality justify#2 -> PASS (4772 tok, 141s)
+02:24:40 [flashnext-q3-quality] QUALITY 14/18
+02:24:40 [flashnext-q3-quality] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\flashnext-q3-quality.json
+02:25:31 [flashnext-cap] parallel=2 ctx=262144 (128K/slot) -> LOADED; GPU 68176 MiB, 98304 MiB; host RAM free 0.5 GB
+02:25:41 PHASE 2b DONE
