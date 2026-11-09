@@ -78,4 +78,4 @@ The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; t
 - WSL `FedoraLinux-45`, with a clean snapshot at `D:\wsl\fedora45-clean.tar`.
 - wslc 3.0.3 (WSL 3.0.3) for dev containers; VS Code `dev.containers.dockerPath` = `wslc`.
 - Docker Desktop 29.9.3 per-user install, started by hand only, used for Testcontainers.
-- The SkunkWerkx dev container design is in `SkunkWerkx/HyperForge` `DEVCONTAINER.md`.
+- The SkunkWerkx dev container design is in `SkunkWerkx/HyperForge` `docs/devcontainer.md`.
