@@ -4,6 +4,8 @@
 #   desk         U5226KW display present                         Win<->Ctrl ON   never (UltraSharp must not sleep)
 #   desk-dark    U5226KW display gone, its TB hub still present  Win<->Ctrl ON   never; OLED shows the black Blank screensaver at once, 1 min idle backstop
 #   road         no U5226KW display, no hub                      OFF             never (unchanged from before)
+#   + remote     the session is RDP (Chromebook -> Spark -> work): swap forced OFF whatever the state; display handling unchanged.
+#                The Chromebook already sends Windows keys; the swap would turn Ctrl into Win and mstsc forwards that on to the work machine.
 #
 # Keyboard: PowerToys Keyboard Manager reloads default.json on change; the swap undoes the Mac's Ctrl<->Cmd swap that DDPM forwards.
 # "desk-dark" keeps the lid open (cooling while serving the LLM) without the OLED taking over / burning in.
@@ -30,7 +32,7 @@ $none = @'
   "remapShortcutsToText": { "global": [], "appSpecific": [] }
 }
 '@
-Add-Type -Namespace KbmAuto -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint a, uint b, IntPtr c, uint d);'
+Add-Type -Namespace KbmAuto -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint a, uint b, IntPtr c, uint d); [DllImport("user32.dll")] public static extern int GetSystemMetrics(int i);'
 function Note($m) { "$(Get-Date -Format s) $m" | Add-Content $log }
 function Get-State {
   $display = $false
@@ -67,17 +69,21 @@ function Set-BlankSaver($on) {
   }
 }
 
-$last = $null
+function Test-Remote { [KbmAuto.Native]::GetSystemMetrics(0x1000) -ne 0 }   # SM_REMOTESESSION
+
+$last = $null; $lastRemote = $null
 while ($true) {
   $s = Get-State
-  if ($s -ne $last) {
+  $remote = Test-Remote
+  if ($s -ne $last -or $remote -ne $lastRemote) {
     switch ($s) {
       'desk'      { Set-Swap $true;  Set-DisplayTimeout 0; Set-BlankSaver $false }
       'desk-dark' { Set-Swap $true;  Set-DisplayTimeout 0; Start-Sleep 3; Set-BlankSaver $true }   # let Windows finish moving to the OLED first
       'road'      { Set-Swap $false; Set-DisplayTimeout 0; Set-BlankSaver $false }
     }
-    Note "state=$s"
-    $last = $s
+    if ($remote) { Set-Swap $false }
+    Note "state=$s remote=$remote"
+    $last = $s; $lastRemote = $remote
   }
   Start-Sleep 5
 }

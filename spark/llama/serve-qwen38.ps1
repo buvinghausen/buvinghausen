@@ -76,6 +76,40 @@ function Stop-Server($p) {
   if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; $p.WaitForExit(30000) | Out-Null }
 }
 
+# Modern Standby guard. On this machine display-off = Modern Standby, whose sleep phase parks the GPU and pauses
+# inference (seen 2026-11-08). While llama-server runs ON AC POWER, hold SystemRequired (blocks the low-power
+# sleep phase; the screen may still turn off) + ExecutionRequired (no throttling). On battery the request is
+# released so a closed lid in a bag still sleeps (Microsoft: never hold SystemRequired indefinitely on battery).
+# Visible in an elevated `powercfg /requests` under SYSTEM / EXECUTION with the reason string below.
+Add-Type -Namespace SparkPower -Name Native -MemberDefinition @'
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+public struct REASON_CONTEXT { public uint Version; public uint Flags; [MarshalAs(UnmanagedType.LPWStr)] public string SimpleReasonString; }
+[StructLayout(LayoutKind.Sequential)]
+public struct SYSTEM_POWER_STATUS { public byte ACLineStatus, BatteryFlag, BatteryLifePercent, SystemStatusFlag; public int BatteryLifeTime, BatteryFullLifeTime; }
+[DllImport("kernel32.dll", SetLastError = true)] public static extern IntPtr PowerCreateRequest(ref REASON_CONTEXT ctx);
+[DllImport("kernel32.dll", SetLastError = true)] public static extern bool PowerSetRequest(IntPtr h, int type);
+[DllImport("kernel32.dll", SetLastError = true)] public static extern bool PowerClearRequest(IntPtr h, int type);
+[DllImport("kernel32.dll")] public static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS s);
+'@
+$ctxReason = New-Object SparkPower.Native+REASON_CONTEXT
+$ctxReason.Version = 0; $ctxReason.Flags = 1   # POWER_REQUEST_CONTEXT_VERSION, POWER_REQUEST_CONTEXT_SIMPLE_STRING
+$ctxReason.SimpleReasonString = 'llama-server is serving inference (no Modern Standby while on AC)'
+$script:powerReq = [SparkPower.Native]::PowerCreateRequest([ref]$ctxReason)
+$script:powerHeld = $false
+function On-AC { $ps = New-Object SparkPower.Native+SYSTEM_POWER_STATUS; [void][SparkPower.Native]::GetSystemPowerStatus([ref]$ps); return ($ps.ACLineStatus -eq 1) }
+function Update-PowerHold($serving) {
+  $want = $serving -and (On-AC)
+  if ($want -eq $script:powerHeld) { return }
+  if ($want) {
+    $ok = [SparkPower.Native]::PowerSetRequest($script:powerReq, 1) -and [SparkPower.Native]::PowerSetRequest($script:powerReq, 3)   # SystemRequired, ExecutionRequired
+    Note "power request HELD (system+execution required), ok=$ok"
+  } else {
+    [void][SparkPower.Native]::PowerClearRequest($script:powerReq, 1); [void][SparkPower.Native]::PowerClearRequest($script:powerReq, 3)
+    Note "power request RELEASED (serving=$serving, onAC=$(On-AC))"
+  }
+  $script:powerHeld = $want
+}
+
 Note "supervisor start (pid $PID)"
 $srv = Get-ServerProc
 if ($srv) { Note "adopted running server pid $($srv.Id)"; Status "running (adopted)" $srv.Id "" }
@@ -90,6 +124,7 @@ while ($true) {
     if ($srv -and -not $srv.HasExited) { Note "stop flag present -> stopping pid $($srv.Id)"; Stop-Server $srv }
     $srv = $null; $fails = 0
     Status 'stopped (control\stop present)' '' ''
+    Update-PowerHold $false
     Start-Sleep 5; continue
   }
 
@@ -127,5 +162,6 @@ while ($true) {
   } elseif ($fails -gt 0 -and ((Get-Date) - $srv.StartTime).TotalMinutes -gt 10) {
     $fails = 0   # stable for 10 minutes: forget earlier crashes
   }
+  Update-PowerHold ([bool]($srv -and -not $srv.HasExited))
   Start-Sleep 5
 }

@@ -19,7 +19,7 @@ The scripts in this folder are the ones actually used on the box, collected 2026
   - `prod-restart` touches `control\restart`.
   - `prod-status` shows the status file, the flag and the 9931 listener.
 
-**State at 2026-11-09: STOPPED** (the stop flag has been set since the benchmarks). Cutover is just `prod-start.ps1`, which will also be the first live test of the supervisor's start path.
+**State: RUNNING since 2026-11-09 06:18.** `prod-start.ps1` worked first time, which was the first live test of the supervisor's start path: listening in 6 s, healthy in about 5 s more, 66–77 tok/s on a short code prompt with thinking off.
 
 ## Benchmarks (`bench\`, 2026-11-08 → 09)
 
@@ -42,7 +42,12 @@ Gotchas found: b12110 has no `--no-mmap`; use `--load-mode none`. Claude Code ba
 On this machine, **display off = Modern Standby** (Kernel-Power events 506/507), even with sleep set to never. The GPU and llama-server pause and the fans stop. Seen 2026-11-08 23:33 when SC_MONITORPOWER was used. So never power displays off while serving.
 - The desk automation uses a black screensaver instead (an OLED shows black with its pixels off).
 - The screensaver doesn't run over the **lock screen**, which governs itself with its own display timeout (set to never). Locking while docked-dark therefore leaves the lock screen on the OLED.
-- **Open:** have the supervisor hold a `PowerSetRequest` (Execution/SystemRequired) while llama-server runs. Then test: production running, lock the screen, let the display turn off, send a request from pebble, and check for Kernel-Power 506. That would also cover lid-closed and the 3-minute display timeout on battery.
+- **Guard, installed 2026-11-09** (`llama\admin-powerguard.ps1`):
+  - While llama-server runs **on AC**, the supervisor holds `PowerSetRequest` SystemRequired + ExecutionRequired.
+  - The reason string is "llama-server is serving inference…". It shows in an elevated `powercfg /requests` (`llama\admin-requests.ps1`, read-only); confirmed there, owned by the supervisor's `powershell.exe`. `supervisor.log` records each hold and release.
+  - On battery the request is released, so a closed lid in a bag still sleeps.
+  - The same script set the lock-screen display timeout `VIDEOCONLOCK` to 60 s on AC. The value lives in the registry under the Balanced scheme; `powercfg /q` hides it.
+- **Open: the screen didn't turn off at the lock screen.** Locked with production running, the OLED never went dark, and there were no Kernel-Power events. `powercfg /requests` shows no DISPLAY request. Main suspect: DDPM's network KVM feeding input to the Surface while the Mac is in use, which resets the 60 s idle timer. Next step: lock, keep using the Mac, and log `GetLastInputInfo` idle time (the scratch logger for this was `idlewatch.ps1`; re-create it when needed). Once the screen does go off, run `llama\locktest.ps1` from pebble over SSH. Pass = normal tok/s and no Kernel-Power 506.
 
 ## Desk automation (`desk\kbm-autoswitch.ps1`)
 
@@ -56,6 +61,10 @@ A per-user logon task `KbmAutoSwitch` (hidden PowerShell 5.1 window, restart on 
 
 The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; the script writes it without a BOM. The AC display timeout is always 0. On the U5226KW in PBP, only one input's audio plays; it's pinned to Thunderbolt (the Surface).
 
+**RDP override (2026-11-09):** when the session is remote (`GetSystemMetrics(SM_REMOTESESSION)`), the swap is forced OFF whatever the state, and it comes back on when you return to the console. The broken path was Chromebook → RDP → Spark → RDP → work: the Chromebook already sends Windows keys, the swap turned Ctrl into Win, and mstsc forwarded that on to the work machine. The log line is now `state=<s> remote=<bool>`. The Mac keeps its Ctrl↔Cmd swap; moving the receiver to the Surface was rejected because DDPM on macOS is a user-space app with no virtual HID device (`hidutil list`), so per-device modifier remaps and Karabiner wouldn't apply to forwarded input.
+
+Watch item: on 2026-11-09 the task was found stopped since 03:08, last result `0xC000013A` (Ctrl-C/close exit), so "restart on failure" didn't bring it back. Cause not known yet. Check `Get-ScheduledTaskInfo KbmAutoSwitch` if the keys look wrong.
+
 ## SSH ("diamond" topology, `ssh\`)
 
 - In-box OpenSSH Server, keys only, `AllowUsers buvy`, default shell Windows PowerShell, port 22 from the tailnet only (100.64.0.0/10, fd7a:115c:a1e0::/48).
@@ -65,7 +74,7 @@ The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; t
   - skywalker (Chromebook) is a client only and never a destination.
   - surfacespark ↔ pebble both ways.
   - xps-15-9510 is a destination only, for local x64 builds; it accepts skywalker, surfacespark and pebble.
-  - work is the employer machine: RDP only, no SSH, and tagged `tag:sink` in Tailscale, so it can't start any outbound tailnet connection.
+  - The work machine: RDP only, no SSH, and tagged `tag:sink` in Tailscale, so it can't start any outbound tailnet connection.
 - `ssh\make-sshd-bundle.ps1 -Target <host> -Keys a,b,c` generates a self-contained elevated setup script for another Windows machine (installs the capability via dism).
 - Gotchas: `Add-WindowsCapability` fails in pwsh 7 with "Class not registered" (use 5.1 or dism). sshd takes the first value it sees for each setting, so managed settings are prepended.
 - Still open: the ssh-agent on the Spark (the key has a passphrase).
