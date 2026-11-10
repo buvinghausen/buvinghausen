@@ -51,8 +51,8 @@ curl https://wasmtime.dev/install.sh -sSf | bash
 export WASMTIME_HOME="${WASMTIME_HOME:-$HOME/.wasmtime}"
 export PATH="$WASMTIME_HOME/bin:$PATH"
 
-log ".NET wasm-tools workload"
-dotnet workload install wasm-tools
+log ".NET wasm-tools workloads (wasm-tools = net11.0, wasm-tools-net10 = net10.0, both from the 11.0 SDK band)"
+dotnet workload install wasm-tools wasm-tools-net10
 
 # Real, verified bug (confirmed on both linux-arm64 and linux-x64, and independently in an
 # unrelated project — PyO3/maturin#2549): rustc >= 1.87 emits WASM target-feature metadata
