@@ -29,6 +29,11 @@ try {
   Set-Dword $paint 'DisableGenerativeFill' 1
   Set-Dword $paint 'DisableImageCreator'   1
 
+  # 1b. Notepad's Copilot features (Rewrite/Summarize/Write). Machine-wide; Notepad 11.2503.16+ ("Manage AI features
+  #     in Notepad", Microsoft Learn, checked 2026-11-11).
+  'Notepad AI policy (HKLM):'
+  Set-Dword 'HKLM:\SOFTWARE\Policies\WindowsNotepad' 'DisableAIFeatures' 1
+
   # 2. Windows AI (user). TurnOffWindowsCopilot is deprecated and doesn't touch the new app; kept as a backstop.
   'Windows AI policies (HKCU):'
   Set-Dword 'HKCU:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot' 1

@@ -75,6 +75,22 @@ try {
                  'SubscribedContent-338393Enabled','SubscribedContent-353694Enabled','SubscribedContent-353696Enabled',
                  'SubscribedContent-353698Enabled') { Set-Dword $cdm $v 0 }
 
+  # 3b. Delivery Optimization: 99 = Simple download mode, no peering and no DO cloud service. Updates still come
+  #     straight from Microsoft over HTTP; nothing is uploaded to other PCs. (0 = no peering but still talks to the
+  #     DO cloud.) DoSvc itself stays; Windows Update and the Store download through it.
+  'Delivery Optimization (HKLM):'
+  Set-Dword 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode' 99
+
+  # 3c. Edge runs only when clicked: no Startup Boost (pre-launch at logon), no background mode after closing.
+  #     Edge Update's tasks/services are left alone (security patches); WebView2 is separate and apps need it.
+  'Edge on demand only (HKLM):'
+  $edge = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
+  Set-Dword $edge 'StartupBoostEnabled'   0
+  Set-Dword $edge 'BackgroundModeEnabled' 0
+  foreach ($n in @((Get-Item 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run').Property | Where-Object { $_ -like 'MicrosoftEdgeAutoLaunch*' })) {
+    Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $n; "  removed Run\$n"
+  }
+
   # 4. Services: the uploaders.
   'Services:'
   foreach ($s in 'DiagTrack', 'dmwappushservice') {
