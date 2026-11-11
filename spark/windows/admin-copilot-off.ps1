@@ -54,6 +54,12 @@ try {
     "  $block\$next = $copilotExt"
   }
 
+  # 3b. OneDrive: removed 2026-11-10, but OneDriveSetup.exe still ships in System32 and can come back with a
+  #     feature update or a new profile. "Prevent the usage of OneDrive for file storage" (Policy CSP -
+  #     System/DisableOneDriveFileSync; Pro supported) stops it syncing or appearing in Explorer/file pickers.
+  'OneDrive policy (HKLM):'
+  Set-Dword 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive' 'DisableFileSyncNGSC' 1
+
   # 4. Copilot app: uninstall, and deprovision so feature updates / new profiles don't bring it back.
   #    (RemoveMicrosoftCopilotApp policy is Enterprise/Education only - not this Pro box.)
   'Copilot app packages:'

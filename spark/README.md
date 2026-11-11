@@ -81,6 +81,13 @@ The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; t
 
 ## Dev environment
 
+- **Local account only. No Microsoft account has ever signed in to this box, and none should.** How `buvy` was created during setup (OOBE, 26H1 build 28000):
+  1. Connect to the network as normal and continue until the screen asking you to sign in with or create a Microsoft account.
+  2. Press Shift+F10 to open a command prompt.
+  3. Run `start ms-cxh:localonly`. It opens a local-account dialog (name, password, security questions).
+
+  Microsoft keeps closing these routes (`oobe\bypassnro` was removed in 2025), so check this one still works before the next reinstall. Checked 2026-11-10: `Get-LocalUser buvy` shows `PrincipalSource Local`, and no identities are stored under `HKCU:\Software\Microsoft\IdentityCRL`.
+- **The browser is Brave.** Its profile and PWAs, including the Teams PWA needed for work, are never part of a cleanup. Edge stays installed only because Windows needs it; its Copilot policies are in the Windows Security section.
 - D: = a 500 GB ReFS Dev Drive (VHDX at `C:\DevDrive`).
 - Repos in `D:\src\<org>\<repo>`.
 - `gh` is logged in, with `gh auth setup-git`.
@@ -124,7 +131,12 @@ Both scripts are safe to re-run and are elevated like the others; each writes a 
   - `TurnOffWindowsCopilot=1` (HKCU). Deprecated, and it doesn't affect the new app; kept as a backstop.
   - Edge: `HubsSidebarEnabled=0`, `Microsoft365CopilotChatIconEnabled=0` and `EdgeEntraCopilotPageContext=0`. These don't apply to a profile signed in with a personal Microsoft account. What does work there is `ExtensionInstallBlocklist`, which blocks the Copilot extension `ofefcgjbeghpigppfmkologfjadafddi` machine-wide. Check `edge://policy`.
 - **By hand, no policy available:**
-  - Microsoft 365 apps on a personal subscription: File → Options → Copilot → clear **Enable Copilot**, separately in Word, Excel, PowerPoint and OneNote, and in Outlook under Editor Options.
+  - **Office: removed 2026-11-10.** No Microsoft account sign-in anywhere on this box, and Microsoft 365 requires one.
+    - Removed: the Microsoft 365 Click-to-Run apps, `%LOCALAPPDATA%\Microsoft\Office` (671 MB), `HKCU\Software\Microsoft\Office\16.0`, the new Outlook (`Microsoft.OutlookForWindows`, uninstalled and removed from the Windows image with `dism.exe`), the leftover OneDrive folders, and a broken `Run\Teams` entry for the native Teams app.
+    - Re-scanned clean the same day: no Office/OneDrive folders, Click-to-Run registration, services, scheduled tasks or app packages. The only uninstall entry left is the Teams PWA, which lives in Brave and stays.
+    - If Office is ever needed again: a retail Office 2024 key still has to be redeemed through a Microsoft account, which rules it out. **Office LTSC 2024** is activated by key with no account at any point, and it has no Copilot. It's licensed to organisations, but a CSP reseller can sell single perpetual licences to a small business. Otherwise, use Office on the Mac, or LibreOffice/ONLYOFFICE.
+    - Windows activation (a digital licence tied to the hardware), winget including its `msstore` source, and Edge all work without signing in.
+    - `OneDriveSetup.exe` still ships in `System32` and could bring OneDrive back after a feature update or for a new profile. `admin-copilot-off.ps1` sets `DisableFileSyncNGSC=1` ("Prevent the usage of OneDrive for file storage"), which keeps any OneDrive that comes back from syncing or appearing in Explorer and file pickers. This will also block Office's OneDrive integration once Office is back; that's intended.
   - The Copilot key: Settings → Personalization → Text input.
   - Notepad: turn off AI features in its own Settings.
 - **Dev tools:**
