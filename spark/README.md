@@ -76,7 +76,7 @@ The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; t
   - xps-15-9510 is a destination only, for local x64 builds; it accepts skywalker, surfacespark and pebble.
   - The work machine: RDP only, no SSH, and tagged `tag:sink` in Tailscale, so it can't start any outbound tailnet connection.
 - `ssh\make-sshd-bundle.ps1 -Target <host> -Keys a,b,c` generates a self-contained elevated setup script for another Windows machine (installs the capability via dism).
-- Gotchas: `Add-WindowsCapability` fails in pwsh 7 with "Class not registered" (use 5.1 or dism). sshd takes the first value it sees for each setting, so managed settings are prepended.
+- Gotchas: `Add-WindowsCapability` fails in pwsh 7 with "Class not registered" (use 5.1 or dism). The other DISM-module cmdlets (`Get-WindowsOptionalFeature`, `Get-AppxProvisionedPackage`, …) are worse: they hit the same `0x80040154` and keep retrying for minutes before failing with the same error (see Windows Security below). sshd takes the first value it sees for each setting, so managed settings are prepended.
 - Still open: the ssh-agent on the Spark (the key has a passphrase).
 
 ## Dev environment
@@ -87,7 +87,49 @@ The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; t
 - WSL `FedoraLinux-45`, with a clean snapshot at `D:\wsl\fedora45-clean.tar`.
 - wslc 3.0.5 (WSL 3.0.5) for dev containers; VS Code `dev.containers.dockerPath` = `wslc`.
 - Docker Desktop 29.9.3 per-user install, started by hand only, used for Testcontainers.
+- NuGet, entirely on the Dev Drive, through machine-wide environment variables. These are the only setting that covers all four of NuGet's folders, and they match how HyperForge's CI steers `NUGET_PACKAGES`:
+  - `NUGET_PACKAGES=D:\packages\nuget\packages`
+  - `NUGET_HTTP_CACHE_PATH=D:\packages\nuget\http-cache`
+  - `NUGET_SCRATCH=D:\packages\nuget\scratch`
+  - `NUGET_PLUGINS_CACHE_PATH=D:\packages\nuget\plugins-cache`
+
+  Check with `dotnet nuget locals all --list`. Known gap: `dotnet tool` installs ignore the packages path ([dotnet/sdk#15306](https://github.com/dotnet/sdk/issues/15306)).
+- Rust, native `aarch64-pc-windows-msvc`, on the Dev Drive. Machine-wide `RUSTUP_HOME=D:\packages\rustup` and `CARGO_HOME=D:\packages\cargo`, with `D:\packages\cargo\bin` on the machine PATH. The user-level copies that rustup-init created were removed. When editing the machine PATH, go through the registry with `ExpandString`; `[Environment]::SetEnvironmentVariable` would flatten the `%SystemRoot%` entries.
+  - Installed with the arm64 `rustup-init.exe` from static.rust-lang.org (checked against its sha256), not winget.
+  - Matches the container's `20-rust.sh`: stable, minimal profile, plus clippy, rustfmt, llvm-tools, rust-src and rust-analyzer. Targets: `x86_64-pc-windows-msvc`, `wasm32-wasip1`, `wasm32-unknown-unknown` and `thumbv7em-none-eabi`.
+  - The MSRV and wasm2go toolchains and the container's dev tools stay in the container.
+  - For Windows builds of repos the container also builds, set `CARGO_TARGET_DIR` outside the repo so Windows and Linux artifacts don't share `target/`.
 - The SkunkWerkx dev container design is in `SkunkWerkx/HyperForge` `docs/devcontainer.md`.
+
+## Windows Security and Copilot (`windows\`)
+
+Both scripts are safe to re-run and are elevated like the others; each writes a `.log` beside itself.
+
+**On this box, DISM PowerShell cmdlets hang under pwsh 7.** Examples are `Get-WindowsOptionalFeature`, `Get-AppxProvisionedPackage` and `Add-WindowsCapability`. Their DismHost fails with `0x80040154` (class not registered), and `C:\Windows\Logs\DISM\dism.log` then logs "Retrying..." over and over; there is no error and no timeout. Seen 2026-11-10. Use `dism.exe` or Windows PowerShell 5.1 instead. `admin-copilot-off.ps1` calls `dism.exe` directly, with a 180-second timeout.
+
+- **Defender exclusions** (`windows\admin-defender-exclusions.ps1`):
+  - Paths: `D:\src`, `D:\packages` and `C:\Program Files\dotnet`.
+  - Processes: `dotnet.exe`, `MSBuild.exe`, `devenv.exe` and `VBCSCompiler.exe`.
+  - D: is a Dev Drive, so Defender already scans it in performance mode (in the background). These exclusions go further and skip scanning entirely for trusted dev content, which stops the alerts on unsigned build output.
+  - The first manual pass (2026-11-10) excluded `%USERPROFILE%\.nuget\packages`. NuGet doesn't use that folder on this box, so the script removes that exclusion.
+- **Smart App Control: off, by hand.** Windows Security → App & browser control. It isn't scriptable, and it flags almost every unsigned build output (for example the net472 test `.exe`s).
+- **Copilot** (`windows\admin-copilot-off.ps1`). Run it from the buvy account, because its HKCU values go to whichever user elevates. Reboot afterwards. Policy names were checked against Microsoft Learn on 2026-11-10.
+  - The Copilot app is uninstalled and deprovisioned. The `RemoveMicrosoftCopilotApp` policy is Enterprise/Education only, so it doesn't apply to this Pro machine.
+  - WindowsAI policies:
+    - `AllowRecallEnablement=0` (removes Recall; needs the reboot)
+    - `DisableAIDataAnalysis=1`
+    - `DisableClickToDo=1`
+    - `DisableSettingsAgent=1` (Enterprise only; harmless here)
+  - Paint: `DisableCocreator`, `DisableGenerativeFill` and `DisableImageCreator`.
+  - `TurnOffWindowsCopilot=1` (HKCU). Deprecated, and it doesn't affect the new app; kept as a backstop.
+  - Edge: `HubsSidebarEnabled=0`, `Microsoft365CopilotChatIconEnabled=0` and `EdgeEntraCopilotPageContext=0`. These don't apply to a profile signed in with a personal Microsoft account. What does work there is `ExtensionInstallBlocklist`, which blocks the Copilot extension `ofefcgjbeghpigppfmkologfjadafddi` machine-wide. Check `edge://policy`.
+- **By hand, no policy available:**
+  - Microsoft 365 apps on a personal subscription: File → Options → Copilot → clear **Enable Copilot**, separately in Word, Excel, PowerPoint and OneNote, and in Outlook under Editor Options.
+  - The Copilot key: Settings → Personalization → Text input.
+  - Notepad: turn off AI features in its own Settings.
+- **Dev tools:**
+  - Visual Studio: `vs\.vsconfig` already leaves out Copilot and IntelliCode.
+  - VS Code user settings: `"chat.disableAIFeatures": true`. It's a user setting, not scripted.
 
 ## Visual Studio 2026 Community (`vs\.vsconfig`)
 
@@ -108,5 +150,6 @@ winget install --id Microsoft.VisualStudio.Community --override "--passive --con
 - No VS MAUI workload and no VS Aspire tooling. Both require VS's TypeScript stack, and MAUI also brings a second JDK (`Component.OpenJDK`) and .NET 9 mobile build tools. Instead:
   - MAUI comes from the SDK. Run `dotnet workload install maui` from an elevated prompt after VS is installed, since it writes into `C:\Program Files\dotnet`. Then build from the CLI or VS Code. Android needs a JDK and the Android SDK. Java normally comes from SDKMAN with Temurin (current LTS), but SDKMAN has no Windows arm64 build, and Adoptium publishes Temurin for Windows aarch64 only up to 21 (25 is x64 only, checked 2026-11-10). So on this machine use Temurin 21 aarch64, installed from Adoptium's MSI and not from winget: `EclipseAdoptium.Temurin.21.JDK` has no arm64 installer and would install the emulated x64 JDK. Point builds at it with `-p:JavaSdkDirectory=...`. An x64 machine can use Temurin 25 once .NET for Android supports it; .NET 10 documents JDK 21. iOS and Mac Catalyst builds run on the Mac.
   - Aspire comes from its CLI and templates (NuGet). VS runs the AppHost as an ordinary project.
+- The .NET Compiler Platform SDK (`Microsoft.Component.CodeAnalysis.SDK`) is included mainly to stop the "install missing features" dialog. VS shows that dialog when a solution has a project with `<IsRoslynComponent>true</IsRoslynComponent>`, such as TaskTupleAwaiter's source generator. Builds don't need the component, but it does add the "Roslyn Component" debug target and the Syntax Visualizer. It's small and has no TypeScript or Node dependencies.
 - Container tools are included. They run containers through Docker Desktop or Podman, not wslc. Docker Desktop is started by hand, which matches VS's default "Start the container runtime if needed: Prompt me".
 - Check after installing: `"C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe" export --installPath "C:\Program Files\Microsoft Visual Studio\18\Community" --config out.vsconfig`. Then confirm that nothing with TypeScript or Node in its name came in as a dependency.

@@ -8,6 +8,7 @@
     "Microsoft.NetCore.Component.Web",
     "Microsoft.NetCore.Component.DevelopmentTools",
     "Microsoft.VisualStudio.Component.NuGet",
+    "Microsoft.Component.CodeAnalysis.SDK",
     "Component.Microsoft.VisualStudio.RazorExtension",
     "Microsoft.VisualStudio.Component.DockerTools",
     "Microsoft.VisualStudio.Component.FSharp",
