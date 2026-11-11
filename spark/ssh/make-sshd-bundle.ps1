@@ -7,9 +7,9 @@ $lines = foreach ($k in $Keys) {
   if ($l -notmatch '^ssh-ed25519 [A-Za-z0-9+/=]{60,} \S+$') { throw "bad key file $k.pub" }
   $l
 }
-$keyBlock = ($lines | ForEach-Object { "  '$_'" }) -join ",`r`n"
+$keyBlock = ($lines | ForEach-Object { "  '$_'" }) -join ",`n"
 $out = Join-Path $PSScriptRoot "setup-sshd-$Target.ps1"
-@"
+$script = @"
 # One-shot OpenSSH server setup for $Target. Run ONCE in an ELEVATED PowerShell on ${Target}:
 #   powershell -ExecutionPolicy Bypass -File .\setup-sshd-$Target.ps1
 # - installs the in-box OpenSSH Server (serviced by Windows Update), service Automatic + running
@@ -65,5 +65,6 @@ try {
   'DONE'
 } catch { "ERROR: `$_" }
 Stop-Transcript | Out-Null
-"@ | Set-Content $out -Encoding ascii
+"@
+[IO.File]::WriteAllText($out, ($script -replace "`r`n", "`n") + "`n", [Text.Encoding]::ASCII)   # LF, not Set-Content's CRLF
 "wrote $out"

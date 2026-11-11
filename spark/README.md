@@ -51,7 +51,7 @@ On this machine, **display off = Modern Standby** (Kernel-Power events 506/507),
 
 ## Desk automation (`desk\kbm-autoswitch.ps1`)
 
-A per-user logon task `KbmAutoSwitch` (hidden PowerShell 5.1 window, restart on failure) with three states:
+A per-user task `KbmAutoSwitch`, installed by `desk\install-kbm-autoswitch.ps1` (no admin), with three states. It runs headless (`conhost.exe --headless powershell.exe …`, so there is no console window), starts at logon, and has a 5-minute watchdog trigger (IgnoreNew, so that trigger only restarts it if it has exited):
 
 | State | Detected by | Keyboard | OLED |
 |---|---|---|---|
@@ -59,11 +59,11 @@ A per-user logon task `KbmAutoSwitch` (hidden PowerShell 5.1 window, restart on 
 | desk-dark | display gone, its Thunderbolt hub (`VID_413C&PID_5821`) still present | swap ON | black Blank screensaver, at once |
 | road | neither | swap OFF | normal |
 
-The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; the script writes it without a BOM. The AC display timeout is always 0. On the U5226KW in PBP, only one input's audio plays; it's pinned to Thunderbolt (the Surface).
+The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; the script writes it without a BOM. The AC display timeout is always 0. On the U5226KW in PBP, only one input's audio plays; it's pinned to Thunderbolt (the Surface). The monitor's audio switch setting must be **Manual**; on Auto it moved the audio to the Mac after a Thunderbolt reconnect (2026-11-09).
 
 **RDP override (2026-11-09):** when the session is remote (`GetSystemMetrics(SM_REMOTESESSION)`), the swap is forced OFF whatever the state, and it comes back on when you return to the console. The broken path was Chromebook → RDP → Spark → RDP → work: the Chromebook already sends Windows keys, the swap turned Ctrl into Win, and mstsc forwarded that on to the work machine. The log line is now `state=<s> remote=<bool>`. The Mac keeps its Ctrl↔Cmd swap; moving the receiver to the Surface was rejected because DDPM on macOS is a user-space app with no virtual HID device (`hidutil list`), so per-device modifier remaps and Karabiner wouldn't apply to forwarded input.
 
-Watch item: on 2026-11-09 the task was found stopped since 03:08, last result `0xC000013A` (Ctrl-C/close exit), so "restart on failure" didn't bring it back. Cause not known yet. Check `Get-ScheduledTaskInfo KbmAutoSwitch` if the keys look wrong.
+**Headless since 2026-11-09:** the windowed version died twice (03:08 and 17:29, right after a state change) with `0xC000013A`, meaning its hidden console was closed. "Restart on failure" only covers failed starts, so it stayed dead, and at the desk the Mac keys arrived unswapped. Cause not identified. The script now logs `start pid=` and `exit pid=`. If the log shows an exit and a restart from the watchdog, the problem still happens but recovers within 5 min.
 
 ## SSH ("diamond" topology, `ssh\`)
 
@@ -85,6 +85,28 @@ Watch item: on 2026-11-09 the task was found stopped since 03:08, last result `0
 - Repos in `D:\src\<org>\<repo>`.
 - `gh` is logged in, with `gh auth setup-git`.
 - WSL `FedoraLinux-45`, with a clean snapshot at `D:\wsl\fedora45-clean.tar`.
-- wslc 3.0.3 (WSL 3.0.3) for dev containers; VS Code `dev.containers.dockerPath` = `wslc`.
+- wslc 3.0.5 (WSL 3.0.5) for dev containers; VS Code `dev.containers.dockerPath` = `wslc`.
 - Docker Desktop 29.9.3 per-user install, started by hand only, used for Testcontainers.
 - The SkunkWerkx dev container design is in `SkunkWerkx/HyperForge` `docs/devcontainer.md`.
+
+## Visual Studio 2026 Community (`vs\.vsconfig`)
+
+The same file installs on arm64 and on an x64 backup machine. Both MSVC toolsets are listed, so each machine gets its native compiler plus a cross-compiler for the other architecture. Install from an elevated prompt, to the default location:
+
+```
+winget install --id Microsoft.VisualStudio.Community --override "--passive --config D:\src\buvinghausen\buvinghausen\spark\vs\.vsconfig"
+```
+
+- `--override` applies only to a first install. To change an existing install, use the Installer's **Import configuration** with this file.
+- `--config` installs only what is listed, plus each item's Required dependencies. Recommended items are not added.
+- Deliberately left out:
+  - the ASP.NET workload (it requires VS's JavaScript/TypeScript stack, so the ASP.NET pieces are listed individually instead);
+  - Node.js, Python and Git for Windows;
+  - the SQL tools;
+  - vcpkg, Copilot and IntelliCode;
+  - the .NET 8 and 9 runtimes, and every .NET Framework targeting pack. The SDK fetches reference assemblies for `net4x` builds itself.
+- No VS MAUI workload and no VS Aspire tooling. Both require VS's TypeScript stack, and MAUI also brings a second JDK (`Component.OpenJDK`) and .NET 9 mobile build tools. Instead:
+  - MAUI comes from the SDK. Run `dotnet workload install maui` from an elevated prompt after VS is installed, since it writes into `C:\Program Files\dotnet`. Then build from the CLI or VS Code. Android needs a JDK and the Android SDK. Java normally comes from SDKMAN with Temurin (current LTS), but SDKMAN has no Windows arm64 build, and Adoptium publishes Temurin for Windows aarch64 only up to 21 (25 is x64 only, checked 2026-11-10). So on this machine use Temurin 21 aarch64, installed from Adoptium's MSI and not from winget: `EclipseAdoptium.Temurin.21.JDK` has no arm64 installer and would install the emulated x64 JDK. Point builds at it with `-p:JavaSdkDirectory=...`. An x64 machine can use Temurin 25 once .NET for Android supports it; .NET 10 documents JDK 21. iOS and Mac Catalyst builds run on the Mac.
+  - Aspire comes from its CLI and templates (NuGet). VS runs the AppHost as an ordinary project.
+- Container tools are included. They run containers through Docker Desktop or Podman, not wslc. Docker Desktop is started by hand, which matches VS's default "Start the container runtime if needed: Prompt me".
+- Check after installing: `"C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe" export --installPath "C:\Program Files\Microsoft Visual Studio\18\Community" --config out.vsconfig`. Then confirm that nothing with TypeScript or Node in its name came in as a dependency.

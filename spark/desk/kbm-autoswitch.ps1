@@ -72,18 +72,21 @@ function Set-BlankSaver($on) {
 function Test-Remote { [KbmAuto.Native]::GetSystemMetrics(0x1000) -ne 0 }   # SM_REMOTESESSION
 
 $last = $null; $lastRemote = $null
-while ($true) {
-  $s = Get-State
-  $remote = Test-Remote
-  if ($s -ne $last -or $remote -ne $lastRemote) {
-    switch ($s) {
-      'desk'      { Set-Swap $true;  Set-DisplayTimeout 0; Set-BlankSaver $false }
-      'desk-dark' { Set-Swap $true;  Set-DisplayTimeout 0; Start-Sleep 3; Set-BlankSaver $true }   # let Windows finish moving to the OLED first
-      'road'      { Set-Swap $false; Set-DisplayTimeout 0; Set-BlankSaver $false }
+Note "start pid=$PID"
+try {
+  while ($true) {
+    $s = Get-State
+    $remote = Test-Remote
+    if ($s -ne $last -or $remote -ne $lastRemote) {
+      switch ($s) {
+        'desk'      { Set-Swap $true;  Set-DisplayTimeout 0; Set-BlankSaver $false }
+        'desk-dark' { Set-Swap $true;  Set-DisplayTimeout 0; Start-Sleep 3; Set-BlankSaver $true }   # let Windows finish moving to the OLED first
+        'road'      { Set-Swap $false; Set-DisplayTimeout 0; Set-BlankSaver $false }
+      }
+      if ($remote) { Set-Swap $false }
+      Note "state=$s remote=$remote"
+      $last = $s; $lastRemote = $remote
     }
-    if ($remote) { Set-Swap $false }
-    Note "state=$s remote=$remote"
-    $last = $s; $lastRemote = $remote
+    Start-Sleep 5
   }
-  Start-Sleep 5
-}
+} catch { Note "error: $_" } finally { Note "exit pid=$PID" }   # leaves a trace if the loop is ever stopped

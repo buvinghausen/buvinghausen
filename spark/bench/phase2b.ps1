@@ -2,7 +2,7 @@
 # Launched detached (not as a Claude Code background shell) so memory-pressure reaping can't kill it. Production must be stopped.
 $B  = $PSScriptRoot
 $fn = 'C:\llama.cpp\models\bench\Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf'
-function Log($m) { "$(Get-Date -f HH:mm:ss) $m" | Add-Content "$B\progress.log" }
+function Log($m) { [IO.File]::AppendAllText("$B\progress.log", "$(Get-Date -f HH:mm:ss) $m`n") }   # LF, not Add-Content's CRLF
 if (Get-NetTCPConnection -LocalPort 9931 -State Listen -EA SilentlyContinue) { Log 'PHASE 2b ABORT: production is running on 9931'; exit 1 }
 Log 'PHASE 2b START (quality resume, --load-mode none)'
 & "$B\bench.ps1" -Name 'flashnext-q3-quality' -Model $fn -Quality -QualityOnly -Ctx 98304 -Extra @('--load-mode', 'none') `

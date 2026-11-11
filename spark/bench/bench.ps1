@@ -18,7 +18,10 @@ $log   = Join-Path $B "logs\$Name.log"
 $resF  = Join-Path $B "results\$Name.json"
 $base  = "http://127.0.0.1:$Port"
 $prodK = (Get-Content C:\llama.cpp\api-key.txt -Raw).Trim()
-function Note($m) { "$(Get-Date -f HH:mm:ss) [$Name] $m" | Tee-Object -FilePath (Join-Path $B 'progress.log') -Append }
+# Files are written LF-only, UTF-8 without a BOM: Set-Content/Add-Content/Tee-Object end lines with CRLF on Windows.
+function Lf($s) { ($s -replace "`r`n", "`n").TrimEnd("`n") + "`n" }
+function Note($m) { $l = "$(Get-Date -f HH:mm:ss) [$Name] $m"; $l; [IO.File]::AppendAllText((Join-Path $B 'progress.log'), (Lf $l)) }
+function SaveRes { [IO.File]::WriteAllText($resF, (Lf ($Res | ConvertTo-Json -Depth 8))) }
 function ProdBusy { try { [bool]((Invoke-RestMethod http://127.0.0.1:9931/slots -Headers @{Authorization="Bearer $prodK"} -TimeoutSec 5) | Where-Object is_processing) } catch { $null } }
 function Post($path, $body, $timeout = 3600) { Invoke-RestMethod "$base$path" -Method Post -ContentType 'application/json' -Body ($body | ConvertTo-Json -Depth 8 -Compress) -TimeoutSec $timeout }
 function ToWsl($p) { '/mnt/' + $p.Substring(0,1).ToLower() + ($p.Substring(2) -replace '\\','/') }
@@ -103,13 +106,13 @@ try {
           else {
             $code = $blocks[$blocks.Count - 1].Groups[1].Value
             $f = Join-Path $runD "$($t.id)-$s.py"
-            Set-Content $f ($code + "`n`n# ---- tests ----`n" + $t.tests) -Encoding utf8NoBOM
+            [IO.File]::WriteAllText($f, (Lf ($code + "`n`n# ---- tests ----`n" + $t.tests)))
             $o = & wsl -d FedoraLinux-45 -- timeout 60 python3 -I (ToWsl $f) 2>&1
             if ($LASTEXITCODE -eq 0) { $pass = $true } else { $why = (($o | Select-Object -Last 2) -join ' ').Trim(); if ($why.Length -gt 160) { $why = $why.Substring(0,160) } }
           }
         } catch { $why = "request error: $($_.Exception.Message)" }
         $q += [ordered]@{ task = $t.id; sample = $s; pass = $pass; why = $why; out_n = $outN; gen_tps = $tps; secs = [math]::Round($sw.Elapsed.TotalSeconds, 1); prod_busy = $busy }
-        $Res.quality = $q; $Res | ConvertTo-Json -Depth 8 | Set-Content $resF   # save after every sample
+        $Res.quality = $q; SaveRes   # save after every sample
         Note "quality $($t.id)#$s -> $(if($pass){'PASS'}else{'FAIL: ' + $why}) ($outN tok, $([math]::Round($sw.Elapsed.TotalSeconds))s)"
       }
     }
@@ -122,6 +125,6 @@ try {
   $Res.error = "$_"; Note "ERROR: $_"
 } finally {
   if (-not $srv.HasExited) { Stop-Process -Id $srv.Id -Force }
-  $Res | ConvertTo-Json -Depth 8 | Set-Content $resF
+  SaveRes
   Note "saved $resF"
 }
