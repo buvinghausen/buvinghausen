@@ -451,6 +451,20 @@ tailscale version      # 1.104.1
 tailscale status       # the tailnet's peers, from the running app
 ```
 
+### DNS: NextDNS through Tailscale
+
+**The NextDNS configuration profile didn't take effect on this Mac (macOS 27.2.1, build 26B131).** Seen 2026-11-11. The cause is unconfirmed: a local script that restarts Tailscale may have brought it back during the "Tailscale quit" test, so this may be a Tailscale (VPN) override rather than a macOS bug. The profile from apple.nextdns.io installed (`sudo profiles list` showed `io.nextdns.b8df55.profile`) and was **Enabled** under Network → Filters & Proxies. It was also reinstalled fresh with every optional field blank. Even so, `scutil --dns` showed the router (`192.168.1.1`) as the resolver and test.nextdns.io said `unconfigured`, with or without Tailscale running.
+
+The fix is tailnet-wide, set in the admin console at login.tailscale.com/admin/dns: Nameservers → Add nameserver → NextDNS (`https://dns.nextdns.io/<id>`), with **Override DNS servers** on and MagicDNS kept on. The Mac must have "Use Tailscale DNS settings" checked. Tailscale then forwards every query to NextDNS over DoH and tags each one with the device name. The profile is left installed as a fallback in case a later macOS fixes it.
+
+```zsh
+curl -sSL https://test.nextdns.io   # status ok, protocol DOH, clientName "tailscale", deviceName "pebble"
+```
+
+- `curl -s` printed nothing because test.nextdns.io answers with a 302 redirect; `-L` is needed.
+- In Brave, Settings → Privacy and security → Use secure DNS must be **With your current service provider**. The **NextDNS** preset goes to NextDNS's generic resolver (`clientName: chromium-default`, no `profile`), which skips the configuration and its blocklists.
+- When Tailscale is off, DNS falls back to the router and the ISP.
+
 ---
 
 ## Code Directory
