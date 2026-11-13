@@ -76,6 +76,47 @@ function Stop-Server($p) {
   if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; $p.WaitForExit(30000) | Out-Null }
 }
 
+# GPU-state watchdog. /health only proves the HTTP loop is alive: after an NVIDIA driver update (2026-11-12) the
+# server lost its GPU memory, /health stayed "ok" and every completion failed ("failed to allocate CUDA0 buffer").
+# A real completion probe would land in an idle slot and evict an agent's cached prompt (minutes of re-prefill at
+# 256K), so detection is passive. Every 60 s, once the server is 5 min old:
+#   - total GPU memory used (nvidia-smi; per-process figures are N/A under WDDM) below half the healthy peak, or
+#   - a CUDA allocation/error line in the server's stderr log since the last start (sticky until restart).
+# Bad on 2 consecutive checks -> restart the server (counts toward the 3-crash back-off).
+$nvsmi = Join-Path $env:SystemRoot 'System32\nvidia-smi.exe'
+$gpuCheckEvery = 60
+$script:gpuBase = 0; $script:gpuBad = 0; $script:logPos = 0; $script:logErr = $false; $script:lastGpuCheck = Get-Date
+function Reset-GpuWatch { $script:gpuBase = 0; $script:gpuBad = 0; $script:logPos = 0; $script:logErr = $false; $script:lastGpuCheck = Get-Date }
+function Get-GpuUsedMiB {
+  try { $v = & $nvsmi --query-gpu=memory.used --format=csv,noheader,nounits 2>$null | Select-Object -First 1; return [int]$v } catch { return -1 }
+}
+function Test-NewLogErrors($file) {
+  # read only what llama-server appended since the last check; it holds the file open, so share ReadWrite
+  if (-not $file -or -not (Test-Path $file)) { return $false }
+  $fs = [System.IO.File]::Open($file, 'Open', 'Read', 'ReadWrite')
+  try {
+    if ($fs.Length -lt $script:logPos) { $script:logPos = 0 }
+    [void]$fs.Seek($script:logPos, 'Begin')
+    $text = (New-Object System.IO.StreamReader($fs)).ReadToEnd()
+    $script:logPos = $fs.Length
+  } finally { $fs.Dispose() }
+  return ($text -match 'failed to allocate CUDA|CUDA error')
+}
+function Test-GpuState($p, $logFile) {
+  # returns a reason string when the server should be restarted, else $null
+  if (((Get-Date) - $script:lastGpuCheck).TotalSeconds -lt $gpuCheckEvery) { return $null }
+  $script:lastGpuCheck = Get-Date
+  try { $age = ((Get-Date) - $p.StartTime).TotalMinutes } catch { $age = 999 }
+  if ($age -lt 5) { return $null }   # still loading / warming up
+  if (Test-NewLogErrors $logFile) { $script:logErr = $true }
+  $used = Get-GpuUsedMiB
+  if ($used -gt $script:gpuBase) { $script:gpuBase = $used }
+  $memLost = ($used -ge 0 -and $script:gpuBase -gt 0 -and $used -lt ($script:gpuBase / 2))
+  if ($memLost -or $script:logErr) { $script:gpuBad++ } else { $script:gpuBad = 0 }
+  if ($script:gpuBad -ge 2) { return "GPU state lost (gpu used $used MiB, healthy peak $($script:gpuBase) MiB, CUDA error in log: $($script:logErr))" }
+  return $null
+}
+
 # Modern Standby guard. On this machine display-off = Modern Standby, whose sleep phase parks the GPU and pauses
 # inference (seen 2026-11-08). While llama-server runs ON AC POWER, hold SystemRequired (blocks the low-power
 # sleep phase; the screen may still turn off) + ExecutionRequired (no throttling). On battery the request is
@@ -112,7 +153,7 @@ function Update-PowerHold($serving) {
 
 Note "supervisor start (pid $PID)"
 $srv = Get-ServerProc
-if ($srv) { Note "adopted running server pid $($srv.Id)"; Status "running (adopted)" $srv.Id "" }
+if ($srv) { Note "adopted running server pid $($srv.Id)"; Status "running (adopted)" $srv.Id ""; Reset-GpuWatch }
 $srvLog = ''
 $fails = 0
 $lastRestart = RestartStamp   # only react to restart requests made after the supervisor started
@@ -154,13 +195,25 @@ while ($true) {
       Note 'api-key.txt missing or empty; waiting'
       Start-Sleep 30; continue
     }
-    if (Get-ServerProc) { $srv = Get-ServerProc; Note "port $port already served by pid $($srv.Id); adopting"; Status "running (adopted)" $srv.Id ""; continue }
+    if (Get-ServerProc) { $srv = Get-ServerProc; $srvLog = ''; Note "port $port already served by pid $($srv.Id); adopting"; Status "running (adopted)" $srv.Id ""; Reset-GpuWatch; continue }
     $srv = Start-Process -FilePath $exe -ArgumentList $llamaArgs -WorkingDirectory $root `
              -RedirectStandardError $srvLog -RedirectStandardOutput $out -NoNewWindow -PassThru
     Note "started server pid $($srv.Id), log $srvLog"
     Status 'running' $srv.Id $srvLog
-  } elseif ($fails -gt 0 -and ((Get-Date) - $srv.StartTime).TotalMinutes -gt 10) {
-    $fails = 0   # stable for 10 minutes: forget earlier crashes
+    Reset-GpuWatch
+  } else {
+    if ($fails -gt 0 -and ((Get-Date) - $srv.StartTime).TotalMinutes -gt 10) {
+      $fails = 0   # stable for 10 minutes: forget earlier crashes
+    }
+    $why = Test-GpuState $srv $srvLog
+    if ($why) {
+      Note "$why -> restarting pid $($srv.Id)"
+      Stop-Server $srv
+      $srv = $null; $fails++
+      Status "restarting: $why" '' $srvLog
+      Update-PowerHold $false
+      Start-Sleep 5; continue
+    }
   }
   Update-PowerHold ([bool]($srv -and -not $srv.HasExited))
   Start-Sleep 5

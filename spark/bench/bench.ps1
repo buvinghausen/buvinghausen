@@ -9,7 +9,8 @@ param(
   [int]$Port = 9940,
   [int[]]$Prefill = @(4096, 16384, 65536),
   [switch]$QualityOnly,          # skip prefill + generation speed tests
-  [string[]]$Skip = @()          # quality samples already done, e.g. lru_cache#1
+  [string[]]$Skip = @(),         # quality samples already done, e.g. lru_cache#1
+  [int]$QualityMaxTokens = 16384 # per-sample generation cap for quality (production's own cap is --n-predict 32768)
 )
 $ErrorActionPreference = 'Stop'
 $B     = $PSScriptRoot
@@ -33,7 +34,7 @@ if ($Draft) { $args2 += @('--spec-type', 'draft-dflash', '--spec-draft-n-max', '
 Note "starting server: $(Split-Path $Model -Leaf) draft=$([bool]$Draft) ctx=$Ctx"
 $srv = Start-Process C:\llama.cpp\llama-server.exe -ArgumentList ($args2 | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) `
          -WorkingDirectory C:\llama.cpp -RedirectStandardError $log -RedirectStandardOutput "$log.out" -WindowStyle Hidden -PassThru
-$Res = [ordered]@{ name = $Name; model = (Split-Path $Model -Leaf); draft = [bool]$Draft; ctx = $Ctx; extra = ($Extra -join " "); started = (Get-Date -f s) }
+$Res = [ordered]@{ name = $Name; model = (Split-Path $Model -Leaf); draft = [bool]$Draft; ctx = $Ctx; extra = ($Extra -join " "); quality_max_tokens = $QualityMaxTokens; started = (Get-Date -f s) }
 try {
   $t0 = Get-Date
   while ($true) {
@@ -97,7 +98,7 @@ try {
           @{ role = 'user'; content = $t.prompt })
         $pass = $false; $why = ''; $outN = 0; $tps = 0
         try {
-          $r = Post '/v1/chat/completions' @{ messages = $msgs; max_tokens = 16384 } 3600
+          $r = Post '/v1/chat/completions' @{ messages = $msgs; max_tokens = $QualityMaxTokens } 3600
           $outN = $r.usage.completion_tokens; $tps = [math]::Round($r.timings.predicted_per_second, 1)
           $txt = [string]$r.choices[0].message.content
           if (-not ($txt -match '```')) { $txt = $txt + "`n" + [string]$r.choices[0].message.reasoning_content }

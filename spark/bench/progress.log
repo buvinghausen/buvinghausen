@@ -206,3 +206,55 @@
 15:10:08 [watchdog] stopped; while a bench server ran: min host free 2268 MB, max GPU used 85641 MiB
 15:10:37 production health: ok
 15:10:37 PHASE 3 DONE
+20:48:11 PHASE 4 START (quality @ 32768 tokens: Flash-Next IQ4_XS+MTP, then 27B Q4+DFlash; detailed memory log)
+20:48:11 stopping production (control\stop)
+20:48:22 production stopped; GPU 841 MiB
+20:48:42 [flashnext-iq4-mtp-32k] starting server: Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf draft=False ctx=262144
+20:49:12 [flashnext-iq4-mtp-32k] ready in 30.1s
+20:57:31 [flashnext-iq4-mtp-32k] quality iso_duration#1 -> PASS (18179 tok, 498s)
+21:12:02 [flashnext-iq4-mtp-32k] quality iso_duration#2 -> PASS (32057 tok, 872s)
+21:12:15 [flashnext-iq4-mtp-32k] quality lru_cache#1 -> PASS (411 tok, 12s)
+21:12:28 [flashnext-iq4-mtp-32k] quality lru_cache#2 -> PASS (522 tok, 13s)
+21:15:29 [flashnext-iq4-mtp-32k] quality merge_intervals#1 -> PASS (6430 tok, 182s)
+21:15:55 [flashnext-iq4-mtp-32k] quality merge_intervals#2 -> PASS (908 tok, 26s)
+21:31:10 [flashnext-iq4-mtp-32k] quality calc#1 -> FAIL: elif ch == '.' or is_digit(ch): IndentationError: unexpected indent (32768 tok, 915s)
+21:46:07 [flashnext-iq4-mtp-32k] quality calc#2 -> FAIL: raise ValueError("unbalanced parentheses") ValueError: unbalanced parentheses (32768 tok, 896s)
+21:46:38 [flashnext-iq4-mtp-32k] quality toposort#1 -> PASS (1106 tok, 31s)
+21:47:07 [flashnext-iq4-mtp-32k] quality toposort#2 -> PASS (1079 tok, 29s)
+21:59:14 [flashnext-iq4-mtp-32k] quality csv_line#1 -> PASS (26512 tok, 727s)
+22:08:05 [flashnext-iq4-mtp-32k] quality csv_line#2 -> PASS (18578 tok, 531s)
+22:14:55 [flashnext-iq4-mtp-32k] quality roman#1 -> FAIL: ^^^^^^^^^^^^^^^^ AssertionError: (40, 'XXXX') (15348 tok, 410s)
+22:25:57 [flashnext-iq4-mtp-32k] quality roman#2 -> PASS (23780 tok, 662s)
+22:26:29 [flashnext-iq4-mtp-32k] quality dijkstra#1 -> PASS (1190 tok, 32s)
+22:27:51 [flashnext-iq4-mtp-32k] quality dijkstra#2 -> PASS (2787 tok, 81s)
+22:31:33 [flashnext-iq4-mtp-32k] quality rle#1 -> PASS (7968 tok, 222s)
+22:34:24 [flashnext-iq4-mtp-32k] quality rle#2 -> PASS (6050 tok, 172s)
+22:47:52 [flashnext-iq4-mtp-32k] quality semver#1 -> FAIL: ^^^^^^^^^^^^^^ NameError: name 'compare_semver' is not defined (32768 tok, 808s)
+22:55:30 [flashnext-iq4-mtp-32k] quality semver#2 -> PASS (17894 tok, 458s)
+22:56:19 [flashnext-iq4-mtp-32k] quality palindrome#1 -> PASS (1694 tok, 49s)
+22:57:34 [flashnext-iq4-mtp-32k] quality palindrome#2 -> PASS (2786 tok, 75s)
+22:57:59 [flashnext-iq4-mtp-32k] quality justify#1 -> PASS (966 tok, 25s)
+22:59:12 [flashnext-iq4-mtp-32k] quality justify#2 -> PASS (2742 tok, 74s)
+22:59:12 [flashnext-iq4-mtp-32k] QUALITY 20/24
+22:59:12 [flashnext-iq4-mtp-32k] saved D:\src\buvinghausen\buvinghausen\spark\bench\results\flashnext-iq4-mtp-32k.json
+22:59:12 pause 60 s between models (memory should settle; visible in phase4-mem.csv)
+23:00:13 [q4-dflash-32k] starting server: Qwen3.8-27B-UD-Q4_K_M.gguf draft=True ctx=98304
+23:00:23 [q4-dflash-32k] ready in 10s
+23:12:09 [q4-dflash-32k] quality iso_duration#1 -> PASS (21957 tok, 707s)
+23:28:50 [q4-dflash-32k] quality iso_duration#2 -> FAIL: ^^^^^^ IndentationError: expected an indented block after function definition on line 1 (32768 tok, 1001s)
+23:29:39 [q4-dflash-32k] quality lru_cache#1 -> PASS (1492 tok, 48s)
+23:30:40 [q4-dflash-32k] quality lru_cache#2 -> FAIL: ^^^^^^^^^^^^^^ AssertionError (2336 tok, 61s)
+23:31:12 [q4-dflash-32k] quality merge_intervals#1 -> PASS (923 tok, 32s)
+23:32:03 [q4-dflash-32k] quality merge_intervals#2 -> PASS (1353 tok, 51s)
+23:52:28 [q4-dflash-32k] quality calc#1 -> FAIL: no code block (32768 tok, 1225s)
+00:12:43 [q4-dflash-32k] quality calc#2 -> FAIL: ^^^^ NameError: name 'expr' is not defined (32768 tok, 1216s)
+00:14:16 [q4-dflash-32k] quality toposort#1 -> PASS (2404 tok, 93s)
+00:15:37 [q4-dflash-32k] quality toposort#2 -> PASS (2027 tok, 81s)
+00:24:32 [q4-dflash-32k] quality csv_line#1 -> PASS (14070 tok, 535s)
+00:36:21 [q4-dflash-32k] quality csv_line#2 -> FAIL: ^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError (18373 tok, 708s)
+00:44:35 [q4-dflash-32k] quality roman#1 -> PASS (14850 tok, 494s)
+00:54:18 [q4-dflash-32k] quality roman#2 -> FAIL: ^^^^^^^^^^^^^^^^ AssertionError: (40, 'XXXX') (16917 tok, 582s)
+01:01:01 [q4-dflash-32k] quality dijkstra#1 -> PASS (10648 tok, 403s)
+01:06:02 [q4-dflash-32k] quality dijkstra#2 -> FAIL: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError (7821 tok, 302s)
+01:09:49 [q4-dflash-32k] quality rle#1 -> PASS (5819 tok, 226s)
+01:15:16 [q4-dflash-32k] quality rle#2 -> PASS (8555 tok, 327s)

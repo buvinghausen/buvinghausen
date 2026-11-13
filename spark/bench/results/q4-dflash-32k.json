@@ -1,0 +1,192 @@
+{
+  "name": "q4-dflash-32k",
+  "model": "Qwen3.8-27B-UD-Q4_K_M.gguf",
+  "draft": true,
+  "ctx": 98304,
+  "extra": "",
+  "quality_max_tokens": 32768,
+  "started": "2026-11-12T23:00:13",
+  "load_s": 10.0,
+  "quality": [
+    {
+      "task": "iso_duration",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 21957,
+      "gen_tps": 31.4,
+      "secs": 706.5,
+      "prod_busy": null
+    },
+    {
+      "task": "iso_duration",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^ IndentationError: expected an indented block after function definition on line 1",
+      "out_n": 32768,
+      "gen_tps": 33.0,
+      "secs": 1001.3,
+      "prod_busy": null
+    },
+    {
+      "task": "lru_cache",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1492,
+      "gen_tps": 34.6,
+      "secs": 48.2,
+      "prod_busy": null
+    },
+    {
+      "task": "lru_cache",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^ AssertionError",
+      "out_n": 2336,
+      "gen_tps": 41.0,
+      "secs": 61.5,
+      "prod_busy": null
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 923,
+      "gen_tps": 34.3,
+      "secs": 31.5,
+      "prod_busy": null
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 1353,
+      "gen_tps": 28.9,
+      "secs": 51.3,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 1,
+      "pass": false,
+      "why": "no code block",
+      "out_n": 32768,
+      "gen_tps": 26.8,
+      "secs": 1224.7,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^ NameError: name 'expr' is not defined",
+      "out_n": 32768,
+      "gen_tps": 27.1,
+      "secs": 1215.8,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 2404,
+      "gen_tps": 28.0,
+      "secs": 92.9,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 2027,
+      "gen_tps": 27.0,
+      "secs": 81.1,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 14070,
+      "gen_tps": 26.6,
+      "secs": 535.1,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError",
+      "out_n": 18373,
+      "gen_tps": 26.2,
+      "secs": 708.5,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 14850,
+      "gen_tps": 30.4,
+      "secs": 494.4,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^^^ AssertionError: (40, 'XXXX')",
+      "out_n": 16917,
+      "gen_tps": 29.4,
+      "secs": 582.3,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 10648,
+      "gen_tps": 26.9,
+      "secs": 403.1,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError",
+      "out_n": 7821,
+      "gen_tps": 26.5,
+      "secs": 301.6,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 5819,
+      "gen_tps": 26.5,
+      "secs": 226.3,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 8555,
+      "gen_tps": 26.6,
+      "secs": 327.5,
+      "prod_busy": null
+    }
+  ]
+}
