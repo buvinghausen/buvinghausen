@@ -2,7 +2,7 @@
 # Run this on Windows hosts that already have the shared private key at
 # $env:USERPROFILE\.ssh\id_ed25519_github (either generated here with
 # generate-key-ONCE.ps1, or securely copied over). Wires up the OpenSSH
-# agent service and git's SSH-based commit signing — no GPG involved.
+# agent service and git's SSH-based commit signing - no GPG involved.
 # ---------------------------------------------------------------------------
 
 $Email   = "buvinghausen@users.noreply.github.com"
@@ -11,7 +11,7 @@ $SshDir  = Join-Path $env:USERPROFILE ".ssh"
 $KeyPath = Join-Path $SshDir "id_ed25519_github"
 
 if (-not (Test-Path $KeyPath)) {
-    Write-Host "No key found at $KeyPath — copy the private key here first (see the setup guide), then re-run."
+    Write-Host "No key found at $KeyPath - copy the private key here first (see the setup guide), then re-run."
     exit 1
 }
 

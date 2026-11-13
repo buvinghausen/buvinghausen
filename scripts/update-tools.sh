@@ -4,7 +4,7 @@
 # Chromium, the cross-language perf tools (perf, hyperfine, valgrind,
 # heaptrack), posh-git-sh. Not one of the six language stacks you asked for
 # individually, but skipping it would leave the orchestrator short of the
-# doc's full pass — drop this module from update-toolchain.sh's MODULES
+# doc's full pass - drop this module from update-toolchain.sh's MODULES
 # list if you'd rather run it separately.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -14,7 +14,7 @@ log "GitHub CLI"
 GH_LATEST=$(github_latest_release cli/cli)
 GH_CURRENT=$(gh --version 2>/dev/null | head -1 | awk '{print $3}' || true)
 if [[ "$GH_CURRENT" == "$GH_LATEST" ]]; then
-	echo "gh already at $GH_CURRENT — skipping"
+	echo "gh already at $GH_CURRENT - skipping"
 else
 	GH_PKG="gh_${GH_LATEST}_linux_$(arch_amd64_arm64)"
 	install_from_tarball "https://github.com/cli/cli/releases/download/v${GH_LATEST}/${GH_PKG}.tar.gz" \
@@ -25,13 +25,13 @@ log "actionlint"
 AL_LATEST=$(github_latest_release rhysd/actionlint)
 AL_CURRENT=$(actionlint --version 2>/dev/null | head -1 || true)
 if [[ "$AL_CURRENT" == "$AL_LATEST" ]]; then
-	echo "actionlint already at $AL_CURRENT — skipping"
+	echo "actionlint already at $AL_CURRENT - skipping"
 else
 	install_from_tarball "https://github.com/rhysd/actionlint/releases/download/v${AL_LATEST}/actionlint_${AL_LATEST}_linux_$(arch_amd64_arm64).tar.gz" \
 		actionlint /usr/local/bin/actionlint
 fi
 
-# actionlint shells out to these for `run:` script bodies and `python` steps —
+# actionlint shells out to these for `run:` script bodies and `python` steps -
 # it silently skips those checks when they aren't on PATH, so they're part of
 # the actionlint install, not optional extras. Both come from dnf rather than
 # pip/pyenv on purpose: a pip-installed pyflakes lives inside the pyenv build
@@ -44,7 +44,7 @@ log "PowerShell"
 PS_LATEST=$(github_latest_release PowerShell/PowerShell)
 PS_CURRENT=$(pwsh --version 2>/dev/null | awk '{print $2}' || true)
 if [[ "$PS_CURRENT" == "$PS_LATEST" ]]; then
-	echo "pwsh already at $PS_CURRENT — skipping"
+	echo "pwsh already at $PS_CURRENT - skipping"
 else
 	ARCH=$(arch_x64_arm64)
 	TMP=$(mktemp -d)
@@ -62,7 +62,7 @@ sudo dnf install -y mono-complete
 log "Chromium (Playwright MCP browser)"
 sudo dnf install -y chromium
 
-# Language-agnostic performance tooling — everything here works on a process
+# Language-agnostic performance tooling - everything here works on a process
 # or a binary, not a language, so it lives in this module rather than under any
 # one stack: perf (kernel sampling/counters), hyperfine (command-level A/B
 # timing with warmup and outlier detection), valgrind (callgrind/cachegrind/
@@ -75,7 +75,7 @@ sudo dnf install -y hyperfine valgrind
 # packages / 262 MiB), and with dnf's default weak dependencies on top that
 # becomes 130 packages / 336 MiB of udisks2, kio-extras, filesystem tools and
 # Qt translations nothing here uses. The flag is scoped to this one install.
-log "heaptrack (heap profiler — no weak deps, see comment above)"
+log "heaptrack (heap profiler - no weak deps, see comment above)"
 sudo dnf install -y --setopt=install_weak_deps=False heaptrack
 
 log "posh-git-sh"
@@ -83,16 +83,16 @@ curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master
 
 # The download above is a replay-safe overwrite, but the ~/.bashrc wiring
 # that actually activates it (source + cd() override) is a one-time bootstrap
-# — add it if missing. Must land BEFORE the SDKMAN block: SDKMAN's own
+# - add it if missing. Must land BEFORE the SDKMAN block: SDKMAN's own
 # installer requires its block to stay the last thing in ~/.bashrc, so this
 # is spliced in above it rather than appended at the end.
-POSH_MARKER="# posh-git-sh — only active inside ~/code/**"
+POSH_MARKER="# posh-git-sh - only active inside ~/code/**"
 if ! grep -qF "$POSH_MARKER" "$HOME/.bashrc" 2>/dev/null; then
 	log "Wiring posh-git-sh into ~/.bashrc"
 	POSH_BLOCK=$(
 		cat <<'EOF'
 
-# posh-git-sh — only active inside ~/code/**
+# posh-git-sh - only active inside ~/code/**
 source ~/.posh-git-sh
 
 posh_update_prompt() {

@@ -5,13 +5,13 @@
 # (HyperUuid's lint-rust CI job runs `cargo clippy --target
 # aarch64-linux-android`; clippy never links, so the target alone covers CI,
 # and the NDK is what covers the build the CI job doesn't do). Hard-depends
-# on rustup, like update-wasm.sh — runs after `rust` in update-toolchain.sh's
+# on rustup, like update-wasm.sh - runs after `rust` in update-toolchain.sh's
 # MODULES order and hard-fails with a pointer rather than bootstrapping it.
 #
 # The NDK is a plain release zip from dl.google.com, not an `sdkmanager`
 # install: sdkmanager needs the whole command-line-tools package and a JDK
 # just to download one zip, and nothing here needs the rest of the Android
-# SDK (no platforms, no build-tools, no emulator — the NDK is the linker and
+# SDK (no platforms, no build-tools, no emulator - the NDK is the linker and
 # sysroot, which is all a cdylib build needs). Takes pwsh/async-profiler's
 # shape: unpacked under /opt, with a version-free /opt/android-ndk symlink as
 # the stable path ANDROID_NDK_HOME points at, and the superseded versioned
@@ -19,7 +19,7 @@
 #
 # Google publishes NDK host builds for linux-x86_64, darwin and windows only
 # (developer.android.com/ndk/downloads lists exactly one Linux package, and
-# there is no linux-aarch64 one) — so on the Snapdragon box this module
+# there is no linux-aarch64 one) - so on the Snapdragon box this module
 # prints why and exits 0 rather than failing the full pass every time. That
 # is a loud, explicit skip, not a fallback: nothing Android gets installed
 # there, and the message says so.
@@ -30,10 +30,10 @@ source ./lib.sh
 if [[ -f "$HOME/.cargo/env" ]]; then
 	source "$HOME/.cargo/env"
 fi
-require_cmd rustup "rustup not found — run the rust module first (see TOOLCHAIN.md)"
+require_cmd rustup "rustup not found - run the rust module first (see TOOLCHAIN.md)"
 
 if [[ "$(uname -m)" != "x86_64" ]]; then
-	echo "SKIPPED: the Android NDK has no $(uname -m) Linux host build (linux-x86_64 only) — see TOOLCHAIN.md's Android section" >&2
+	echo "SKIPPED: the Android NDK has no $(uname -m) Linux host build (linux-x86_64 only) - see TOOLCHAIN.md's Android section" >&2
 	exit 0
 fi
 
@@ -41,7 +41,7 @@ fi
 # prerelease. Not lib.sh's github_latest_release: GitHub's "latest" is the
 # most recently *created* non-prerelease, and point releases of an older
 # line land after newer majors (r27d was published after r28c), so "latest"
-# can walk backwards. Resolved from the release list instead — stable tags
+# can walk backwards. Resolved from the release list instead - stable tags
 # only, highest by version sort (r28c < r29 < r30).
 ndk_latest_release() {
 	curl -s 'https://api.github.com/repos/android/ndk/releases?per_page=30' \
@@ -58,7 +58,7 @@ NDK_CURRENT=$(basename "$(readlink "$NDK_ROOT" 2>/dev/null || true)" | sed 's/^a
 
 log "Android NDK"
 if [[ "$NDK_CURRENT" == "$NDK_LATEST" ]]; then
-	echo "NDK already at $NDK_CURRENT — skipping"
+	echo "NDK already at $NDK_CURRENT - skipping"
 else
 	NDK_ZIP="android-ndk-${NDK_LATEST}-linux.zip"
 	NDK_TMP=$(mktemp -d)

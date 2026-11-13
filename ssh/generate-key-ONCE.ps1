@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------
 # Run this ON EXACTLY ONE HOST if you want Windows to be the origin instead
-# of WSL. Only run generate-key-ONCE on ONE machine total — everywhere else,
+# of WSL. Only run generate-key-ONCE on ONE machine total - everywhere else,
 # copy the resulting private key over and run configure-host instead.
 # ---------------------------------------------------------------------------
 

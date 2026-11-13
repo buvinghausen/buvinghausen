@@ -4,7 +4,7 @@
 # private key at ~/.ssh/id_ed25519_github (either because you generated it
 # here with generate-key-ONCE.sh, or because you securely copied it over
 # from the host that did). It wires up the agent, SSH config, and git's
-# SSH-based commit signing — no GPG involved.
+# SSH-based commit signing - no GPG involved.
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -13,7 +13,7 @@ NAME="Buvy"
 KEY_PATH="$HOME/.ssh/id_ed25519_github"
 
 if [ ! -f "$KEY_PATH" ]; then
-  echo "No key found at $KEY_PATH — copy the private key here first (see the setup guide), then re-run."
+  echo "No key found at $KEY_PATH - copy the private key here first (see the setup guide), then re-run."
   exit 1
 fi
 chmod 600 "$KEY_PATH"

@@ -32,7 +32,7 @@ if [[ -f "$HOME/.cargo/env" ]]; then
 fi
 
 if ! command -v rustup >/dev/null 2>&1; then
-	log "rustup not found — bootstrapping (see TOOLCHAIN-macos.md)"
+	log "rustup not found - bootstrapping (see TOOLCHAIN-macos.md)"
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 	append_zshrc_once "# Rust" <<'EOF2'
 
@@ -41,7 +41,7 @@ source "$HOME/.cargo/env"
 EOF2
 	source "$HOME/.cargo/env"
 fi
-require_cmd rustup "rustup install failed — check the installer output above"
+require_cmd rustup "rustup install failed - check the installer output above"
 
 log "rustup"
 rustup update

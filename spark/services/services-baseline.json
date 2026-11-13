@@ -1,0 +1,137 @@
+[
+  {
+    "Name": "Spooler",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "MapsBroker",
+    "StartType": "Automatic",
+    "Status": "Stopped"
+  },
+  {
+    "Name": "PhoneSvc",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "RasMan",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "SstpSvc",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "SSDPSRV",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "FDResPub",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "fdPHost",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "NcdAutoSetup",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "lmhosts",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "QWAVE",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "InventorySvc",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "PcaSvc",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "wuqisvc",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "SysMain",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "WSAIFabricSvc",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "OptionsPlusUpdaterService",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "DellTechHub",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "DellClientManagementService",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "SurfaceMachineLearningService",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "SurfaceExperienceService-76.10212.108.3",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "WSLService",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "vmcompute",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "hns",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "nvagent",
+    "StartType": "Manual",
+    "Status": "Running"
+  },
+  {
+    "Name": "WSearch",
+    "StartType": "Automatic",
+    "Status": "Running"
+  },
+  {
+    "Name": "CodexSandboxService.OpenAI.Codex",
+    "StartType": "Automatic",
+    "Status": "Running"
+  }
+]

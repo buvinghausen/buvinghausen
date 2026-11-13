@@ -8,7 +8,7 @@
 # hyperfine); pyflakes through pipx; pwsh's osx-arm64 tarball under
 # ~/.local/opt; Google Chrome from its cask for Playwright (Homebrew's
 # chromium cask is disabled for Apple Silicon); no perf/valgrind/
-# heaptrack (none exist for Apple Silicon — the macOS column is the bundled
+# heaptrack (none exist for Apple Silicon - the macOS column is the bundled
 # sample/leaks/heap/malloc_history plus samply and hyperfine); posh-git-sh on
 # its zsh precmd hook, scoped to ~/Developer/**.
 set -euo pipefail
@@ -27,15 +27,15 @@ brew_ensure gh actionlint shellcheck hyperfine mono
 # first only for the release-guard run (see TOOLCHAIN-macos.md). lld is not
 # keg-only: ld.lld / lld-link / ld64.lld / wasm-ld land in Homebrew's bin,
 # none of which shadows the CLT's ld.
-log "LLVM / lld (Homebrew — release-guard checks)"
+log "LLVM / lld (Homebrew - release-guard checks)"
 brew_ensure llvm lld
 
 # actionlint shells out to shellcheck (above) and pyflakes for `run:` bodies
 # and `python` steps, silently skipping those checks when either is missing.
 # No pyflakes formula exists; pipx gives it its own venv on Homebrew's python
-# — outside the pyenv build that update-python.sh replaces on every upgrade,
+# - outside the pyenv build that update-python.sh replaces on every upgrade,
 # which is the same reason Fedora takes it from dnf rather than pip.
-log "pyflakes (pipx — actionlint integration)"
+log "pyflakes (pipx - actionlint integration)"
 brew_ensure pipx
 if pipx list --short 2>/dev/null | grep '^pyflakes ' >/dev/null; then
 	pipx upgrade pyflakes
@@ -49,7 +49,7 @@ log "PowerShell"
 PS_LATEST=$(github_latest_release PowerShell/PowerShell)
 PS_CURRENT=$(pwsh --version 2>/dev/null | awk '{print $2}' || true)
 if [[ "$PS_CURRENT" == "$PS_LATEST" ]]; then
-	echo "pwsh already at $PS_CURRENT — skipping"
+	echo "pwsh already at $PS_CURRENT - skipping"
 else
 	ARCH=$(arch_x64_arm64)
 	PS_HOME="$LOCAL_OPT/microsoft/powershell/7"
@@ -69,13 +69,13 @@ curl -o ~/.posh-git-sh https://raw.githubusercontent.com/lyze/posh-git-sh/master
 # One-time ~/.zshrc wiring (the download above is a replay-safe overwrite).
 # zsh has no PROMPT_COMMAND; posh-git-sh's README gives the precmd hook form.
 # Spliced in above SDKMAN's block, which its installer requires to stay last.
-POSH_MARKER="# posh-git-sh — only active inside ~/Developer/**"
+POSH_MARKER="# posh-git-sh - only active inside ~/Developer/**"
 if ! grep -qF "$POSH_MARKER" "$HOME/.zshrc" 2>/dev/null; then
 	log "Wiring posh-git-sh into ~/.zshrc"
 	POSH_BLOCK=$(
 		cat <<'EOF2'
 
-# posh-git-sh — only active inside ~/Developer/**
+# posh-git-sh - only active inside ~/Developer/**
 source ~/.posh-git-sh
 
 precmd() {
@@ -102,7 +102,7 @@ EOF2
 	fi
 fi
 
-# Playwright MCP — the same `playwright` plugin as Fedora (claude-plugins-
+# Playwright MCP - the same `playwright` plugin as Fedora (claude-plugins-
 # official), whose .mcp.json launches `npx @playwright/mcp@latest` with no
 # arguments; the server's default browser on macOS is Google Chrome under
 # /Applications. The Fedora doc's system-Chromium reasoning (one copy, the
@@ -116,20 +116,20 @@ fi
 # plugin install is replay-safe (exit 0, "already installed").
 #
 # Chrome has to be opened ONCE from the GUI before it will run from the
-# command line. Until then every launch — headless or via Playwright, with or
-# without --user-data-dir, sandboxed or not — dies with
+# command line. Until then every launch - headless or via Playwright, with or
+# without --user-data-dir, sandboxed or not - dies with
 # `FATAL:base/path_service.cc Failed to get the path for 1001` (exit 133).
 # The GUI launch creates ~/Library/Application Support/Google/Chrome and its
 # `First Run` sentinel, and from then on headless and Playwright launches
 # work (Brave, also Chromium 155, had been opened before and never showed
 # it). The sentinel is the check; the fix is manual, so this fails loudly.
-log "Google Chrome (Homebrew cask — Playwright's default browser)"
+log "Google Chrome (Homebrew cask - Playwright's default browser)"
 brew list --cask google-chrome >/dev/null 2>&1 || brew install --cask google-chrome
 brew upgrade --cask --greedy google-chrome
 CHROME_FIRST_RUN="$HOME/Library/Application Support/Google/Chrome/First Run"
 if [[ ! -f "$CHROME_FIRST_RUN" ]]; then
 	cat >&2 <<'EOF'
-Google Chrome has never been opened on this box — Playwright can't launch it
+Google Chrome has never been opened on this box - Playwright can't launch it
 until it has (see TOOLCHAIN-macos.md, Playwright). Once, by hand:
   open -a "Google Chrome"      # get past the first-run screens, then quit it
 then rerun: ./update-toolchain.sh tools

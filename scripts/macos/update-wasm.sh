@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Updates the cross-cutting WASM toolchain used by multiple language stacks:
 # Rust's wasm32-wasip1/wasm32-unknown-unknown/wasm32-unknown-emscripten targets,
-# wasm-pack, the Emscripten SDK, wasmtime, and .NET's wasm-tools workload —
+# wasm-pack, the Emscripten SDK, wasmtime, and .NET's wasm-tools workload -
 # plus the wasm-opt patch over every installed Emscripten Sdk pack. Darwin twin
 # of scripts/update-wasm.sh; read that header for what each piece is for and
 # the verified `--enable-bulk-memory-opt` bug the patch loop fixes. Hard-depends
@@ -10,7 +10,7 @@
 # Darwin differences: ~/.zshrc for the emsdk line; wasmtime's installer wires
 # ~/.zshrc itself (its detect_profile picks .zshrc for a zsh $SHELL); and
 # emsdk's own tooling needs Python >= 3.10 where the Command Line Tools ship
-# 3.9.6 — hit on the first run ("emsdk requires python 3.10 or above"). It
+# 3.9.6 - hit on the first run ("emsdk requires python 3.10 or above"). It
 # gets Homebrew's python, named explicitly through EMSDK_PYTHON rather than
 # left to PATH order. Not pyenv's: that build is replaced on every Python
 # upgrade and runs later in MODULES anyway.
@@ -24,8 +24,8 @@ export PATH="$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools"
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_NOLOGO=1
 
-require_cmd rustup "rustup not found — run the rust module first (see TOOLCHAIN-macos.md)"
-require_cmd dotnet "dotnet not found — run the dotnet module first (see TOOLCHAIN-macos.md)"
+require_cmd rustup "rustup not found - run the rust module first (see TOOLCHAIN-macos.md)"
+require_cmd dotnet "dotnet not found - run the dotnet module first (see TOOLCHAIN-macos.md)"
 
 log "Rust wasm targets"
 rustup target add wasm32-wasip1 wasm32-unknown-unknown wasm32-unknown-emscripten

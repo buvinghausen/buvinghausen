@@ -2,12 +2,12 @@
 # Updates Python via pyenv (standard + free-threaded builds) and removes the
 # superseded global build once the new one is active. Preserves whichever
 # flavor (standard vs free-threaded `t`) is currently set as global rather
-# than forcing one — TOOLCHAIN.md documents standard/GIL-enabled as the
+# than forcing one - TOOLCHAIN.md documents standard/GIL-enabled as the
 # current default (yt-dlp needs the GIL); free-threaded is opt-in via
 # `pyenv local`/`pyenv shell` for testing.
 #
 # Bootstraps pyenv itself when missing (fresh machine / fresh distro), rather
-# than hard-failing like the other update-*.sh scripts do — this is the
+# than hard-failing like the other update-*.sh scripts do - this is the
 # install entry point TOOLCHAIN.md's Python section documents, transcribed
 # (pyenv.run installer, ~/.bashrc block; build deps come from lib.sh) so both
 # paths never drift apart. Fedora/dnf-specific, matching this box; substitute
@@ -18,7 +18,7 @@ source ./lib.sh
 
 export PYENV_ROOT="$HOME/.pyenv"
 if [[ ! -d "$PYENV_ROOT/bin" ]]; then
-	log "pyenv not found — bootstrapping (see TOOLCHAIN.md)"
+	log "pyenv not found - bootstrapping (see TOOLCHAIN.md)"
 
 	log "Build dependencies (shared dnf list, see lib.sh)"
 	dnf_build_deps
@@ -66,12 +66,12 @@ fi
 # Build/test/lint tooling for the Python bindings of the Rust-core projects
 # (HyperUuid: pyo3 abi3 extension built with maturin, pytest suite, ruff
 # lint + `ruff format`), plus the rest of what those bindings' extras and CI
-# name: mypy (the `test` extra — tests/test_typing.py skips without it),
-# pyperf (the `bench` extra — what bench_*.py are written against), and py-spy
+# name: mypy (the `test` extra - tests/test_typing.py skips without it),
+# pyperf (the `bench` extra - what bench_*.py are written against), and py-spy
 # (sampling profiler; attaches from outside, no code changes to the target). openpyxl is
 # HyperTabular's: corpus/workbook/make_fixtures.py writes the committed .xlsx
 # fixtures with it (regeneration only; the test suites read the files).
-# Installed into the pyenv global build, so this runs on every pass — the
+# Installed into the pyenv global build, so this runs on every pass - the
 # uninstall above discards the superseded build's site-packages along with it.
 log "maturin / pytest / ruff / mypy / pyperf / py-spy / openpyxl"
 pip install --upgrade pip maturin pytest ruff mypy pyperf py-spy openpyxl
@@ -80,7 +80,7 @@ python --version
 python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
 ruff --version
 mypy --version
-# pyperf's CLI has no version flag — ask the module.
+# pyperf's CLI has no version flag - ask the module.
 python -c "import pyperf; print('pyperf', pyperf.__version__)"
 py-spy --version
 python -c "import openpyxl; print('openpyxl', openpyxl.__version__)"

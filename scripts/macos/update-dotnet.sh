@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Updates the .NET 11.0 SDK and the .NET 10.0 ASP.NET Core runtime, then
 # prunes everything but the newest GA version per tracked channel.
-# Darwin twin of scripts/update-dotnet.sh — the header there explains the
+# Darwin twin of scripts/update-dotnet.sh - the header there explains the
 # prune policy (what is keyed by exact version and safe to remove, why GA
 # manifest bands are left alone); dotnet-install.sh resolves osx-arm64 itself
 # and lays out $DOTNET_ROOT identically, so the whole body carries over. The
@@ -16,7 +16,7 @@ export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export DOTNET_NOLOGO=1
 
 if ! command -v dotnet >/dev/null 2>&1; then
-	log "dotnet not found — bootstrapping (see TOOLCHAIN-macos.md)"
+	log "dotnet not found - bootstrapping (see TOOLCHAIN-macos.md)"
 	append_zshrc_once "# .NET" <<'EOF2'
 
 # .NET
@@ -47,7 +47,7 @@ newest_ga() { # $1 = newline-separated versions, $2.. = major.minor channels
 	shift
 	for ch in "$@"; do
 		v=$(grep -E "^${ch//./\\.}\\.[0-9]+$" <<<"$versions" | sort -V | tail -1 || true)
-		[[ -n "$v" ]] || { echo "no GA $ch version installed — refusing to prune" >&2; exit 1; }
+		[[ -n "$v" ]] || { echo "no GA $ch version installed - refusing to prune" >&2; exit 1; }
 		echo "$v"
 	done
 }
@@ -88,10 +88,10 @@ prune_sdks
 prune_runtime Microsoft.NETCore.App
 prune_runtime Microsoft.AspNetCore.App
 
-log "dotnet new — template updates"
+log "dotnet new - template updates"
 dotnet new update
 
-log "dotnet tool — diagnostics tools (dotnet-trace, dotnet-counters)"
+log "dotnet tool - diagnostics tools (dotnet-trace, dotnet-counters)"
 for id in dotnet-trace dotnet-counters; do
 	if dotnet tool list --global | awk -v id="$id" 'NR > 2 && $1 == id {found = 1} END {exit !found}'; then
 		echo "$id already installed"
@@ -100,7 +100,7 @@ for id in dotnet-trace dotnet-counters; do
 	fi
 done
 
-log "dotnet tool — global tool updates"
+log "dotnet tool - global tool updates"
 TOOLS=$(dotnet tool list --global | tail -n +3 | awk 'NF {print $1, $2}')
 if [[ -n "$TOOLS" ]]; then
 	while read -r id version; do
@@ -111,7 +111,7 @@ if [[ -n "$TOOLS" ]]; then
 		fi
 	done <<<"$TOOLS"
 else
-	echo "No global tools installed — skipping"
+	echo "No global tools installed - skipping"
 fi
 
 # The mobile workloads the Hyper repos' C# legs build with: ios and maccatalyst
@@ -130,23 +130,23 @@ fi
 # manifest for the current band, and uninstalled if it's present without one.
 # Feature band = major.minor.N00 of the SDK version (11.0.203 -> 11.0.200).
 SDK_BAND=$(dotnet --version | sed -E 's/^([0-9]+\.[0-9]+)\.([0-9]+)[0-9]{2}.*/\1.\200/')
-log "dotnet workload — ios / maccatalyst / android (SDK band $SDK_BAND)"
+log "dotnet workload - ios / maccatalyst / android (SDK band $SDK_BAND)"
 for id in ios maccatalyst android; do
 	if curl -fs -o /dev/null "https://api.nuget.org/v3-flatcontainer/microsoft.net.sdk.$id.manifest-$SDK_BAND/index.json"; then
 		dotnet workload install "$id"
 	elif dotnet workload list | awk -v id="$id" '$1 == id {found = 1} END {exit !found}'; then
-		echo "$id: no $SDK_BAND manifest on NuGet yet — uninstalling the older band's workload"
+		echo "$id: no $SDK_BAND manifest on NuGet yet - uninstalling the older band's workload"
 		dotnet workload uninstall "$id"
 	else
-		echo "$id: no $SDK_BAND manifest on NuGet yet — skipping"
+		echo "$id: no $SDK_BAND manifest on NuGet yet - skipping"
 	fi
 done
 
-log "dotnet workload — workload updates"
+log "dotnet workload - workload updates"
 if dotnet workload list | awk '/^-+$/{t=1;next} /^Use `dotnet workload search`/{t=0} t && NF{f=1} END{exit !f}'; then
 	dotnet workload update
 else
-	echo "No workloads installed — skipping"
+	echo "No workloads installed - skipping"
 fi
 
 # Workload packs carry their own versions (iOS 27.0.12212-net11-rc.2, Android
@@ -156,10 +156,10 @@ fi
 # superseded SDKs gone, clean garbage-collects every manifest and pack no
 # surviving band references. (`workload install`/`update` above already run
 # the same GC for the newest band; this catches the rest.)
-log "dotnet workload — clean manifests/packs left by pruned SDKs"
+log "dotnet workload - clean manifests/packs left by pruned SDKs"
 dotnet workload clean
 
-# Preview/rc bands only — see header note on why GA bands are skipped. Must
+# Preview/rc bands only - see header note on why GA bands are skipped. Must
 # run AFTER the workload GC above, never before: GC uninstalls a recorded
 # manifest by deleting its sdk-manifests/<band>/<id>/<version> folder, and
 # throws ("Could not find a part of the path") if that folder is already

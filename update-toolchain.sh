@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Orchestrates scripts/update-*.sh — the executable version of TOOLCHAIN.md's
+# Orchestrates scripts/update-*.sh - the executable version of TOOLCHAIN.md's
 # "Full Update Pass". Safe to rerun any time; every module is written to be
 # a no-op (or a clean overwrite) when already current. See TOOLCHAIN.md for
 # what each module does and why.

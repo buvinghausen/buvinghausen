@@ -2,16 +2,16 @@
 # Swift on macOS is Apple's toolchain (swift.org's sits beside it only for
 # Swift SDKs, see below): the Command Line Tools
 # ship `swift`, `swift build`/SPM and `swift format`, and full Xcode adds the
-# platform SDKs (iOS — the Hyper repos' iOS smoke test) and Instruments/xctrace.
+# platform SDKs (iOS - the Hyper repos' iOS smoke test) and Instruments/xctrace.
 # Both update through Apple (`softwareupdate` / the App Store), so there is no
-# toolchain install or prune here — this module verifies the Apple side is
+# toolchain install or prune here - this module verifies the Apple side is
 # selected and keeps SwiftLint (the Hyper repos' lint-docs-swift CI gate)
 # current from Homebrew, which carries the same 0.65.x CI pins.
 #
 # Xcode itself is a manual App Store install (sudo one-time steps documented
 # in TOOLCHAIN-macos.md). When Xcode is present but not the selected developer
 # directory, this fails loudly with the exact commands rather than running
-# sudo — nothing in this pass runs as root. When it's absent, the CLT Swift is
+# sudo - nothing in this pass runs as root. When it's absent, the CLT Swift is
 # the toolchain and that is a documented state, not a failure.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -19,7 +19,7 @@ source ./lib-macos.sh
 
 log "Developer directory"
 DEV_DIR=$(xcode-select -p 2>/dev/null || true)
-[[ -n "$DEV_DIR" ]] || { echo "No developer directory selected — run \`xcode-select --install\`, or install Xcode (see TOOLCHAIN-macos.md)" >&2; exit 1; }
+[[ -n "$DEV_DIR" ]] || { echo "No developer directory selected - run \`xcode-select --install\`, or install Xcode (see TOOLCHAIN-macos.md)" >&2; exit 1; }
 echo "$DEV_DIR"
 if [[ -d /Applications/Xcode.app ]]; then
 	if [[ "$DEV_DIR" != /Applications/Xcode.app/* ]]; then
@@ -33,10 +33,10 @@ MSG
 	fi
 	xcodebuild -version
 else
-	echo "Xcode not installed — Command Line Tools Swift in use (iOS SDK / Instruments / XCTest unavailable until Xcode is added, see TOOLCHAIN-macos.md)"
+	echo "Xcode not installed - Command Line Tools Swift in use (iOS SDK / Instruments / XCTest unavailable until Xcode is added, see TOOLCHAIN-macos.md)"
 	# SwiftLint loads sourcekitdInProc from the selected toolchain and, with
 	# only the CLT selected, searches every Xcode path but not the CLT's
-	# (crashes, exit 133 — hit on the first run). TOOLCHAIN_DIR is the
+	# (crashes, exit 133 - hit on the first run). TOOLCHAIN_DIR is the
 	# override it honors; the CLT carries the framework under usr/lib. The
 	# guard makes the line a no-op once Xcode is selected instead.
 	export TOOLCHAIN_DIR="$DEV_DIR"
@@ -69,7 +69,7 @@ if [[ ! -x "$SWIFTLY" ]]; then
 	curl -fsSL -o "$SWIFTLY_TMP/swiftly.pkg" https://download.swift.org/swiftly/darwin/swiftly.pkg
 	# Notarized by swift.org's Developer ID; refuse anything else.
 	pkgutil --check-signature "$SWIFTLY_TMP/swiftly.pkg" | grep -F "Notarization: trusted by the Apple notary service" >/dev/null \
-		|| { echo "swiftly.pkg is not notarized — not installing it" >&2; exit 1; }
+		|| { echo "swiftly.pkg is not notarized - not installing it" >&2; exit 1; }
 	installer -pkg "$SWIFTLY_TMP/swiftly.pkg" -target CurrentUserHomeDirectory
 	rm -rf "$SWIFTLY_TMP"
 	"$SWIFTLY" init --no-modify-profile --skip-install --assume-yes --quiet-shell-followup
@@ -90,7 +90,7 @@ done < <(find "$HOME/Library/Developer/Toolchains" -maxdepth 1 -name 'swift-*-RE
 
 # Swift SDKs are installed per job (android_build_suite.sh installs the one
 # matching the toolchain on PATH) and only work with that exact release, so
-# a superseded one is dead weight — and worse: with 6.4.0's and 6.4.1's
+# a superseded one is dead weight - and worse: with 6.4.0's and 6.4.1's
 # Android SDKs both installed, `--swift-sdk aarch64-unknown-linux-android28`
 # stopped with "matched multiple SDKs". Every swift-<version>-RELEASE_* SDK
 # whose version is not the kept toolchain's is removed.

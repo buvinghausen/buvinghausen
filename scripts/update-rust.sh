@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Updates Rust via rustup and refreshes cargo-installed tooling.
-# rustup replaces the active toolchain in place — no separate cleanup needed.
+# rustup replaces the active toolchain in place - no separate cleanup needed.
 #
-# Bootstraps rustup itself when missing (fresh machine / fresh distro) —
+# Bootstraps rustup itself when missing (fresh machine / fresh distro) -
 # rustup-init.sh doesn't touch shell rc files on its own (verified: the
 # sh.rustup.rs wrapper just downloads and execs the real installer binary,
 # which leaves PATH wiring to the caller), so ~/.bashrc is appended here.
@@ -15,7 +15,7 @@ if [[ -f "$HOME/.cargo/env" ]]; then
 fi
 
 if ! command -v rustup >/dev/null 2>&1; then
-	log "rustup not found — bootstrapping (see TOOLCHAIN.md)"
+	log "rustup not found - bootstrapping (see TOOLCHAIN.md)"
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	append_bashrc_once "# Rust" <<'EOF'
 
@@ -24,7 +24,7 @@ source "$HOME/.cargo/env"
 EOF
 	source "$HOME/.cargo/env"
 fi
-require_cmd rustup "rustup install failed — check the installer output above"
+require_cmd rustup "rustup install failed - check the installer output above"
 
 log "rustup"
 rustup update
@@ -39,14 +39,14 @@ log "cargo tools"
 cargo install cargo-watch cargo-edit
 
 # samply: the sampling profiler for the native core (and, through it, every
-# language binding that loads it) — records via perf events, opens the result
+# language binding that loads it) - records via perf events, opens the result
 # in the Firefox Profiler UI. cargo-semver-checks: the local twin of the Hyper
 # repos' check-semver CI job. Both are `--locked` because that is the install
 # line each project's own README gives.
 log "samply (profiler) / cargo-semver-checks"
 cargo install --locked samply cargo-semver-checks
 
-log "cargo-nextest (prebuilt binary — building from source takes 15+ min, see TOOLCHAIN.md)"
+log "cargo-nextest (prebuilt binary - building from source takes 15+ min, see TOOLCHAIN.md)"
 NEXTEST_PLATFORM=$(uname -m | sed 's/x86_64/linux/;s/aarch64/linux-arm/')
 curl -LsSf "https://get.nexte.st/latest/${NEXTEST_PLATFORM}" | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
 

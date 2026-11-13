@@ -4,24 +4,24 @@
 # channel dropped at 11.0 GA).
 #
 # Every install below is a cheap no-op/overwrite to rerun. What isn't cheap
-# is that $DOTNET_ROOT never removes anything on its own — every channel
+# is that $DOTNET_ROOT never removes anything on its own - every channel
 # leaves its previous patch sitting side by side with the new one
 # indefinitely. The pruning below removes whatever isn't the newest GA
 # version of a tracked channel, across every location
 # .NET actually scatters a version's files into: sdk/, shared/*/, host/fxr/,
 # packs/*/, templates/. Those five are always keyed by the exact, full
 # version string (SDK version or runtime version, 1:1, verified by
-# inspecting $DOTNET_ROOT directly) — safe to remove by exact match.
+# inspecting $DOTNET_ROOT directly) - safe to remove by exact match.
 #
 # sdk-manifests/, sdk-advertising/, and metadata/workloads/ are NOT included
 # in that sweep except for preview/rc-qualified bands. Verified by
 # inspection: GA patches within the same feature band share ONE manifest
-# folder (10.0.301 and 10.0.302 both resolve to sdk-manifests/10.0.100) —
+# folder (10.0.301 and 10.0.302 both resolve to sdk-manifests/10.0.100) -
 # removing it because an old patch was superseded would break the SURVIVING
 # SDK, which still needs it. There's no reliable way to derive the GA
 # manifest-band string from the SDK version (it's a Microsoft-assigned
 # workload-set band, not a simple truncation), so GA bands are left alone
-# entirely — they're small (KBs, not the hundreds of MB sdk/shared/packs
+# entirely - they're small (KBs, not the hundreds of MB sdk/shared/packs
 # cost). Preview/rc bands are different: each preview number is its own
 # band (confirmed: preview.1 and preview.6 are separate folders), and with
 # no prerelease SDK kept, none of them is needed.
@@ -39,10 +39,10 @@ export DOTNET_NOLOGO=1
 
 # dotnet-install.sh below installs unconditionally regardless of whether
 # dotnet already exists, so bootstrapping is just persisting PATH for future
-# shells — dotnet-install.sh itself never touches ~/.bashrc (verified: it
+# shells - dotnet-install.sh itself never touches ~/.bashrc (verified: it
 # only patches PATH for its own process).
 if ! command -v dotnet >/dev/null 2>&1; then
-	log "dotnet not found — bootstrapping (see TOOLCHAIN.md)"
+	log "dotnet not found - bootstrapping (see TOOLCHAIN.md)"
 	append_bashrc_once "# .NET" <<'EOF'
 
 # .NET
@@ -73,7 +73,7 @@ newest_ga() { # $1 = newline-separated versions, $2.. = major.minor channels
 	shift
 	for ch in "$@"; do
 		v=$(grep -E "^${ch//./\\.}\\.[0-9]+$" <<<"$versions" | sort -V | tail -1 || true)
-		[[ -n "$v" ]] || { echo "no GA $ch version installed — refusing to prune" >&2; exit 1; }
+		[[ -n "$v" ]] || { echo "no GA $ch version installed - refusing to prune" >&2; exit 1; }
 		echo "$v"
 	done
 }
@@ -114,16 +114,16 @@ prune_sdks
 prune_runtime Microsoft.NETCore.App
 prune_runtime Microsoft.AspNetCore.App
 
-log "dotnet new — template updates"
+log "dotnet new - template updates"
 dotnet new update
 
 # The update loop below only ever touches tools that are already installed,
 # so the diagnostics pair this toolchain expects gets its first install here:
-# dotnet-trace (EventPipe CPU/event traces — .nettrace, convertible to
+# dotnet-trace (EventPipe CPU/event traces - .nettrace, convertible to
 # speedscope) and dotnet-counters (live runtime counters: GC, allocation rate,
-# thread pool, exceptions). Formatting needs no tool — `dotnet format` is part
+# thread pool, exceptions). Formatting needs no tool - `dotnet format` is part
 # of the SDK.
-log "dotnet tool — diagnostics tools (dotnet-trace, dotnet-counters)"
+log "dotnet tool - diagnostics tools (dotnet-trace, dotnet-counters)"
 for id in dotnet-trace dotnet-counters; do
 	if dotnet tool list --global | awk -v id="$id" 'NR > 2 && $1 == id {found = 1} END {exit !found}'; then
 		echo "$id already installed"
@@ -132,13 +132,13 @@ for id in dotnet-trace dotnet-counters; do
 	fi
 done
 
-log "dotnet tool — global tool updates"
+log "dotnet tool - global tool updates"
 # Per-tool instead of `--all`: dotnet-ef rode the 11.0 preview channel
 # alongside the preview SDK, and `--all` hard-fails the moment any installed
 # tool is newer than its latest *stable* ("requested version 10.0.10 is lower
 # than existing version 11.0.0-preview.x"), killing the whole run. Policy:
 # a tool whose installed version is a prerelease keeps tracking prereleases;
-# everything else tracks stable. Self-healing at GA — stable outranks its own
+# everything else tracks stable. Self-healing at GA - stable outranks its own
 # previews, so `--prerelease` rolls the tool onto the GA version and the next
 # run's version check stops matching, dropping it back to stable-only.
 TOOLS=$(dotnet tool list --global | tail -n +3 | awk 'NF {print $1, $2}')
@@ -151,14 +151,14 @@ if [[ -n "$TOOLS" ]]; then
 		fi
 	done <<<"$TOOLS"
 else
-	echo "No global tools installed — skipping"
+	echo "No global tools installed - skipping"
 fi
 
-log "dotnet workload — workload updates"
+log "dotnet workload - workload updates"
 if dotnet workload list | awk '/^-+$/{t=1;next} /^Use `dotnet workload search`/{t=0} t && NF{f=1} END{exit !f}'; then
 	dotnet workload update
 else
-	echo "No workloads installed — skipping"
+	echo "No workloads installed - skipping"
 fi
 
 # Workload packs carry their own versions (iOS 27.0.12212-net11-rc.2, Android
@@ -168,10 +168,10 @@ fi
 # superseded SDKs gone, clean garbage-collects every manifest and pack no
 # surviving band references. (`workload install`/`update` above already run
 # the same GC for the newest band; this catches the rest.)
-log "dotnet workload — clean manifests/packs left by pruned SDKs"
+log "dotnet workload - clean manifests/packs left by pruned SDKs"
 dotnet workload clean
 
-# Preview/rc bands only — see header note on why GA bands are skipped. Must
+# Preview/rc bands only - see header note on why GA bands are skipped. Must
 # run AFTER the workload GC above, never before: GC uninstalls a recorded
 # manifest by deleting its sdk-manifests/<band>/<id>/<version> folder, and
 # throws ("Could not find a part of the path") if that folder is already

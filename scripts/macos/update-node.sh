@@ -5,7 +5,7 @@
 # its own, so every installed version except `fnm current` is uninstalled.
 #
 # Darwin differences: fnm comes from Homebrew (fnm's own curl installer just
-# shells out to `brew install fnm` on macOS and then edits ~/.zshrc itself —
+# shells out to `brew install fnm` on macOS and then edits ~/.zshrc itself -
 # calling brew directly keeps the rc wiring under append_zshrc_once like
 # every other module here), and the shell hook is zsh's.
 set -euo pipefail
@@ -25,9 +25,9 @@ log "Node.js (fnm lts-latest)"
 fnm install --lts
 fnm default lts-latest
 
-# npm only lands on PATH once a node version is installed and active above —
+# npm only lands on PATH once a node version is installed and active above -
 # checked here, not before, so this also works on a first-ever bootstrap.
-require_cmd npm "npm not found on PATH after fnm install — check fnm install"
+require_cmd npm "npm not found on PATH after fnm install - check fnm install"
 
 NODE_KEEP=$(fnm current)
 log "Pruning stale Node.js versions (keeping ${NODE_KEEP})"

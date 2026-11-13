@@ -143,3 +143,66 @@
 02:24:40 [flashnext-q3-quality] saved C:\Users\buvy\AppData\Local\Temp\claude\7514d7f2a4f13b04\14f60e6a-6af2-4814-b219-0f913f184bfa\scratchpad\bench\results\flashnext-q3-quality.json
 02:25:31 [flashnext-cap] parallel=2 ctx=262144 (128K/slot) -> LOADED; GPU 68176 MiB, 98304 MiB; host RAM free 0.5 GB
 02:25:41 PHASE 2b DONE
+12:26:17 PHASE 3 START (Flash-Next UD-IQ4_XS + MTP n=3, NVIDIA recipe on b12110)
+12:26:17 download Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+12:26:18 verified Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf (0.01 GB)
+12:26:18 download Qwen3.8-Flash-Next-UD-IQ4_XS-00002-of-00003.gguf
+12:44:11 verified Qwen3.8-Flash-Next-UD-IQ4_XS-00002-of-00003.gguf (46.41 GB)
+12:44:11 download Qwen3.8-Flash-Next-UD-IQ4_XS-00003-of-00003.gguf
+13:02:14 verified Qwen3.8-Flash-Next-UD-IQ4_XS-00003-of-00003.gguf (40.83 GB)
+13:02:14 download mmproj-BF16.gguf
+13:02:30 verified mmproj-BF16.gguf (0.85 GB)
+13:02:30 download mtp-Qwen3.8-Flash-Next-Q8_0.gguf
+13:03:38 verified mtp-Qwen3.8-Flash-Next-Q8_0.gguf (3.85 GB)
+13:03:38 stopping production (control\stop)
+13:03:49 production stopped; GPU 904 MiB [N/A]
+13:03:49 [flashnext-iq4-mtp] starting server: Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf draft=False ctx=262144
+13:04:00 PHASE 3 KILLED by hand after downloads (NVIDIA driver 621.24 installed mid-run; reboot first, then rerun phase3.ps1)
+13:13:22 PHASE 3 START (Flash-Next UD-IQ4_XS + MTP n=3, NVIDIA recipe on b12110)
+13:13:22 have Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+13:17:06 have Qwen3.8-Flash-Next-UD-IQ4_XS-00002-of-00003.gguf
+13:20:21 have Qwen3.8-Flash-Next-UD-IQ4_XS-00003-of-00003.gguf
+13:20:25 have mmproj-BF16.gguf
+13:20:44 have mtp-Qwen3.8-Flash-Next-Q8_0.gguf
+13:20:44 stopping production (control\stop)
+13:20:54 production stopped; GPU 493 MiB [N/A]
+13:20:55 [flashnext-iq4-mtp] starting server: Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf draft=False ctx=262144
+13:21:25 [flashnext-iq4-mtp] ready in 30s
+13:21:39 [flashnext-iq4-mtp] prefill 4096 -> 931.9 tok/s (prod_busy=)
+13:22:21 [flashnext-iq4-mtp] prefill 16384 -> 883.2 tok/s (prod_busy=)
+13:25:15 [flashnext-iq4-mtp] prefill 65536 -> 775.4 tok/s (prod_busy=)
+13:25:38 [flashnext-iq4-mtp] gen code#1 -> 51.3 tok/s, n=1024, accept=0.721 (prod_busy=)
+13:25:59 [flashnext-iq4-mtp] gen code#2 -> 55.1 tok/s, n=1024, accept=0.807 (prod_busy=)
+13:26:28 [flashnext-iq4-mtp] gen prose#1 -> 38.8 tok/s, n=1024, accept=0.486 (prod_busy=)
+13:26:58 [flashnext-iq4-mtp] gen prose#2 -> 36.6 tok/s, n=1024, accept=0.436 (prod_busy=)
+13:34:26 [flashnext-iq4-mtp] quality iso_duration#1 -> FAIL: no code block (16384 tok, 448s)
+13:42:03 [flashnext-iq4-mtp] quality iso_duration#2 -> FAIL: ^^^^^^^^^^^^^^ NameError: name 'parse_duration' is not defined (16384 tok, 457s)
+13:42:31 [flashnext-iq4-mtp] quality lru_cache#1 -> PASS (1011 tok, 28s)
+13:42:42 [flashnext-iq4-mtp] quality lru_cache#2 -> PASS (456 tok, 11s)
+13:43:20 [flashnext-iq4-mtp] quality merge_intervals#1 -> PASS (1293 tok, 37s)
+13:45:51 [flashnext-iq4-mtp] quality merge_intervals#2 -> PASS (5511 tok, 151s)
+13:53:59 [flashnext-iq4-mtp] quality calc#1 -> FAIL: ^^^^^^^^ NameError: name 'evaluate' is not defined (16384 tok, 488s)
+14:02:01 [flashnext-iq4-mtp] quality calc#2 -> PASS (16384 tok, 482s)
+14:03:23 [flashnext-iq4-mtp] quality toposort#1 -> PASS (2946 tok, 81s)
+14:08:02 [flashnext-iq4-mtp] quality toposort#2 -> PASS (9851 tok, 279s)
+14:16:14 [flashnext-iq4-mtp] quality csv_line#1 -> FAIL: if closed: IndentationError: unexpected indent (16384 tok, 492s)
+14:22:02 [flashnext-iq4-mtp] quality csv_line#2 -> PASS (11713 tok, 349s)
+14:27:35 [flashnext-iq4-mtp] quality roman#1 -> PASS (11641 tok, 332s)
+14:33:29 [flashnext-iq4-mtp] quality roman#2 -> PASS (12581 tok, 355s)
+14:34:05 [flashnext-iq4-mtp] quality dijkstra#1 -> PASS (1141 tok, 36s)
+14:35:07 [flashnext-iq4-mtp] quality dijkstra#2 -> PASS (2126 tok, 62s)
+14:37:06 [flashnext-iq4-mtp] quality rle#1 -> PASS (3915 tok, 119s)
+14:40:42 [flashnext-iq4-mtp] quality rle#2 -> PASS (7509 tok, 216s)
+14:48:08 [flashnext-iq4-mtp] quality semver#1 -> PASS (16384 tok, 446s)
+14:56:11 [flashnext-iq4-mtp] quality semver#2 -> FAIL: ^^^^^ SyntaxError: invalid syntax (16384 tok, 483s)
+15:04:09 [flashnext-iq4-mtp] quality palindrome#1 -> FAIL: ^ NameError: name 'n' is not defined (16384 tok, 477s)
+15:05:55 [flashnext-iq4-mtp] quality palindrome#2 -> PASS (3778 tok, 106s)
+15:07:57 [flashnext-iq4-mtp] quality justify#1 -> PASS (4436 tok, 122s)
+15:09:07 [flashnext-iq4-mtp] quality justify#2 -> PASS (2382 tok, 70s)
+15:09:07 [flashnext-iq4-mtp] QUALITY 18/24
+15:09:07 [flashnext-iq4-mtp] saved D:\src\buvinghausen\buvinghausen\spark\bench\results\flashnext-iq4-mtp.json
+15:09:52 [flashnext-iq4-cap] parallel=2 ctx=524288 (256K/slot) -> LOADED; GPU 85641 MiB; host RAM free 19.1 GB
+15:10:07 starting production (removing control\stop)
+15:10:08 [watchdog] stopped; while a bench server ran: min host free 2268 MB, max GPU used 85641 MiB
+15:10:37 production health: ok
+15:10:37 PHASE 3 DONE

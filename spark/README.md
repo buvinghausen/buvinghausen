@@ -1,4 +1,4 @@
-# surfacespark — the RTX Spark inference box
+# surfacespark - the RTX Spark inference box
 
 Machine record for the Surface Laptop Ultra with an NVIDIA RTX Spark (N1X): Windows 11 26H1 build 28000 (release channel, not Insider), ARM64, GPU memory split **96 / 32** (kept on purpose). Tailscale `100.114.43.34`. Its job: a dedicated `llama-server` for the Hermes agent hub on the M6 Mac mini `pebble` (`100.110.233.121`). Planned host renames, held until a reboot is convenient: surfacespark → `spark`, pebble → `build`.
 
@@ -19,7 +19,7 @@ The scripts in this folder are the ones actually used on the box, collected 2026
   - `prod-restart` touches `control\restart`.
   - `prod-status` shows the status file, the flag and the 9931 listener.
 
-**State: RUNNING since 2026-11-09 06:18.** `prod-start.ps1` worked first time, which was the first live test of the supervisor's start path: listening in 6 s, healthy in about 5 s more, 66–77 tok/s on a short code prompt with thinking off.
+**State: RUNNING since 2026-11-09 06:18.** `prod-start.ps1` worked first time, which was the first live test of the supervisor's start path: listening in 6 s, healthy in about 5 s more, 66-77 tok/s on a short code prompt with thinking off.
 
 ## Benchmarks (`bench\`, 2026-11-08 → 09)
 
@@ -28,14 +28,51 @@ Harness `bench\bench.ps1` (prefill, generation, and 12 Python tasks × 2 with th
 | | Code / prose tok/s | Quality |
 |---|---|---|
 | 27B Q4 + DFlash | **43.0 / 23.1** | **21/24** |
-| 27B Q4, no draft | 15.6 / 15.5 | — |
+| 27B Q4, no draft | 15.6 / 15.5 | - |
 | 27B Q8 + DFlash | 32.3 / 16.9 | 17/24 |
-| 27B Q8, no draft | 9.4 / 9.6 | — |
+| 27B Q8, no draft | 9.4 / 9.6 | - |
 | Flash-Next UD-Q3_K_XL, no draft | 36 / 36 | 19/24 |
+| Flash-Next UD-IQ4_XS + MTP n=3 (NVIDIA recipe, 2026-11-12) | **53.2 / 37.7** | 18/24 |
+
+**Flash-Next on NVIDIA's RTX Spark recipe** (`bench\phase3.ps1`, 2026-11-12):
+- **Setup:**
+  - llama.cpp b12110 instead of the recipe's b11617, and driver 621.24 instead of the recipe's 617.06.
+  - Weights: unsloth UD-IQ4_XS, the 3-shard upload at commit `38bb39e`, which the recipe pins for its mmproj. Main has since been re-quantized into 4 shards. The files live in `D:\models\qwen3.8-flash-next`.
+  - Flags: `-lzm on`, `-ngl auto`, `-fa on`, batch 2048, the BF16 mmproj, and the ggml-org MTP Q8_0 draft with n-max 3.
+- **Speed:**
+  - Prefill 932 / 883 / 775 tok/s at 4K / 16K / 64K, the fastest of all runs.
+  - Draft acceptance 72-81% on code and 44-49% on prose.
+- **Memory:**
+  - 1 × 256K: 76.5 GB GPU and 19.8 GB host free at load. `-lzm on` keeps the 87 GB of weights from spilling into host RAM; the Q3 run without it left 0.5 GB.
+  - Production shape, 2 × 256K, loads at 85.6 GB GPU with 19.1 GB host free.
+- **Quality 18/24.** All 6 failures hit the 16K thinking cap: iso_duration ×2, calc, csv_line, semver and palindrome. It thinks longer than the 27B.
+- **Open: host free RAM fell steadily while the bench server ran,** from 19.8 GB at load to 2.27 GB after 1.75 h (`logs\phase3-mem.csv`). It recovered when the server stopped. The cause is unknown. Candidates: `--cache-ram` (default 8192 MiB), lazy-mode file reads counted against free, or the WSL test VM. Log Windows "Available" alongside free before trialling it as production.
 
 Prefill is about the same for all (~885 / 835 / 650 tok/s at 4K / 16K / 64K). Most quality failures were the 16K thinking cap. Flash-Next with 2 slots × 128K loads, but it uses 68 GB of GPU memory and leaves the host 0.5 GB of free RAM, so it was rejected. Q8 buys nothing: memory bandwidth bounds this box, so smaller weights plus speculative decoding win. Hosting models inside WSL2 was considered and rejected: same engine, no speed gain, and it takes RAM from the 32 GB side.
 
 Gotchas found: b12110 has no `--no-mmap`; use `--load-mode none`. Claude Code background shells get reaped under memory pressure, so start long runs detached (`Start-Process`). When waiting for a log marker, match it case-sensitively and anchored (`'^\d\d:\d\d:\d\d PHASE 1 DONE$'`), or the waiter matches its own waiting message.
+
+## Services sweep (`services\`, 2026-11-12)
+
+Rule: anything that might be used is **Manual** (starts on demand, off at boot); only never-used services are **Disabled**. `services\admin-services-sweep.ps1` applies it and is safe to re-run. It records each target's original start type and status in `services-baseline.json` before changing it. `admin-services-restore.ps1` puts that state back. Output goes to `services-sweep.log`.
+- **Disabled:** Spooler, MapsBroker, PhoneSvc, RasMan, SstpSvc, SSDPSRV, FDResPub, fdPHost, NcdAutoSetup, lmhosts, QWAVE, InventorySvc, PcaSvc, wuqisvc, WSearch.
+- **Manual:** SysMain, WSAIFabricSvc, OptionsPlusUpdaterService, DellTechHub, DellClientManagementService, WSLService, vmcompute, hns, nvagent. `wsl --status` was confirmed to start a Manual WSLService on demand.
+- **Surface services stay Automatic and running:** SurfaceService (Integration), SurfaceMachineLearningService, SurfaceExperienceService and SurfaceThermalService.
+  - Surface ML was briefly set to Manual by the first sweep and was reverted the same day. A Microsoft Q&A accepted answer (not official docs) says it does adaptive performance, thermal and battery tuning, and that Experience handles firmware communication and battery-health reporting. Neither should be off on a box under sustained GPU load.
+  - SurfaceService was switched Auto → Manual at 12:02 on 2026-11-12. The sweep didn't do it, and the System log (event 7040) doesn't record who did. It's back on Automatic. If it flips again, look for event 7040.
+- **Couldn't change:** SurfaceExperienceService and CodexSandboxService.OpenAI.Codex. Both are MSIX-packaged services (`WIN32_PACKAGED_PROCESS`, binaries under `C:\Program Files\WindowsApps`). Their service ACL lets Authenticated Users start and stop them but gives Administrators no config right, so both stay Automatic. Surface Experience is wanted running anyway. Codex can be stopped without admin (`Stop-Service CodexSandboxService.OpenAI.Codex`) but comes back at boot. Forcing it would mean taking ownership of the service's security descriptor, and an app update re-registers the service anyway, so they were left alone.
+- **Kept on purpose:** sshd, Tailscale, LanmanServer (Hermes share), Remote Desktop (TermService, SessionEnv, UmRdpService; Manual by default, for RDP over Tailscale away from home), DDPM KVM, DPMService, NVIDIA, the Surface services above, Defender, XtaCache (x64 emulation), Windows Update.
+
+**RAM trim, same day.** Goal: as much free host RAM as possible. Keep DDPM (KVM), RDP and Tailscale.
+- **Dell Core Services** 1.16.67 must stay installed. It was uninstalled through its MSI (TechHub, MyDell, the update service, their two services), and the KVM kept working only until the next reboot. After that, DDPM's session components (`DDPM.Subagent`, `DDPM.Subagent.User`, `DDPM-NKVM`, the network service) no longer started and DDPM showed 0 devices. DDPM 2.4 installs Core Services itself as a bundled component (`C:\ProgramData\Dell\DDPM.Subagent\dcs-<ver>.log`). The fix was a Repair from `C:\Program Files\Dell\Dell Display and Peripheral Manager\Installer\setup.exe -runfromtemp`, which brought back the devices and the KVM. Repair also resets `DellTechHub` and `DellClientManagementService` to Automatic. Both were set back to Manual and stopped, and the KVM survived a reboot that way (2026-11-12). After the reboot only `DDPMNetworkKVMService`, `DDPM-NKVM` and the Dell Display Manager Network Service run, and host free RAM was 21.7 GB with production loaded. Core Services has to be *installed*; it doesn't have to be *running*.
+- **Dell Peripheral Core** (`DPMService` + `DPM.exe`, ~170 MB) stays installed for UltraSharp and webcam firmware updates. `DPMService` is set to Manual; start it when updating firmware. The Network KVM was confirmed working with it stopped.
+- **NVIDIA App overlay** was turned off in NVIDIA App → Settings → Features, saving ~500 MB. The NVIDIA App container and driver stay.
+- **Windows Search UI is fully off:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search` `DisableSearch` = 1 (DWORD), the documented "Fully disable Search UI" policy (Policy CSP Search/DisableSearch). SearchHost and its 6 WebView2 processes (~550-600 MB) no longer run, and free host RAM was 21.2 GB after it.
+  - The per-user `DisableSearchBoxSuggestions` = 1 under `HKCU\Software\Policies\Microsoft\Windows\Explorer` was tried first and saved almost nothing (602 → 534 MB), because SearchHost preloads at login anyway. It is still set and harmless.
+  - Restarting Explorer is enough to apply either policy; signing out would kill detached bench runs.
+- **Surface app UI** (`SurfaceApp.Desktop`, ~250 MB) was auto-launched at login by `SurfaceAppStartup.exe`, its packaged startup task, and was killed. If it comes back after a reboot, disable the startup task.
+
+**Remote Desktop over Tailscale only** (`rdp\admin-rdp-tailscale.ps1`, 2026-11-12). RDP is enabled. All built-in Remote Desktop firewall rules (User Mode TCP/UDP, Shadow) were open to every remote address. They are now scoped to `100.64.0.0/10` and `fd7a:115c:a1e0::/48` (the tailnet). The scope is set on disabled rules too, so toggling RDP keeps it. Connect away from home by Tailscale IP or MagicDNS name.
 
 ## Modern Standby (important)
 
@@ -44,14 +81,14 @@ On this machine, **display off = Modern Standby** (Kernel-Power events 506/507),
 - The screensaver doesn't run over the **lock screen**, which governs itself with its own display timeout (set to never). Locking while docked-dark therefore leaves the lock screen on the OLED.
 - **Guard, installed 2026-11-09** (`llama\admin-powerguard.ps1`):
   - While llama-server runs **on AC**, the supervisor holds `PowerSetRequest` SystemRequired + ExecutionRequired.
-  - The reason string is "llama-server is serving inference…". It shows in an elevated `powercfg /requests` (`llama\admin-requests.ps1`, read-only); confirmed there, owned by the supervisor's `powershell.exe`. `supervisor.log` records each hold and release.
+  - The reason string is "llama-server is serving inference...". It shows in an elevated `powercfg /requests` (`llama\admin-requests.ps1`, read-only); confirmed there, owned by the supervisor's `powershell.exe`. `supervisor.log` records each hold and release.
   - On battery the request is released, so a closed lid in a bag still sleeps.
   - The same script set the lock-screen display timeout `VIDEOCONLOCK` to 60 s on AC. The value lives in the registry under the Balanced scheme; `powercfg /q` hides it.
 - **Open: the screen didn't turn off at the lock screen.** Locked with production running, the OLED never went dark, and there were no Kernel-Power events. `powercfg /requests` shows no DISPLAY request. Main suspect: DDPM's network KVM feeding input to the Surface while the Mac is in use, which resets the 60 s idle timer. Next step: lock, keep using the Mac, and log `GetLastInputInfo` idle time (the scratch logger for this was `idlewatch.ps1`; re-create it when needed). Once the screen does go off, run `llama\locktest.ps1` from pebble over SSH. Pass = normal tok/s and no Kernel-Power 506.
 
 ## Desk automation (`desk\kbm-autoswitch.ps1`)
 
-A per-user task `KbmAutoSwitch`, installed by `desk\install-kbm-autoswitch.ps1` (no admin), with three states. It runs headless (`conhost.exe --headless powershell.exe …`, so there is no console window), starts at logon, and has a 5-minute watchdog trigger (IgnoreNew, so that trigger only restarts it if it has exited):
+A per-user task `KbmAutoSwitch`, installed by `desk\install-kbm-autoswitch.ps1` (no admin), with three states. It runs headless (`conhost.exe --headless powershell.exe ...`, so there is no console window), starts at logon, and has a 5-minute watchdog trigger (IgnoreNew, so that trigger only restarts it if it has exited):
 
 | State | Detected by | Keyboard | OLED |
 |---|---|---|---|
@@ -76,7 +113,7 @@ The swap is in PowerToys Keyboard Manager's `default.json`, which hot-reloads; t
   - xps-15-9510 is a destination only, for local x64 builds; it accepts skywalker, surfacespark and pebble.
   - The work machine: RDP only, no SSH, and tagged `tag:sink` in Tailscale, so it can't start any outbound tailnet connection.
 - `ssh\make-sshd-bundle.ps1 -Target <host> -Keys a,b,c` generates a self-contained elevated setup script for another Windows machine (installs the capability via dism).
-- Gotchas: `Add-WindowsCapability` fails in pwsh 7 with "Class not registered" (use 5.1 or dism). The other DISM-module cmdlets (`Get-WindowsOptionalFeature`, `Get-AppxProvisionedPackage`, …) are worse: they hit the same `0x80040154` and keep retrying for minutes before failing with the same error (see Windows Security below). sshd takes the first value it sees for each setting, so managed settings are prepended.
+- Gotchas: `Add-WindowsCapability` fails in pwsh 7 with "Class not registered" (use 5.1 or dism). The other DISM-module cmdlets (`Get-WindowsOptionalFeature`, `Get-AppxProvisionedPackage`, ...) are worse: they hit the same `0x80040154` and keep retrying for minutes before failing with the same error (see Windows Security below). sshd takes the first value it sees for each setting, so managed settings are prepended.
 - Still open: the ssh-agent on the Spark (the key has a passphrase).
 
 ## Dev environment
@@ -152,7 +189,7 @@ Both scripts are safe to re-run and are elevated like the others; each writes a 
   - **What's actually in place (2026-11-11): Wi-Fi only, set by hand, script not run.** Settings → Network → Wi-Fi → Hardware properties → DNS: manual, IPv4 `45.90.28.0`/`45.90.30.0` and the config's linked IPv6 pair, DoH on with manual template `https://dns.nextdns.io/<id>`. Settings stores this per adapter (`HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\InterfaceSpecificParameters\{guid}\DohInterfaceSettings`, `DohFlags=2`), not in the global DoH table the script uses, so don't mix the two on one adapter. test.nextdns.io: ok / DOH. The USB 2.5GbE isn't covered yet; do it in Settings the same way when it's plugged in, and add `/surfacespark` to the template so the logs name the box instead of `unknown-doh`.
 - **By hand, no policy available:**
   - Lock-screen Spotlight (Bing images). The policy `DisableWindowsSpotlightFeatures` is Enterprise only. Settings → Personalization → Lock screen → **Picture**. Done 2026-11-11; `RotatingLockScreenEnabled=0`. Do the same for the desktop background if it's ever set to Spotlight.
-    - The "Get fun facts, tips, tricks…" checkbox doesn't appear on 26H1 build 28000, but its per-user values do. They were set directly, without admin: `HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager`, `RotatingLockScreenOverlayEnabled=0` and `SubscribedContent-338387Enabled=0`.
+    - The "Get fun facts, tips, tricks..." checkbox doesn't appear on 26H1 build 28000, but its per-user values do. They were set directly, without admin: `HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager`, `RotatingLockScreenOverlayEnabled=0` and `SubscribedContent-338387Enabled=0`.
   - **Office: removed 2026-11-10.** No Microsoft account sign-in anywhere on this box, and Microsoft 365 requires one.
     - Removed: the Microsoft 365 Click-to-Run apps, `%LOCALAPPDATA%\Microsoft\Office` (671 MB), `HKCU\Software\Microsoft\Office\16.0`, the new Outlook (`Microsoft.OutlookForWindows`, uninstalled and removed from the Windows image with `dism.exe`), the leftover OneDrive folders, and a broken `Run\Teams` entry for the native Teams app.
     - Re-scanned clean the same day: no Office/OneDrive folders, Click-to-Run registration, services, scheduled tasks or app packages. The only uninstall entry left is the Teams PWA, which lives in Brave and stays.

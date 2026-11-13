@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------
-# GitHub SSH key setup — Windows (PowerShell)
+# GitHub SSH key setup - Windows (PowerShell)
 #
 # Run this in a Windows PowerShell terminal (not WSL) if you also commit
 # from native Windows tools (PowerShell, Git Bash, VS Code without Remote-WSL).
 #
 # It will NOT overwrite an existing key at the target path.
-# You will be prompted once to set a passphrase for the new key — that's
+# You will be prompted once to set a passphrase for the new key - that's
 # expected and recommended.
 # ---------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ if (-not (Test-Path $SshDir)) {
 }
 
 if (Test-Path $KeyPath) {
-    Write-Host "A key already exists at $KeyPath — skipping generation."
+    Write-Host "A key already exists at $KeyPath - skipping generation."
     Write-Host "(Delete $KeyPath and $KeyPath.pub first if you want to regenerate.)"
 } else {
     ssh-keygen -t ed25519 -C $Email -f $KeyPath
@@ -50,7 +50,7 @@ Host github.com
 }
 
 Write-Host ""
-Write-Host "== Done. Your PUBLIC key (safe to share) — paste this into =="
+Write-Host "== Done. Your PUBLIC key (safe to share) - paste this into =="
 Write-Host "== GitHub > Settings > SSH and GPG keys > New SSH key (type: Authentication Key) =="
 Write-Host ""
 Get-Content "$KeyPath.pub"

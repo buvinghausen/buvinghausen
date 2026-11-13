@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Updates Python via pyenv (standard + free-threaded builds) and removes the
 # superseded global build once the new one is active. Darwin twin of
-# scripts/update-python.sh — read that header for the flavor-preservation
+# scripts/update-python.sh - read that header for the flavor-preservation
 # policy (standard/GIL-enabled is the global default; free-threaded `t` is
 # opt-in via `pyenv local`/`pyenv shell`).
 #
 # Darwin differences: build deps from Homebrew (python-build finds Homebrew's
 # openssl@3/readline/sqlite/xz/zlib itself); ~/.zshrc; no tcl-tk (Homebrew's
-# tcl-tk@8 is deprecated and nothing here needs tkinter — pyenv builds without
+# tcl-tk@8 is deprecated and nothing here needs tkinter - pyenv builds without
 # it and says so in its warnings). py-spy's arm64 wheel installs fine, but
 # attaching to a running process needs sudo on macOS (SIP); `py-spy record --
 # python x.py` does not.
@@ -17,7 +17,7 @@ source ./lib-macos.sh
 
 export PYENV_ROOT="$HOME/.pyenv"
 if [[ ! -d "$PYENV_ROOT/bin" ]]; then
-	log "pyenv not found — bootstrapping (see TOOLCHAIN-macos.md)"
+	log "pyenv not found - bootstrapping (see TOOLCHAIN-macos.md)"
 
 	log "Build dependencies (shared Homebrew list, see lib-macos.sh)"
 	brew_build_deps

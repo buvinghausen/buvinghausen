@@ -8,7 +8,7 @@ Design and rationale: [`spec.md`](spec.md). DNS background: [`../WSL-GSA-DNS-fix
 
 ## Install
 
-**Windows** — register the logon task, then start it:
+**Windows** - register the logon task, then start it:
 
 ```powershell
 cd C:\Users\buvy\gsa-bridge\install
@@ -16,7 +16,7 @@ cd C:\Users\buvy\gsa-bridge\install
 Start-ScheduledTask -TaskName gsa-bridge
 ```
 
-**WSL** — update `/etc/hosts`, install the service:
+**WSL** - update `/etc/hosts`, install the service:
 
 ```bash
 cd /mnt/c/Users/buvy/gsa-bridge/wsl
@@ -39,7 +39,7 @@ az keyvault secret list --vault-name vault-dev
 curl https://file-dev.blob.core.windows.net/
 ```
 
-`az login` works without the bridge — Entra endpoints are public and reach the internet directly. The bridge carries only the data plane.
+`az login` works without the bridge - Entra endpoints are public and reach the internet directly. The bridge carries only the data plane.
 
 ## Check it
 
@@ -64,7 +64,7 @@ both systemd units `active`, the `/etc/hosts` block re-applied, and 22/22 tests 
 TDS and TLS checks. Nothing needed a manual step.
 
 Note that GSA handed out an entirely different set of synthetic IPs on that boot. That is expected and is
-exactly why the Windows relay resolves per connection instead of caching — see `spec.md`, "Lazy,
+exactly why the Windows relay resolves per connection instead of caching - see `spec.md`, "Lazy,
 per-connection resolution".
 
 To re-confirm after any later reboot:
@@ -104,7 +104,7 @@ sudo systemctl restart gsa-bridge    # WSL side
 Stop-ScheduledTask -TaskName gsa-bridge; Start-ScheduledTask -TaskName gsa-bridge
 ```
 
-Existing rows are never renumbered — `--assign` only fills in `-` placeholders. A host that already has an address reuses it when you add another port.
+Existing rows are never renumbered - `--assign` only fills in `-` placeholders. A host that already has an address reuses it when you add another port.
 
 ## Troubleshooting
 
@@ -116,7 +116,7 @@ Existing rows are never renumbered — `--assign` only fills in `-` placeholders
 | Name resolves to a public IP in WSL | `/etc/hosts` block missing or stale. Re-run `sudo python3 wsl/sync_hosts.py`. |
 | Certificate errors | Confirm you're using the same hostname as on Windows. The bridge doesn't terminate TLS, so cert behavior is identical to Windows. |
 
-Both relays are passive: they bind loopback sockets at startup and touch nothing until a client connects. Starting before GSA has authenticated is expected and fine — resolution happens per connection, so the bridge starts working the moment GSA is ready, with no restart.
+Both relays are passive: they bind loopback sockets at startup and touch nothing until a client connects. Starting before GSA has authenticated is expected and fine - resolution happens per connection, so the bridge starts working the moment GSA is ready, with no restart.
 
 ## Layout
 

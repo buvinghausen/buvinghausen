@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs TOOLCHAIN-macos.md's Base Dependencies block — the Homebrew formulae
+# Installs TOOLCHAIN-macos.md's Base Dependencies block - the Homebrew formulae
 # every other module's from-source build assumes are already present (pyenv's
 # and ruby-build's headers, autotools, and Homebrew bash for the scripts
 # themselves). The list lives in lib-macos.sh's brew_build_deps so the
@@ -17,7 +17,7 @@ brew update
 
 log "Xcode Command Line Tools"
 if ! xcode-select -p >/dev/null 2>&1; then
-	echo "No developer directory selected — run \`xcode-select --install\` (or install Xcode) first; every compile below needs it" >&2
+	echo "No developer directory selected - run \`xcode-select --install\` (or install Xcode) first; every compile below needs it" >&2
 	exit 1
 fi
 xcode-select -p

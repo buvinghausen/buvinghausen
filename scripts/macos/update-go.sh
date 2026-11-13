@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Updates Go, gopls, Delve, revive, benchstat, and TinyGo. Removes the superseded
 # ~/.local/go install (and the superseded ~/.local/tinygo tree) before laying
-# down a new version — neither coexists side by side. Darwin twin of
+# down a new version - neither coexists side by side. Darwin twin of
 # scripts/update-go.sh: the differences are the `darwin-arm64` asset names,
 # ~/.zshrc as the rc file, and Go's tree living user-owned under ~/.local/go
 # instead of /usr/local/go (no sudo anywhere in this pass; Go finds its own
@@ -15,7 +15,7 @@ TINYGO_HOME="$HOME/.local/tinygo"
 export PATH="$PATH:$GO_HOME/bin:$HOME/go/bin:$TINYGO_HOME/bin"
 
 if ! command -v go >/dev/null 2>&1; then
-	log "Go not found — bootstrapping (see TOOLCHAIN-macos.md)"
+	log "Go not found - bootstrapping (see TOOLCHAIN-macos.md)"
 	append_zshrc_once "# Go" <<'EOF2'
 
 # Go
@@ -29,7 +29,7 @@ GO_LATEST=$(curl -s https://go.dev/VERSION?m=text | head -1)
 GO_CURRENT=$(command -v go >/dev/null 2>&1 && go version | awk '{print $3}' || echo "none")
 
 if [[ "$GO_CURRENT" == "$GO_LATEST" ]]; then
-	log "Go already at $GO_CURRENT — skipping reinstall"
+	log "Go already at $GO_CURRENT - skipping reinstall"
 else
 	log "Go $GO_CURRENT -> $GO_LATEST"
 	ARCH=$(arch_amd64_arm64)
@@ -50,13 +50,13 @@ go install github.com/mgechev/revive@latest
 log "benchstat (go test -bench comparison)"
 go install golang.org/x/perf/cmd/benchstat@latest
 
-# TinyGo — release tarball whose unpacked tree has to stay together, so it
+# TinyGo - release tarball whose unpacked tree has to stay together, so it
 # lives whole under ~/.local/tinygo (see scripts/update-go.sh for the why).
-# The darwin tarball's bin/ carries only `tinygo` — no wasm-opt, unlike the
-# Linux one — and `tinygo build -target wasm` hard-fails without it ("could
+# The darwin tarball's bin/ carries only `tinygo` - no wasm-opt, unlike the
+# Linux one - and `tinygo build -target wasm` hard-fails without it ("could
 # not find wasm-opt"; hit on the first run). TinyGo's own Homebrew formula
 # declares binaryen as its dependency, so that is where wasm-opt comes from.
-log "binaryen (wasm-opt for TinyGo's wasm target — Homebrew)"
+log "binaryen (wasm-opt for TinyGo's wasm target - Homebrew)"
 brew_ensure binaryen
 
 log "TinyGo"
@@ -69,7 +69,7 @@ TINYGO_LATEST=$(github_latest_release tinygo-org/tinygo)
 TINYGO_CURRENT=$("$TINYGO_HOME/bin/tinygo" version 2>/dev/null | awk '{print $3}' || echo "none")
 
 if [[ "$TINYGO_CURRENT" == "$TINYGO_LATEST" ]]; then
-	log "TinyGo already at $TINYGO_CURRENT — skipping reinstall"
+	log "TinyGo already at $TINYGO_CURRENT - skipping reinstall"
 else
 	log "TinyGo $TINYGO_CURRENT -> $TINYGO_LATEST"
 	ARCH=$(arch_amd64_arm64)

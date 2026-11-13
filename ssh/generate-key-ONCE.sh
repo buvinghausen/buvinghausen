@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Run this ON EXACTLY ONE HOST — this generates the single SSH keypair that
+# Run this ON EXACTLY ONE HOST - this generates the single SSH keypair that
 # will be used for BOTH GitHub auth and commit signing, everywhere: every
-# OS, every device, every devcontainer. Do not re-run this on other hosts —
+# OS, every device, every devcontainer. Do not re-run this on other hosts -
 # see GITHUB-SSH-SIGNING-SETUP.md for how to securely copy the resulting
 # private key to your other machines instead of generating separate ones.
 # ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ chmod 700 "$HOME/.ssh"
 ssh-keygen -t ed25519 -C "$EMAIL" -f "$KEY_PATH"
 
 echo
-echo "== Public key — you'll register this TWICE on GitHub =="
+echo "== Public key - you'll register this TWICE on GitHub =="
 echo "== (https://github.com/settings/keys -> New SSH key) =="
 echo "==   1) Key type: Authentication Key"
 echo "==   2) Key type: Signing Key         <- add it a second time with this type"

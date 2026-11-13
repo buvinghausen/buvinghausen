@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Updates Swift via swiftly: self-updates swiftly, then updates the in-use
 # toolchain to latest, then SwiftLint from its release zip. `swiftly update` uninstalls the superseded toolchain
-# as part of the same command — no separate prune step needed, unlike the
+# as part of the same command - no separate prune step needed, unlike the
 # Go/JVM/.NET modules above.
 #
-# Bootstraps swiftly itself when missing (fresh machine / fresh distro) — the
+# Bootstraps swiftly itself when missing (fresh machine / fresh distro) - the
 # swift.org tarball installer's own profile wiring targets
 # ~/.bash_profile/~/.bash_login (login-shell files WSL2's interactive bash
 # terminals don't source), so --no-modify-profile is passed and the env line
@@ -14,7 +14,7 @@
 # full explanation): swift.org's support matrix lists Fedora 41 as the
 # current minimum, but the swiftly binary currently shipped at
 # download.swift.org/swiftly/linux only recognizes fedora39 (plus the ubuntu/
-# ubi9/amazonlinux2/debian12 set) as a --platform value — confirmed by
+# ubi9/amazonlinux2/debian12 set) as a --platform value - confirmed by
 # running it, fedora41 fails hard with "Unrecognized platform". fedora39
 # works fine on this Fedora 44 box.
 set -euo pipefail
@@ -28,7 +28,7 @@ if [[ -f "$SWIFTLY_ENV" ]]; then
 fi
 
 if ! command -v swiftly >/dev/null 2>&1; then
-	log "swiftly not found — bootstrapping (see TOOLCHAIN.md)"
+	log "swiftly not found - bootstrapping (see TOOLCHAIN.md)"
 
 	log "Build dependencies (shared dnf list, see lib.sh)"
 	dnf_build_deps
@@ -55,7 +55,7 @@ append_bashrc_once "# Swiftly (Swift toolchain manager)" <<EOF
 EOF
 
 source "$SWIFTLY_ENV"
-require_cmd swiftly "swiftly install failed — check the installer output above"
+require_cmd swiftly "swiftly install failed - check the installer output above"
 
 log "swiftly self-update"
 swiftly self-update --assume-yes
@@ -65,14 +65,14 @@ swiftly update --assume-yes
 
 # SwiftLint: the Hyper repos' lint-docs-swift CI gate (`swiftlint lint --strict
 # Sources`). The release zip carries two binaries; this installs
-# `swiftlint-static`, the one CI runs — it needs neither a Swift toolchain nor
+# `swiftlint-static`, the one CI runs - it needs neither a Swift toolchain nor
 # the libxml2 soname the dynamically linked `swiftlint` is built against. The
 # formatter is not a separate install: `swift format` ships in the toolchain.
 log "SwiftLint"
 SWIFTLINT_LATEST=$(github_latest_release realm/SwiftLint)
 SWIFTLINT_CURRENT=$(swiftlint version 2>/dev/null || true)
 if [[ "$SWIFTLINT_CURRENT" == "$SWIFTLINT_LATEST" ]]; then
-	echo "swiftlint already at $SWIFTLINT_CURRENT — skipping"
+	echo "swiftlint already at $SWIFTLINT_CURRENT - skipping"
 else
 	SWIFTLINT_ZIP="swiftlint_linux_$(arch_amd64_arm64).zip"
 	SWIFTLINT_TMP=$(mktemp -d)

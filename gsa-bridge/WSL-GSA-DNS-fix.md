@@ -1,9 +1,9 @@
-# WSL2 DNS vs. Global Secure Access — diagnosis and fix
+# WSL2 DNS vs. Global Secure Access - diagnosis and fix
 
 Host: `PW0E88QY` (Windows 11 Enterprise) · Distro: FedoraLinux-44 · WSL 2.7.11.0
 Fixed: 2026-08-17 · Confirmed to survive a full power-down: 2026-08-17
 
-Companion doc: [`gsa-bridge/spec.md`](gsa-bridge/spec.md) — reaching GSA-*protected* endpoints from WSL, which is the opposite problem and needs a different mechanism.
+Companion doc: [`gsa-bridge/spec.md`](gsa-bridge/spec.md) - reaching GSA-*protected* endpoints from WSL, which is the opposite problem and needs a different mechanism.
 
 ## Symptom
 
@@ -14,7 +14,7 @@ Curl error (6): Could not resolve hostname for https://mirrors.fedoraproject.org
 [Could not resolve host: mirrors.fedoraproject.org]
 ```
 
-Later, after partial fixes, the symptom shifts to either of these — all three are the *same underlying problem* wearing different masks:
+Later, after partial fixes, the symptom shifts to either of these - all three are the *same underlying problem* wearing different masks:
 
 - `ping: www.utexas.edu: Temporary failure in name resolution`
 - Names resolve, but to `6.6.1.x`, and every connection hangs with 100% packet loss
@@ -32,7 +32,7 @@ Three independent problems stacked. Each fix exposed the next.
 The Global Secure Access client intercepts DNS and rewrites answers to synthetic addresses in `6.6.0.0/16`. Its filter driver is supposed to catch traffic to those addresses and tunnel it. But per Microsoft:
 
 > a Windows Subsystem for Linux (WSL) doesn't acquire traffic from a client installed on the host machine.
-> — [GSA known limitations](https://learn.microsoft.com/entra/global-secure-access/reference-current-known-limitations)
+> - [GSA known limitations](https://learn.microsoft.com/entra/global-secure-access/reference-current-known-limitations)
 
 So WSL gets the synthetic IP but never the interception. `6.6.0.0/16` routes nowhere → blackhole.
 
@@ -62,9 +62,9 @@ And the mechanism, from [WSL troubleshooting](https://learn.microsoft.com/window
 
 > The Global Secure Access Client ... has a feature to return a temporary address when resolving a name. Then the address is swapped to the actual address when a network connection is made. This can break WSL as **the WSL traffic is forwarded below much of the GSA client hooks**. We recommend disabling DNS Tunneling (`dnsTunneling=false`) or disabling Mirrored Mode (`networkingMode=nat`).
 
-That guidance assumes WSL's DNS leaves outside the host stack. **`networkingMode=mirrored` puts it back on the host stack**, where GSA still catches UDP/53 — so with mirrored mode you need more than the documented fix.
+That guidance assumes WSL's DNS leaves outside the host stack. **`networkingMode=mirrored` puts it back on the host stack**, where GSA still catches UDP/53 - so with mirrored mode you need more than the documented fix.
 
-Proof — same nameserver, two transports:
+Proof - same nameserver, two transports:
 
 ```
 $ dig +short +notcp @45.90.28.0 www.utexas.edu A
@@ -111,7 +111,7 @@ nameserver fec0:0:0:ffff::2
 nameserver fec0:0:0:ffff::3
 ```
 
-These are **Windows' default placeholder IPv6 DNS addresses**, present on any adapter with no explicit IPv6 DNS — not GSA's doing and not a sign of anything exotic. WSL has no route to `fec0::/10`, so all three are dead. They appear whenever mirrored mode copies the host DNS list and finds nothing real.
+These are **Windows' default placeholder IPv6 DNS addresses**, present on any adapter with no explicit IPv6 DNS - not GSA's doing and not a sign of anything exotic. WSL has no route to `fec0::/10`, so all three are dead. They appear whenever mirrored mode copies the host DNS list and finds nothing real.
 
 Chasing these wastes time: they are a *consequence* of having no real resolver, not a cause. Fix the resolver and they stop appearing.
 
@@ -158,7 +158,7 @@ DoT runs over TCP/853, which GSA cannot intercept. `Domains=~.` makes these the 
 | `/etc/wsl.conf` | `wsl --shutdown`, then reopen |
 | `resolved.conf.d/*` | `sudo systemctl restart systemd-resolved` |
 
-`.wslconfig` and `wsl.conf` are read **only at boot** — testing before the restart gives misleading results, because all DNS is still hijacked regardless of which nameserver you query.
+`.wslconfig` and `wsl.conf` are read **only at boot** - testing before the restart gives misleading results, because all DNS is still hijacked regardless of which nameserver you query.
 
 ## Verification
 
@@ -197,11 +197,11 @@ The one failure mode that would *not* survive a reboot is a hand-written `/etc/r
 
 | Observation | Cause | Fix |
 |---|---|---|
-| Names resolve to `6.6.1.x` | GSA intercepting UDP/53 | DoT is off, or resolved fell back to UDP — check for `+DNSOverTLS` in `resolvectl status` |
+| Names resolve to `6.6.1.x` | GSA intercepting UDP/53 | DoT is off, or resolved fell back to UDP - check for `+DNSOverTLS` in `resolvectl status` |
 | "Temporary failure in name resolution", resolv.conf → `stub-resolv.conf` | resolved has no upstreams | Restore the `resolved.conf.d` drop-in, restart resolved |
 | resolv.conf shows `fec0:0:0:ffff::` | `generateResolvConf` back on, copying dead host placeholders | Re-add `generateResolvConf = false`, `wsl --shutdown` |
 | DNS dead on hotel/airline wifi | Network blocks TCP/853; `DNSOverTLS=yes` is strict | See below |
-| `ping 8.8.8.8` works so "networking is fine" | Meaningless — never touches DNS | Test with `getent`/`dig`, not `ping <ip>` |
+| `ping 8.8.8.8` works so "networking is fine" | Meaningless - never touches DNS | Test with `getent`/`dig`, not `ping <ip>` |
 
 ### Networks that block TCP/853
 
@@ -216,9 +216,9 @@ GSA resumes poisoning answers while in `opportunistic` mode, so switch back to `
 
 ## Tradeoffs accepted
 
-- **WSL DNS bypasses GSA entirely** — outside org filtering and visibility. This is Microsoft's own sanctioned workaround, and GSA was never inspecting WSL traffic anyway; it was only corrupting its DNS. Relevant if the machine is audited.
+- **WSL DNS bypasses GSA entirely** - outside org filtering and visibility. This is Microsoft's own sanctioned workaround, and GSA was never inspecting WSL traffic anyway; it was only corrupting its DNS. Relevant if the machine is audited.
 - **Any name that only resolves through the corporate resolver stops resolving in WSL.** Private/split-horizon zones now answer only on the Windows side. `gsa-bridge` exists to cover the ones that matter.
-- **Rejected alternative: `networkingMode=nat`.** Microsoft's other suggestion, and it would work — at the cost of mirrored mode and `hostAddressLoopback`, which `gsa-bridge` depends on.
+- **Rejected alternative: `networkingMode=nat`.** Microsoft's other suggestion, and it would work - at the cost of mirrored mode and `hostAddressLoopback`, which `gsa-bridge` depends on.
 
 ## Reverting
 
@@ -231,6 +231,6 @@ sudoedit /etc/wsl.conf
 
 ## References
 
-- [Known limitations for Global Secure Access](https://learn.microsoft.com/entra/global-secure-access/reference-current-known-limitations) — WSL 2 connectivity, virtualization support, secure DNS, DNS over TCP
-- [Troubleshooting WSL](https://learn.microsoft.com/windows/wsl/troubleshooting#common-issues) — GSA client issues with WSL
+- [Known limitations for Global Secure Access](https://learn.microsoft.com/entra/global-secure-access/reference-current-known-limitations) - WSL 2 connectivity, virtualization support, secure DNS, DNS over TCP
+- [Troubleshooting WSL](https://learn.microsoft.com/windows/wsl/troubleshooting#common-issues) - GSA client issues with WSL
 - [Advanced settings configuration in WSL](https://learn.microsoft.com/windows/wsl/wsl-config)

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Updates Java (Temurin), GraalVM CE, Kotlin, and Gradle via SDKMAN, plus
 # async-profiler from its GitHub release. Darwin twin of scripts/update-jvm.sh
-# — read that header for the GraalVM/`sdk upgrade`/prune reasoning; it all
+# - read that header for the GraalVM/`sdk upgrade`/prune reasoning; it all
 # applies unchanged (the GraalVM lookup is keyed on $SDKMAN_PLATFORM, which
 # sdkman-init.sh sets to darwinarm64 here).
 #
 # Darwin differences: SDKMAN's installer wires ~/.zshrc itself (no append
 # needed); the prune loop lists directories without GNU find's -printf
 # (BSD find has none); async-profiler's macOS asset is a zip, not a tarball;
-# the script needs bash 4+ for `declare -A` — Homebrew's, from the base module.
+# the script needs bash 4+ for `declare -A` - Homebrew's, from the base module.
 #
 # No `-u`/pipefail here for the same reason as the Fedora module: SDKMAN's own
 # scripts are sourced into this shell and aren't strict-mode clean.
@@ -19,13 +19,13 @@ require_bash4
 
 export SDKMAN_DIR="$HOME/.sdkman"
 if [[ ! -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]]; then
-	log "SDKMAN not found — bootstrapping (see TOOLCHAIN-macos.md)"
+	log "SDKMAN not found - bootstrapping (see TOOLCHAIN-macos.md)"
 	curl -s "https://get.sdkman.io" | bash
 fi
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
 
 if [[ ! -d "$SDKMAN_DIR/candidates/java" ]]; then
-	log "Java / Kotlin / Gradle not found — installing (see TOOLCHAIN-macos.md)"
+	log "Java / Kotlin / Gradle not found - installing (see TOOLCHAIN-macos.md)"
 	sdk install java
 	sdk install kotlin
 	sdk install gradle
@@ -54,7 +54,7 @@ graal=$(curl -fsS "$SDKMAN_CANDIDATES_API/candidates/java/$SDKMAN_PLATFORM/versi
 	| tr ',' '\n' | grep -- "^${default_java%%.*}\..*-graalce\$" | sort -V | tail -1)
 [[ -n "$graal" ]] || { echo "No -graalce build for java ${default_java%%.*} on $SDKMAN_PLATFORM" >&2; exit 1; }
 if [[ ! -d "$SDKMAN_DIR/candidates/java/$graal" ]]; then
-	log "GraalVM CE $graal not found — installing alongside $default_java (not made current)"
+	log "GraalVM CE $graal not found - installing alongside $default_java (not made current)"
 	run_sdk install java "$graal" <<<"n"
 else
 	log "GraalVM CE $graal already installed"
@@ -96,7 +96,7 @@ ensure_local_dirs
 ASPROF_LATEST=$(github_latest_release async-profiler/async-profiler)
 ASPROF_CURRENT=$(asprof --version 2>/dev/null | awk '{print $2}' || true)
 if [[ "$ASPROF_CURRENT" == "$ASPROF_LATEST" ]]; then
-	echo "async-profiler already at $ASPROF_CURRENT — skipping"
+	echo "async-profiler already at $ASPROF_CURRENT - skipping"
 else
 	ASPROF_ZIP="async-profiler-${ASPROF_LATEST}-macos.zip"
 	ASPROF_TMP=$(mktemp -d)

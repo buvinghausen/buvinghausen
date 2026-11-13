@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# GitHub SSH key setup — WSL / Linux
+# GitHub SSH key setup - WSL / Linux
 #
-# Run this INSIDE WSL (e.g. your Ubuntu shell) — this generates a
+# Run this INSIDE WSL (e.g. your Ubuntu shell) - this generates a
 # dedicated SSH keypair for GitHub, starts the agent, and wires up
 # ~/.ssh/config so `git` automatically uses the right key for github.com.
 #
 # It will NOT overwrite an existing key at the target path.
-# You will be prompted once to set a passphrase for the new key — that's
+# You will be prompted once to set a passphrase for the new key - that's
 # expected and recommended.
 # ---------------------------------------------------------------------------
 set -euo pipefail
@@ -18,7 +18,7 @@ KEY_PATH="$HOME/.ssh/id_ed25519_github"
 echo "== GitHub SSH key setup (WSL/Linux) =="
 
 if [ -f "$KEY_PATH" ]; then
-  echo "A key already exists at $KEY_PATH — skipping generation."
+  echo "A key already exists at $KEY_PATH - skipping generation."
   echo "(Delete $KEY_PATH and $KEY_PATH.pub first if you want to regenerate.)"
 else
   mkdir -p "$HOME/.ssh"
@@ -64,7 +64,7 @@ EOF
 fi
 
 echo
-echo "== Done. Your PUBLIC key (safe to share) — paste this into =="
+echo "== Done. Your PUBLIC key (safe to share) - paste this into =="
 echo "== GitHub > Settings > SSH and GPG keys > New SSH key (type: Authentication Key) =="
 echo
 cat "$KEY_PATH.pub"

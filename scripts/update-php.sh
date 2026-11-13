@@ -4,10 +4,10 @@
 # the new one is active, and rebuilds cargo-php against it (it links against
 # the active php-config, so a PHP rebuild invalidates the old binary).
 #
-# Host PHP here isn't for general PHP development — it's the build/test target for
+# Host PHP here isn't for general PHP development - it's the build/test target for
 # Rust-backed native code, part of the write-in-Rust/wrap-per-language polyglot work: either a
 # compiled native extension (ext-php-rs) or, what HyperUuid's actual PHP binding uses, PHP's
-# built-in FFI extension dlopen-ing a plain Rust cdylib at runtime — hence --with-ffi below.
+# built-in FFI extension dlopen-ing a plain Rust cdylib at runtime - hence --with-ffi below.
 # See TOOLCHAIN.md's PHP section for both verified smoke tests and why WASM PHP was skipped in
 # favor of this native path.
 #
@@ -21,7 +21,7 @@ source ./lib.sh
 
 export PHPENV_ROOT="$HOME/.phpenv"
 if [[ ! -d "$PHPENV_ROOT" ]]; then
-	log "phpenv not found — bootstrapping (see TOOLCHAIN.md)"
+	log "phpenv not found - bootstrapping (see TOOLCHAIN.md)"
 
 	log "Build dependencies (shared dnf list, see lib.sh)"
 	dnf_build_deps
@@ -39,7 +39,7 @@ EOF
 fi
 export PATH="$PHPENV_ROOT/bin:$PATH"
 eval "$(phpenv init -)"
-require_cmd phpenv "phpenv install failed — check the clone output above"
+require_cmd phpenv "phpenv install failed - check the clone output above"
 
 log "php-build definitions update"
 git -C "$PHPENV_ROOT/plugins/php-build" pull --ff-only

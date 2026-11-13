@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs TOOLCHAIN.md's Base Dependencies block — the dnf packages every
+# Installs TOOLCHAIN.md's Base Dependencies block - the dnf packages every
 # other module's from-source build assumes are already present (gcc/make for
 # cargo builds, the pyenv/ruby-build/php-build/swiftly headers, etc). The
 # list itself lives in lib.sh's dnf_build_deps so the language modules can

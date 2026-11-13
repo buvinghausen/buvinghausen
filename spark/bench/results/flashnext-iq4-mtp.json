@@ -1,0 +1,307 @@
+{
+  "name": "flashnext-iq4-mtp",
+  "model": "Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf",
+  "draft": false,
+  "ctx": 262144,
+  "extra": "--batch-size 2048 -ngl auto -fa on -lzm on --mmproj D:\\models\\qwen3.8-flash-next\\mmproj-BF16.gguf --spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-model D:\\models\\qwen3.8-flash-next\\mtp-Qwen3.8-Flash-Next-Q8_0.gguf",
+  "started": "2026-11-12T13:20:55",
+  "load_s": 30.0,
+  "prefill": [
+    {
+      "target": 4096,
+      "prompt_n": 4116,
+      "prompt_tps": 931.9,
+      "prod_busy": null
+    },
+    {
+      "target": 16384,
+      "prompt_n": 16404,
+      "prompt_tps": 883.2,
+      "prod_busy": null
+    },
+    {
+      "target": 65536,
+      "prompt_n": 65556,
+      "prompt_tps": 775.4,
+      "prod_busy": null
+    }
+  ],
+  "generation": [
+    {
+      "kind": "code",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 51.3,
+      "draft_accept": 0.721,
+      "prod_busy": null
+    },
+    {
+      "kind": "code",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 55.1,
+      "draft_accept": 0.807,
+      "prod_busy": null
+    },
+    {
+      "kind": "prose",
+      "rep": 1,
+      "out_n": 1024,
+      "gen_tps": 38.8,
+      "draft_accept": 0.486,
+      "prod_busy": null
+    },
+    {
+      "kind": "prose",
+      "rep": 2,
+      "out_n": 1024,
+      "gen_tps": 36.6,
+      "draft_accept": 0.436,
+      "prod_busy": null
+    }
+  ],
+  "quality": [
+    {
+      "task": "iso_duration",
+      "sample": 1,
+      "pass": false,
+      "why": "no code block",
+      "out_n": 16384,
+      "gen_tps": 36.8,
+      "secs": 448.1,
+      "prod_busy": null
+    },
+    {
+      "task": "iso_duration",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^^^^^^^^^^ NameError: name 'parse_duration' is not defined",
+      "out_n": 16384,
+      "gen_tps": 36.5,
+      "secs": 456.9,
+      "prod_busy": null
+    },
+    {
+      "task": "lru_cache",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1011,
+      "gen_tps": 43.1,
+      "secs": 28.3,
+      "prod_busy": null
+    },
+    {
+      "task": "lru_cache",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 456,
+      "gen_tps": 50.4,
+      "secs": 11.4,
+      "prod_busy": null
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1293,
+      "gen_tps": 39.6,
+      "secs": 37.3,
+      "prod_busy": null
+    },
+    {
+      "task": "merge_intervals",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 5511,
+      "gen_tps": 38.0,
+      "secs": 151.4,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 1,
+      "pass": false,
+      "why": "^^^^^^^^ NameError: name 'evaluate' is not defined",
+      "out_n": 16384,
+      "gen_tps": 34.0,
+      "secs": 488.2,
+      "prod_busy": null
+    },
+    {
+      "task": "calc",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 16384,
+      "gen_tps": 34.5,
+      "secs": 482.1,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 2946,
+      "gen_tps": 39.4,
+      "secs": 81.3,
+      "prod_busy": null
+    },
+    {
+      "task": "toposort",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 9851,
+      "gen_tps": 36.0,
+      "secs": 279.2,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 1,
+      "pass": false,
+      "why": "if closed: IndentationError: unexpected indent",
+      "out_n": 16384,
+      "gen_tps": 33.8,
+      "secs": 491.7,
+      "prod_busy": null
+    },
+    {
+      "task": "csv_line",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 11713,
+      "gen_tps": 34.2,
+      "secs": 348.7,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 11641,
+      "gen_tps": 35.7,
+      "secs": 332.2,
+      "prod_busy": null
+    },
+    {
+      "task": "roman",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 12581,
+      "gen_tps": 36.2,
+      "secs": 354.5,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 1141,
+      "gen_tps": 36.4,
+      "secs": 35.6,
+      "prod_busy": null
+    },
+    {
+      "task": "dijkstra",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 2126,
+      "gen_tps": 36.7,
+      "secs": 62.1,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 3915,
+      "gen_tps": 34.8,
+      "secs": 119.0,
+      "prod_busy": null
+    },
+    {
+      "task": "rle",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 7509,
+      "gen_tps": 35.8,
+      "secs": 216.0,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 16384,
+      "gen_tps": 37.2,
+      "secs": 446.4,
+      "prod_busy": null
+    },
+    {
+      "task": "semver",
+      "sample": 2,
+      "pass": false,
+      "why": "^^^^^ SyntaxError: invalid syntax",
+      "out_n": 16384,
+      "gen_tps": 34.4,
+      "secs": 483.2,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 1,
+      "pass": false,
+      "why": "^ NameError: name 'n' is not defined",
+      "out_n": 16384,
+      "gen_tps": 34.8,
+      "secs": 477.4,
+      "prod_busy": null
+    },
+    {
+      "task": "palindrome",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 3778,
+      "gen_tps": 37.7,
+      "secs": 106.3,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 1,
+      "pass": true,
+      "why": "",
+      "out_n": 4436,
+      "gen_tps": 38.4,
+      "secs": 122.0,
+      "prod_busy": null
+    },
+    {
+      "task": "justify",
+      "sample": 2,
+      "pass": true,
+      "why": "",
+      "out_n": 2382,
+      "gen_tps": 36.4,
+      "secs": 69.6,
+      "prod_busy": null
+    }
+  ],
+  "quality_pass": "18/24",
+  "finished": "2026-11-12T15:09:07"
+}

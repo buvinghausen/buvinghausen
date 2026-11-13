@@ -1,12 +1,12 @@
-# gsa-bridge — reach GSA-protected Azure resources from WSL2
+# gsa-bridge - reach GSA-protected Azure resources from WSL2
 
 Status: implemented · 2026-08-17 · host `PW0E88QY`
 
 ## Problem
 
-The Global Secure Access client never tunnels WSL traffic — Microsoft states plainly that "WSL doesn't acquire traffic from a client installed on the host machine." Yet GSA's DNS hook still rewrites answers to synthetic `6.6.0.0/16` addresses that only its own filter driver can route. From WSL those addresses blackhole, so GSA-protected private endpoints are unreachable.
+The Global Secure Access client never tunnels WSL traffic - Microsoft states plainly that "WSL doesn't acquire traffic from a client installed on the host machine." Yet GSA's DNS hook still rewrites answers to synthetic `6.6.0.0/16` addresses that only its own filter driver can route. From WSL those addresses blackhole, so GSA-protected private endpoints are unreachable.
 
-Separately, WSL DNS is configured to bypass GSA entirely (see `../WSL-GSA-DNS-fix.md`). That fixes public name resolution but does nothing for private resources, which have no public DNS at all — `sql-dev.database.windows.net` does not resolve.
+Separately, WSL DNS is configured to bypass GSA entirely (see `../WSL-GSA-DNS-fix.md`). That fixes public name resolution but does nothing for private resources, which have no public DNS at all - `sql-dev.database.windows.net` does not resolve.
 
 ## Key insight (measured, not assumed)
 
@@ -19,7 +19,7 @@ got 26 bytes, first byte = 0x04
 hex: 04 01 00 1a ... ff 0c 00 00 83 00 00 03
 ```
 
-A genuine Azure SQL reply — version `12.0.0x8300`, trailing `03` = `ENCRYPT_REQ`.
+A genuine Azure SQL reply - version `12.0.0x8300`, trailing `03` = `ENCRYPT_REQ`.
 
 ## Constraint discovered during design
 
@@ -54,7 +54,7 @@ Why a WSL-side process is unavoidable: `/etc/hosts` maps names to addresses only
 
 ## Design properties
 
-**Raw TCP pass-through — no TLS termination.** The relays copy bytes. TLS is end-to-end from the WSL client to the Azure service; the bridge never sees plaintext, never substitutes a certificate, and never observes a bearer token. This is what makes it safe to carry Entra-authenticated traffic.
+**Raw TCP pass-through - no TLS termination.** The relays copy bytes. TLS is end-to-end from the WSL client to the Azure service; the bridge never sees plaintext, never substitutes a certificate, and never observes a bearer token. This is what makes it safe to carry Entra-authenticated traffic.
 
 **Transparent to clients.** The real hostname and the real port are preserved end to end, so certificate validation, SNI, and Azure SQL gateway routing behave exactly as they do on Windows. Use the identical connection string you use on Windows.
 
@@ -70,7 +70,7 @@ Why a WSL-side process is unavoidable: `/etc/hosts` maps names to addresses only
 
 | Situation | Behavior |
 |---|---|
-| Boot, GSA not up yet | Bridge running; connect fails fast, "not intercepted — is GSA up?" |
+| Boot, GSA not up yet | Bridge running; connect fails fast, "not intercepted - is GSA up?" |
 | GSA finishes starting | Next connection works, no restart |
 | GSA drops mid-session | Next connection fails fast; existing connections drop with the tunnel |
 | Off corporate network | Same fast failure, same message |
@@ -80,8 +80,8 @@ Why a WSL-side process is unavoidable: `/etc/hosts` maps names to addresses only
 
 All 15 resources authenticate with Entra SSO; there are no stored credentials. The two planes take different paths:
 
-- **Auth** — `login.microsoftonline.com`, `login.windows.net`, `management.azure.com` resolve to real public IPs from WSL (verified HTTP 200) and egress directly, bypassing GSA. `az` 2.89.1 is installed in WSL.
-- **Data** — the 15 private endpoints go through this bridge.
+- **Auth** - `login.microsoftonline.com`, `login.windows.net`, `management.azure.com` resolve to real public IPs from WSL (verified HTTP 200) and egress directly, bypassing GSA. `az` 2.89.1 is installed in WSL.
+- **Data** - the 15 private endpoints go through this bridge.
 
 This mirrors how it already works on Windows.
 
@@ -140,10 +140,10 @@ gsa-bridge/
 
 ## Testing
 
-- **Config parsing** — duplicate `wsl_addr`/`bridge_port`, malformed rows, bad ports, comment/blank handling.
-- **Integration, SQL** — the TDS PRELOGIN probe from the design spike, promoted to a real assertion: expects a `0x04` response through the full path.
-- **Integration, HTTPS** — TLS handshake and HTTP response against a bridged 443 endpoint, confirming certificate validation succeeds against the real hostname.
-- **Health check** — `gsa-bridge.ps1 -Status` resolves all 18 and reports intercepted/public/no-resolve per endpoint.
+- **Config parsing** - duplicate `wsl_addr`/`bridge_port`, malformed rows, bad ports, comment/blank handling.
+- **Integration, SQL** - the TDS PRELOGIN probe from the design spike, promoted to a real assertion: expects a `0x04` response through the full path.
+- **Integration, HTTPS** - TLS handshake and HTTP response against a bridged 443 endpoint, confirming certificate validation succeeds against the real hostname.
+- **Health check** - `gsa-bridge.ps1 -Status` resolves all 18 and reports intercepted/public/no-resolve per endpoint.
 
 ## Gotchas that cost real time
 
@@ -154,7 +154,7 @@ Each of these was hit during the build and is easy to hit again.
   worst moment. That is why the hosts block is re-applied by `gsa-bridge-hosts.service` rather than written
   once, and why DNS lives in `resolved.conf.d`.
 - **Under `Set-StrictMode`, never touch `$_.IPAddress` on a `Resolve-DnsName` result.** Most of these names
-  resolve through two or three CNAMEs, and CNAME record objects have no `IPAddress` property at all —
+  resolve through two or three CNAMEs, and CNAME record objects have no `IPAddress` property at all -
   reading it throws, and inside a `try`/`catch` that reads as "name did not resolve". It presented as 12 of
   18 endpoints falsely reporting `NO-RESOLVE` while SQL, which has a direct A record, looked fine. Filter on
   `$_.Type -eq 'A'` instead.
@@ -166,5 +166,5 @@ Each of these was hit during the build and is easy to hit again.
 ## Out of scope
 
 - Bridging anything GSA does not intercept.
-- Auth, token handling, credential storage — Entra SSO handles all of it.
+- Auth, token handling, credential storage - Entra SSO handles all of it.
 - Restoring GSA coverage for WSL traffic; Microsoft does not support it.

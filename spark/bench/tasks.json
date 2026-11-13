@@ -1,0 +1,62 @@
+[
+  {
+    "id": "iso_duration",
+    "prompt": "Write a Python function `parse_duration(s: str) -> float` that parses an ISO-8601 duration like 'P1Y2M10DT2H30M15.5S' or 'P3W' into total seconds. Use 1Y=365 days, 1M=30 days, 1W=7 days. Components may be fractional (e.g. 'PT0.5H'). Raise ValueError for invalid input, including 'P', 'PT', '' and strings with components out of order.",
+    "tests": "assert parse_duration('PT1H') == 3600\nassert parse_duration('P1D') == 86400\nassert parse_duration('P3W') == 3*7*86400\nassert parse_duration('P1Y2M10DT2H30M15.5S') == 365*86400 + 60*86400 + 10*86400 + 2*3600 + 30*60 + 15.5\nassert parse_duration('PT0.5H') == 1800\nassert parse_duration('P1DT1S') == 86401\nfor bad in ['', 'P', 'PT', '1D', 'PT1D', 'P1H', 'PT1S1M', 'P1D2Y', 'Px']:\n    try:\n        parse_duration(bad)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError('accepted ' + repr(bad))\n"
+  },
+  {
+    "id": "lru_cache",
+    "prompt": "Write a Python class `LRUCache` with `__init__(self, capacity: int)`, `get(self, key) -> int` (returns -1 if missing) and `put(self, key, value) -> None`, all O(1). When capacity is exceeded, evict the least recently used key. `get` and `put` both count as use.",
+    "tests": "c = LRUCache(2)\nc.put(1, 1); c.put(2, 2)\nassert c.get(1) == 1\nc.put(3, 3)\nassert c.get(2) == -1\nc.put(4, 4)\nassert c.get(1) == -1\nassert c.get(3) == 3\nassert c.get(4) == 4\nc = LRUCache(1)\nc.put(1, 1); c.put(1, 5)\nassert c.get(1) == 5\nc.put(2, 2)\nassert c.get(1) == -1 and c.get(2) == 2\nc = LRUCache(2)\nc.put(1,1); c.put(2,2); c.put(1,10); c.put(3,3)\nassert c.get(2) == -1 and c.get(1) == 10\n"
+  },
+  {
+    "id": "merge_intervals",
+    "prompt": "Write a Python function `merge(intervals: list[list[int]]) -> list[list[int]]` that merges all overlapping or touching closed intervals and returns them sorted by start. Input may be unsorted and empty. Do not mutate the input.",
+    "tests": "assert merge([]) == []\nassert merge([[1,3],[2,6],[8,10],[15,18]]) == [[1,6],[8,10],[15,18]]\nassert merge([[1,4],[4,5]]) == [[1,5]]\nassert merge([[5,7],[1,2]]) == [[1,2],[5,7]]\nassert merge([[1,10],[2,3],[4,5]]) == [[1,10]]\nx = [[3,4],[1,2]]\nmerge(x)\nassert x == [[3,4],[1,2]]\n"
+  },
+  {
+    "id": "calc",
+    "prompt": "Write a Python function `evaluate(expr: str) -> float` that evaluates an arithmetic expression with non-negative decimal numbers, + - * /, parentheses, unary minus/plus and arbitrary whitespace, with normal precedence and left associativity. Do NOT use eval, exec, ast or any parsing library. Raise ValueError on malformed input (e.g. '1 +', '(1', '2 3', '').",
+    "tests": "import math\ndef close(a,b): return math.isclose(a,b,rel_tol=1e-9,abs_tol=1e-12)\nassert close(evaluate('1 + 2 * 3'), 7)\nassert close(evaluate('(1 + 2) * 3'), 9)\nassert close(evaluate('10 / 4'), 2.5)\nassert close(evaluate('8 - 3 - 2'), 3)\nassert close(evaluate('2 * -3'), -6)\nassert close(evaluate('-(2 + 3) * 2'), -10)\nassert close(evaluate(' 1.5 * 2 '), 3)\nassert close(evaluate('--4'), 4)\nassert close(evaluate('16 / 4 / 2'), 2)\nfor bad in ['1 +', '(1', '2 3', '', '1 + ()', ')1(']:\n    try:\n        evaluate(bad)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError('accepted ' + repr(bad))\n"
+  },
+  {
+    "id": "toposort",
+    "prompt": "Write a Python function `toposort(deps: dict[str, set[str]]) -> list[str]` where deps maps each node to the set of nodes it depends on (those must come before it). Nodes that only appear as dependencies are also included. Return a topological order; when several nodes are available, pick the lexicographically smallest first. Raise ValueError if there is a cycle.",
+    "tests": "assert toposort({}) == []\nassert toposort({'b': {'a'}, 'c': {'a'}}) == ['a', 'b', 'c']\nassert toposort({'d': {'b','c'}, 'b': {'a'}, 'c': {'a'}}) == ['a','b','c','d']\nassert toposort({'x': set(), 'a': set()}) == ['a','x']\nassert toposort({'c': {'b'}, 'b': {'a'}, 'z': set()}) == ['a','b','c','z']\nfor cyc in [{'a': {'b'}, 'b': {'a'}}, {'a': {'a'}}, {'a': {'b'}, 'b': {'c'}, 'c': {'a'}}]:\n    try:\n        toposort(cyc)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError('no cycle detected')\n"
+  },
+  {
+    "id": "csv_line",
+    "prompt": "Write a Python function `parse_csv_line(line: str) -> list[str]` that splits one CSV line on commas following RFC 4180 quoting: fields may be wrapped in double quotes, a quoted field may contain commas, and a doubled quote inside a quoted field means a literal quote. Unquoted fields are returned as-is (no stripping). Raise ValueError for an unterminated quoted field. Do not use the csv module.",
+    "tests": "assert parse_csv_line('a,b,c') == ['a','b','c']\nassert parse_csv_line('') == ['']\nassert parse_csv_line('a,,c') == ['a','','c']\nassert parse_csv_line('\"a,b\",c') == ['a,b','c']\nassert parse_csv_line('\"he said \"\"hi\"\"\",x') == ['he said \"hi\"','x']\nassert parse_csv_line(' a , b ') == [' a ',' b ']\nassert parse_csv_line('a,') == ['a','']\nassert parse_csv_line('\"\"') == ['']\ntry:\n    parse_csv_line('\"abc,d')\nexcept ValueError:\n    pass\nelse:\n    raise AssertionError('unterminated accepted')\n"
+  },
+  {
+    "id": "roman",
+    "prompt": "Write two Python functions: `to_roman(n: int) -> str` for 1 <= n <= 3999 (raise ValueError otherwise) and `from_roman(s: str) -> int` that accepts only canonical Roman numerals (raise ValueError for invalid ones such as 'IIII', 'IC', 'VX', '' or lowercase).",
+    "tests": "for n,s in [(1,'I'),(4,'IV'),(9,'IX'),(14,'XIV'),(40,'XL'),(90,'XC'),(400,'CD'),(944,'CMXLIV'),(1994,'MCMXCIV'),(3999,'MMMCMXCIX')]:\n    assert to_roman(n) == s, (n, to_roman(n))\n    assert from_roman(s) == n\nfor n in range(1, 4000):\n    assert from_roman(to_roman(n)) == n\nfor bad in [0, 4000, -1]:\n    try:\n        to_roman(bad)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(bad)\nfor bad in ['IIII', 'IC', 'VX', '', 'iv', 'MMMM', 'XXC', 'IL']:\n    try:\n        from_roman(bad)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(bad)\n"
+  },
+  {
+    "id": "dijkstra",
+    "prompt": "Write a Python function `shortest_path(graph: dict[str, dict[str, float]], start: str, goal: str) -> tuple[float, list[str]]` where graph[u][v] is the non-negative weight of directed edge u->v. Return (total_cost, path_including_start_and_goal). If goal is unreachable return (float('inf'), []). If start == goal return (0, [start]). Nodes may appear only as edge targets.",
+    "tests": "g = {'a': {'b': 1, 'c': 4}, 'b': {'c': 2, 'd': 5}, 'c': {'d': 1}}\nassert shortest_path(g, 'a', 'd') == (4, ['a','b','c','d'])\nassert shortest_path(g, 'a', 'a') == (0, ['a'])\nassert shortest_path(g, 'd', 'a') == (float('inf'), [])\nassert shortest_path(g, 'a', 'zz') == (float('inf'), [])\ng2 = {'s': {'t': 10, 'm': 1}, 'm': {'t': 1}}\nassert shortest_path(g2, 's', 't') == (2, ['s','m','t'])\n"
+  },
+  {
+    "id": "rle",
+    "prompt": "Write Python functions `rle_encode(s: str) -> str` and `rle_decode(s: str) -> str`. Encoding writes each run as <count><char> (count always present, may exceed 9), e.g. 'aaabcc' -> '3a1b2c'. Input strings to encode contain no digits. Decoding is the inverse and must raise ValueError for malformed input such as 'a', '3', '0a' or '2a3'. Both functions return '' for ''.",
+    "tests": "assert rle_encode('') == ''\nassert rle_decode('') == ''\nassert rle_encode('aaabcc') == '3a1b2c'\nassert rle_encode('a'*12 + 'b') == '12a1b'\nassert rle_decode('12a1b') == 'a'*12 + 'b'\nfor s in ['x', 'xyz', 'aabbaa', ' ' * 5 + '!']:\n    assert rle_decode(rle_encode(s)) == s\nfor bad in ['a', '3', '0a', '2a3']:\n    try:\n        rle_decode(bad)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(bad)\n"
+  },
+  {
+    "id": "semver",
+    "prompt": "Write a Python function `compare_semver(a: str, b: str) -> int` returning -1, 0 or 1 according to SemVer 2.0.0 precedence rules, including pre-release identifiers (numeric identifiers compare numerically and are lower than alphanumeric ones; a version without pre-release is higher than one with) and ignoring build metadata after '+'. Raise ValueError for invalid versions (e.g. '1.2', '01.2.3', '1.2.3-').",
+    "tests": "assert compare_semver('1.0.0', '1.0.0') == 0\nassert compare_semver('1.0.0', '2.0.0') == -1\nassert compare_semver('1.10.0', '1.9.0') == 1\nchain = ['1.0.0-alpha','1.0.0-alpha.1','1.0.0-alpha.beta','1.0.0-beta','1.0.0-beta.2','1.0.0-beta.11','1.0.0-rc.1','1.0.0']\nfor x, y in zip(chain, chain[1:]):\n    assert compare_semver(x, y) == -1, (x, y)\n    assert compare_semver(y, x) == 1, (y, x)\nassert compare_semver('1.0.0+build.1', '1.0.0+build.2') == 0\nassert compare_semver('1.0.0-alpha+x', '1.0.0-alpha') == 0\nfor bad in ['1.2', '01.2.3', '1.2.3-', 'a.b.c', '1.2.3-01']:\n    try:\n        compare_semver(bad, '1.0.0')\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(bad)\n"
+  },
+  {
+    "id": "palindrome",
+    "prompt": "Write a Python function `longest_palindrome(s: str) -> str` returning the longest palindromic substring of s; if several have the same maximal length return the one that starts first. Must run in at most O(n^2) time for n up to 3000.",
+    "tests": "assert longest_palindrome('') == ''\nassert longest_palindrome('a') == 'a'\nassert longest_palindrome('babad') == 'bab'\nassert longest_palindrome('cbbd') == 'bb'\nassert longest_palindrome('abacdfgdcaba') == 'aba'\nassert longest_palindrome('forgeeksskeegfor') == 'geeksskeeg'\nimport time\ns = 'ab' * 1500\nt = time.time(); r = longest_palindrome(s); assert len(r) == 2999 and time.time() - t < 20\n"
+  },
+  {
+    "id": "justify",
+    "prompt": "Write a Python function `full_justify(words: list[str], width: int) -> list[str]` that formats words into lines of exactly `width` characters with full justification: pack greedily as many words per line as fit with at least one space between words; distribute extra spaces as evenly as possible, giving more to the left gaps; a line with a single word is left-justified and padded with spaces on the right; the last line is left-justified with single spaces and padded on the right. Every word is at most `width` long.",
+    "tests": "assert full_justify(['This','is','an','example','of','text','justification.'], 16) == ['This    is    an','example  of text','justification.  ']\nassert full_justify(['What','must','be','acknowledgment','shall','be'], 16) == ['What   must   be','acknowledgment  ','shall be        ']\nassert full_justify(['a'], 3) == ['a  ']\nassert full_justify(['ab','cd','ef'], 5) == ['ab cd','ef   ']\n"
+  }
+]
