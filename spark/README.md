@@ -8,8 +8,13 @@ The scripts in this folder are the ones actually used on the box, collected 2026
 ## llama-server (production)
 
 - **Build:** llama.cpp b12110, `win-cuda-13.4-arm64`, unpacked to `C:\llama.cpp` (same layout as NVIDIA's RTX Spark playbook).
-- **Model, decided 2026-11-09:** Qwen3.8-27B **Q4_K_M + DFlash** draft (`--spec-type draft-dflash`, `--spec-draft-n-max 7`, `--spec-draft-backend-sampling`) plus mmproj, with NVIDIA's sampling settings. This is NVIDIA's own default; benchmarks below.
-- **Serve shape:** alias `qwen3.8-27b`, `0.0.0.0:9931`, `--api-key-file C:\llama.cpp\api-key.txt` (key lives in Bitwarden as "Spark llama-server API key"), `--ctx-size 524288 --parallel 2` (256K per slot), `--n-predict 32768`. Don't lower n-predict: thinking runaway was the main quality failure.
+- **Model, since 2026-11-13:** Qwen3.8 **Flash-Next UD-IQ4_XS + MTP** draft on NVIDIA's RTX Spark recipe:
+  - **Weights:** the 3-shard unsloth upload at commit `38bb39e` plus its BF16 mmproj.
+  - **Flags:** `-lzm on -fa on -ngl auto`, batch 2048 / ubatch 512, `--spec-type draft-mtp --spec-draft-n-max 3` with ggml-org's Q8_0 MTP draft, and `--cache-ram 2048` (see phase 4).
+  - **Files:** copied into the admin-only `C:\llama.cpp\models` and SHA-256 verified by `llama\admin-flip-flashnext.ps1`; `D:\models` is user-writable, so the SYSTEM supervisor never loads from there.
+  - **Why:** chosen on bench phases 3-4 (below): 53 / 38 vs 43 / 23 tok/s, and 20/24 vs 16/24 quality at the 32K cap.
+  - **Fallback:** the previous model, Qwen3.8-27B Q4_K_M + DFlash (decided 2026-11-09), stays in `models\`. To revert, restore `C:\llama.cpp\serve-qwen38.ps1.bak-20261113-0206` and restart the supervisor task.
+- **Serve shape:** alias `qwen3.8-flash-next` (was `qwen3.8-27b`), `0.0.0.0:9931`, `--api-key-file C:\llama.cpp\api-key.txt` (key lives in Bitwarden as "Spark llama-server API key"), `--ctx-size 524288 --parallel 2` (256K per slot), `--n-predict 32768`. Don't lower n-predict: thinking runaway was the main quality failure.
 - **Firewall:** TCP 9931 only from pebble's tailnet IP. `llama\admin-setup.ps1` adds the rule, `llama\admin-fix.ps1` removes Windows' auto-created allow-any rules, `llama\admin-smb.ps1` adds the Hermes backup SMB share (445, pebble only).
 - **Lockdown** (`llama\admin-lockdown.ps1`): `C:\llama.cpp` was Authenticated Users:Modify, which was a SYSTEM escalation path. Now owner Administrators; Admins/SYSTEM Full; Users RX. `api-key.txt` keeps its own protected ACL.
 - **Supervisor** (`llama\serve-qwen38.ps1`, installed by `llama\admin-supervisor.ps1`): a SYSTEM scheduled task loop (PowerShell 5.1-compatible, no time limit, restart on failure). It watches `C:\llama.cpp\control\` (user-writable; SYSTEM never writes or deletes there, so it's junction-safe). Status goes to `logs\status.txt`, the log to `logs\supervisor.log`. It adopts an existing listener on 9931, backs off after 3 crashes, and writes `logs\server-FATAL.log` if the key file is missing. A GPU-state watchdog (added 2026-11-12) catches what `/health` can't. After an NVIDIA driver update the server lost its GPU memory, `/health` kept returning ok, and every completion failed. Once the server is 5 min old, the supervisor checks every 60 s for two signs: total GPU memory used falling below half its healthy peak (`nvidia-smi`; per-process figures are N/A under WDDM), and `failed to allocate CUDA`/`CUDA error` in the server log. Either one on 2 checks in a row restarts the server. It deliberately sends no test completion, because that would evict an agent's cached prompt from a slot. Deploy changes with `llama\admin-supervisor-update.ps1` (elevated).
@@ -19,7 +24,12 @@ The scripts in this folder are the ones actually used on the box, collected 2026
   - `prod-restart` touches `control\restart`.
   - `prod-status` shows the status file, the flag and the 9931 listener.
 
-**State: RUNNING since 2026-11-09 06:18.** `prod-start.ps1` worked first time, which was the first live test of the supervisor's start path: listening in 6 s, healthy in about 5 s more, 66-77 tok/s on a short code prompt with thinking off.
+**State: RUNNING Flash-Next since 2026-11-13 02:07** (flip plus GPU-watchdog deploy via `admin-flip-flashnext.ps1` → `admin-supervisor-update.ps1 -RestartServer`).
+- `/v1/models` serves `qwen3.8-flash-next`, with 2 slots × 262144 context.
+- A real completion worked: MTP accepted 6/9 drafts.
+- Memory: 86.2 GB GPU, 21.8 GB host free at load.
+
+The 27B ran from 2026-11-09 06:18 until the flip.
 
 ## Benchmarks (`bench\`, 2026-11-08 → 09)
 
@@ -33,6 +43,9 @@ Harness `bench\bench.ps1` (prefill, generation, and 12 Python tasks × 2 with th
 | 27B Q8, no draft | 9.4 / 9.6 | - |
 | Flash-Next UD-Q3_K_XL, no draft | 36 / 36 | 19/24 |
 | Flash-Next UD-IQ4_XS + MTP n=3 (NVIDIA recipe, 2026-11-12) | **53.2 / 37.7** | 18/24 |
+| *Quality at production's 32K cap (phase 4, 2026-11-12/13):* | | |
+| Flash-Next UD-IQ4_XS + MTP n=3 @ 32K | (as above) | **20/24** |
+| 27B Q4 + DFlash @ 32K | (as above) | 16/24 |
 
 **Flash-Next on NVIDIA's RTX Spark recipe** (`bench\phase3.ps1`, 2026-11-12):
 - **Setup:**
@@ -46,7 +59,26 @@ Harness `bench\bench.ps1` (prefill, generation, and 12 Python tasks × 2 with th
   - 1 × 256K: 76.5 GB GPU and 19.8 GB host free at load. `-lzm on` keeps the 87 GB of weights from spilling into host RAM; the Q3 run without it left 0.5 GB.
   - Production shape, 2 × 256K, loads at 85.6 GB GPU with 19.1 GB host free.
 - **Quality 18/24.** All 6 failures hit the 16K thinking cap: iso_duration ×2, calc, csv_line, semver and palindrome. It thinks longer than the 27B.
-- **Open: host free RAM fell steadily while the bench server ran,** from 19.8 GB at load to 2.27 GB after 1.75 h (`logs\phase3-mem.csv`). It recovered when the server stopped. The cause is unknown. Candidates: `--cache-ram` (default 8192 MiB), lazy-mode file reads counted against free, or the WSL test VM. Log Windows "Available" alongside free before trialling it as production.
+- **Host free RAM fell steadily while the bench server ran** in phase 3, from 19.8 GB at load to 2.27 GB after 1.75 h (`logs\phase3-mem.csv`), and recovered when the server stopped. Phase 4 found the cause; see below.
+
+**Phase 4: quality at production's real cap + the memory cause** (`bench\phase4.ps1`, `phase4-watch.ps1`, 2026-11-12 20:48 to 11-13 02:00). Quality only, with `bench.ps1 -QualityMaxTokens 32768` (production's `--n-predict`). Both models used the same args as their earlier runs.
+- **Flash-Next 20/24** (16K: 18/24). Failures: calc ×2 (hit 32K), semver#1 (hit 32K, called an undefined `compare_semver`), roman#1 (40 → "XXXX"). The extra headroom rescued iso_duration ×2 and csv_line, which take 18-32K tokens.
+- **27B Q4 + DFlash 16/24** (16K: 21/24). Failures: calc ×2, iso_duration#2 and semver#2 (all at 32K), plus wrong answers in lru_cache#2, csv_line#2, roman#2 (the same "XXXX") and dijkstra#2. The 16K → 32K drop is run-to-run variance at temp 1.0 on 24 samples, not a cap effect. Treat ±3 as noise.
+- Both models fail calc every time (all 4 samples ran out at 32K), and both make the same roman-numeral error.
+- **Verdict:** Flash-Next wins on quality at the real cap, as well as on speed and prefill. Chosen as the next production model; the flip waits for the user's go.
+- **The memory cause is llama-server's prompt cache (`--cache-ram`, default 8192 MiB), not a leak, lazy mode or file cache.** `phase4-mem.csv` logs every 10 s: free, available, standby, modified, commit, GPU, bench private/working set and vmmem.
+  - **Free and available fell together.** Standby (the file cache) fell with them, so it isn't cache being counted as used.
+  - **Both models' private bytes grew by about 8 GB, then plateaued:**
+
+    | Model | Private bytes, load → plateau | Plateau reached |
+    |---|---|---|
+    | Flash-Next | 80.5 → 88.6 GB | ~2 h |
+    | 27B | 27.3 → 34.7-35.5 GB | ~1 h |
+
+  - **The 27B doesn't use `-lzm`**, so lazy mode is ruled out.
+  - **GPU stayed flat.** Free RAM recovered when each server stopped.
+  - **Lowest available:** 3.56 GB (Flash-Next, 1 × 256K). The watchdog never fired.
+  - **Production implication:** Flash-Next leaves ~12-19 GB of host RAM after load, against ~21 GB for the 27B. Flash-Next's production config gets `--cache-ram 2048`. With 2 agent slots, cross-conversation cache reuse is worth little.
 
 Prefill is about the same for all (~885 / 835 / 650 tok/s at 4K / 16K / 64K). Most quality failures were the 16K thinking cap. Flash-Next with 2 slots × 128K loads, but it uses 68 GB of GPU memory and leaves the host 0.5 GB of free RAM, so it was rejected. Q8 buys nothing: memory bandwidth bounds this box, so smaller weights plus speculative decoding win. Hosting models inside WSL2 was considered and rejected: same engine, no speed gain, and it takes RAM from the 32 GB side.
 

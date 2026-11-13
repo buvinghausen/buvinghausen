@@ -1,6 +1,8 @@
 # Deploy this folder's serve-qwen38.ps1 to C:\llama.cpp and restart the "llama-server" supervisor task. Run elevated.
 # The supervisor adopts a llama-server still listening on 9931, so production may keep running through this;
 # if ending the task takes the server down too, the new supervisor starts a fresh one (~1 min to healthy).
+# -RestartServer: also kill the running llama-server so the new server arguments take effect (model/flag changes).
+param([switch]$RestartServer)
 $ErrorActionPreference = 'Stop'
 Start-Transcript (Join-Path $PSScriptRoot 'admin-supervisor-update.log') -Force | Out-Null
 try {
@@ -8,6 +10,10 @@ try {
   Copy-Item (Join-Path $PSScriptRoot 'serve-qwen38.ps1') C:\llama.cpp -Force
   Stop-ScheduledTask llama-server
   Start-Sleep 3
+  if ($RestartServer) {
+    Get-Process llama-server -ErrorAction SilentlyContinue | Stop-Process -Force
+    Start-Sleep 10   # let GPU memory drain
+  }
   Start-ScheduledTask llama-server
   Start-Sleep 15
   "--- task ---"; Get-ScheduledTask llama-server | Select-Object TaskName, State | Format-List

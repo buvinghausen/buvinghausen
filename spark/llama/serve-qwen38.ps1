@@ -8,12 +8,18 @@
 # Helpers: C:\llama.cpp\prod-stop.ps1, prod-start.ps1, prod-restart.ps1, prod-status.ps1 (no admin needed).
 # Server arguments are below and require admin to change (this folder is locked to Administrators/SYSTEM).
 #
-# Based on NVIDIA's RTX Spark recipe (start-qwen38-nvidia.ps1), with these deliberate differences:
-#   - local model paths instead of -hf/-hfrd/--mmproj-url (no network/user-profile dependency at boot)
+# Model: Qwen3.8 Flash-Next UD-IQ4_XS + MTP draft (since 2026-11-13; previously Qwen3.8-27B Q4 + DFlash, whose files
+# stay in models\ as a fallback). Chosen on bench phases 3-4 (spark/README.md): faster, and 20/24 vs 16/24 quality at 32K.
+# Based on NVIDIA's RTX Spark recipe for Flash-Next (qwen/qwen3.8-flash-next/rtx-spark/windows/llama-cpp/iq4-xs/vision-mtp),
+# with these deliberate differences:
+#   - local model paths instead of -hf/-hfrd/--mmproj-url (no network/user-profile dependency at boot); the weights are the
+#     3-shard upload at unsloth commit 38bb39e, which the recipe pins
 #   - --host 0.0.0.0 + --api-key-file (access limited by firewall rule to the Mac's Tailscale IP)
-#   - --parallel 2 with --ctx-size 524288 => 256K context per slot (orchestrator + implementer)
+#   - --parallel 2 with --ctx-size 524288 => 256K context per slot (orchestrator + implementer); loads at ~86 GB GPU
 #   - --alias so clients can use a short model name
 #   - --n-predict 32768 generation cap per request
+#   - --cache-ram 2048: the default 8192 MiB host prompt cache grew server private bytes ~8 GB (bench phase 4), and
+#     Flash-Next leaves only ~12-19 GB host RAM; with 2 agent slots cross-conversation reuse is worth little
 $ErrorActionPreference = 'Stop'
 $root    = 'C:\llama.cpp'
 $m       = Join-Path $root 'models'
@@ -25,22 +31,24 @@ $keyFile = Join-Path $root 'api-key.txt'
 New-Item -ItemType Directory -Force $logs, $ctl | Out-Null
 
 $llamaArgs = @(
-  '-m', "`"$m\Qwen3.8-27B-UD-Q4_K_M.gguf`"",
-  '--mmproj', "`"$m\mmproj-F16.gguf`"",
-  '--alias', 'qwen3.8-27b',
+  '-m', "`"$m\Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf`"",
+  '--mmproj', "`"$m\Qwen3.8-Flash-Next-mmproj-BF16.gguf`"",
+  '--alias', 'qwen3.8-flash-next',
   '--host', '0.0.0.0',
   '--port', "$port",
   '--api-key-file', "`"$keyFile`"",
-  '--batch-size', '4096',
+  '--batch-size', '2048',
   '--ubatch-size', '512',
   '--ctx-size', '524288',
   '--parallel', '2',
   '--n-predict', '32768',          # cap per-request generation (Hermes sends no max_tokens; stops runaway reasoning)
-  '-ngl', '999',
-  '--spec-type', 'draft-dflash',
-  '--spec-draft-n-max', '7',
-  '--spec-draft-model', "`"$m\Qwen3.8-27B-DFlash2-Q4_K_M.gguf`"",
-  '--spec-draft-backend-sampling',
+  '--cache-ram', '2048',           # MiB of host prompt cache (default 8192); see header
+  '-ngl', 'auto',
+  '-fa', 'on',
+  '-lzm', 'on',                    # lazy tensor loading: keeps the 87 GB of weights from spilling into host RAM
+  '--spec-type', 'draft-mtp',
+  '--spec-draft-n-max', '3',
+  '--spec-draft-model', "`"$m\mtp-Qwen3.8-Flash-Next-Q8_0.gguf`"",
   '--temp', '1.0',
   '--top-p', '0.95',
   '--top-k', '20',
